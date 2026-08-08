@@ -210,5 +210,6 @@ mod tests {
         };
         assert!(manifest.validate().is_err());
         assert!(artifact("../secret").validate().is_err());
+        assert!(artifact("C:\\secret").validate().is_err());
     }
 }
