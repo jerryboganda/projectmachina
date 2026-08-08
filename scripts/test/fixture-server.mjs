@@ -13,7 +13,7 @@ const MAX_BODY_BYTES = 64 * 1024;
 const WEBSOCKET_MAGIC = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 
 function isLoopbackHost(host) {
-  return host === "127.0.0.1" || host === "::1" || host === "localhost";
+  return host === "127.0.0.1" || host === "::1";
 }
 
 function json(response, statusCode, value) {

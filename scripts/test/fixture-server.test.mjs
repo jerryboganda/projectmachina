@@ -66,6 +66,15 @@ test("serves deterministic navigation, redirect, mutation, and form fixtures", a
       external_network: false
     });
 
+    const mutation = await fetch(`${baseUrl}/dom-mutation`);
+    assert.match(await mutation.text(), /data-state="initial"/);
+    const networkPolicy = await fetch(`${baseUrl}/network-policy`);
+    assert.deepEqual(await networkPolicy.json(), {
+      origin: "127.0.0.1",
+      redirect_target: "/navigation",
+      private_network_allowed: false
+    });
+
     const form = await fetch(`${baseUrl}/form`, {
       method: "POST",
       headers: { "content-type": "application/x-www-form-urlencoded" },
