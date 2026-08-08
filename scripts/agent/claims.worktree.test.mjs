@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import { spawnSync } from "node:child_process";
 import test from "node:test";
-import { claimTask, releaseTask } from "./claims.mjs";
+import { claimTask, getClaimStoreRoot, releaseTask } from "./claims.mjs";
 
 function git(root, args) {
   const result = spawnSync("git", args, {
@@ -20,7 +20,7 @@ function git(root, args) {
 
 test("binds a claim to a registered Git worktree and branch", async () => {
   const root = await mkdtemp(join(tmpdir(), "machina-git-claims-"));
-  const worktree = join(root, "worktree");
+  const worktree = join(dirname(root), `${basename(root)}-worktree`);
   try {
     git(root, ["init", "-b", "main"]);
     git(root, ["config", "user.name", "Claim Test"]);
@@ -40,6 +40,7 @@ test("binds a claim to a registered Git worktree and branch", async () => {
       now: new Date("2026-08-09T01:00:00.000Z")
     });
     assert.equal(claim.status, "active");
+    assert.equal(getClaimStoreRoot(root), join(root, ".git", "machina-claims"));
     const released = await releaseTask({
       root,
       task: "M0-T02",

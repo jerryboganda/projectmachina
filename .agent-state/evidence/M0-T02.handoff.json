@@ -1,0 +1,67 @@
+{
+  "schema_version": "0.1.0",
+  "type": "handoff",
+  "task_id": "M0-T02",
+  "agent_id": "copilot-claims",
+  "identity": {
+    "task": "M0-T02",
+    "agent": "copilot-claims",
+    "branch": "agent/M0-T02-claims",
+    "worktree": "D:\\Projects\\machina-worktrees\\M0-T02-claims",
+    "base_commit": "0088d3ec8ba585f01fe97654435853e252e21651",
+    "current_commit": "0088d3ec8ba585f01fe97654435853e252e21651 (uncommitted changes)"
+  },
+  "generated_at": "2026-08-09T03:04:16.275+05:00",
+  "objective": "Implement shared claims/leases, worktree lifecycle, dependency validation, stale-lock fencing, and durable evidence projections.",
+  "acceptance_criteria": [
+    "overlapping write scopes are rejected deterministically",
+    "expired claims and stale locks require explicit inspected recovery",
+    "real Git worktrees can be created, inspected, and removed safely",
+    "handoff and evidence state survives session restart"
+  ],
+  "completed": [
+    "claims and leases implementation",
+    "task registry validation",
+    "worktree lifecycle helper",
+    "handoff/evidence projections",
+    "focused tests"
+  ],
+  "in_progress": [
+    "terminal fast gate",
+    "Git diff review and commit",
+    "independent review"
+  ],
+  "changed_files": [
+    "scripts/agent/claims.mjs",
+    "scripts/agent/claims.test.mjs",
+    "scripts/agent/claims.worktree.test.mjs",
+    "scripts/agent/claims.recovery.test.mjs",
+    "scripts/agent/task-registry.mjs",
+    "scripts/agent/task-registry.test.mjs",
+    "scripts/agent/worktree.mjs",
+    "scripts/agent/worktree.test.mjs",
+    "scripts/agent/handoff.mjs",
+    "scripts/agent/handoff.test.mjs",
+    "scripts/agent/evidence.mjs",
+    "scripts/agent/README.md",
+    ".agent-state/README.md",
+    ".agent-state/evidence/M0-T02.md",
+    ".agent-state/evidence/M0-T02.handoff.md",
+    ".agent-state/evidence/M0-T02.handoff.json"
+  ],
+  "commands": [
+    {
+      "command": "node --check scripts/agent/claims.mjs",
+      "result": "not run: terminal execution unavailable"
+    },
+    {
+      "command": "node --test scripts/agent/claims.test.mjs scripts/agent/claims.worktree.test.mjs scripts/agent/claims.recovery.test.mjs scripts/agent/task-registry.test.mjs scripts/agent/worktree.test.mjs scripts/agent/handoff.test.mjs",
+      "result": "not run: terminal execution unavailable"
+    }
+  ],
+  "risks": [
+    "syntax/test behavior still needs reproduction in a terminal-capable session",
+    "no commit or pull request exists yet"
+  ],
+  "recommended_next_action": "Resume with terminal/Git tooling, run the focused gate, inspect allowed paths, commit M0-T02, and request independent review."
+}
