@@ -3,9 +3,6 @@ import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("../..", import.meta.url));
-const policy = JSON.parse(
-  await readFile(join(root, "architecture/boundary-policy.json"), "utf8")
-);
 const sourceExtensions = new Set([".rs", ".ts", ".tsx", ".js", ".mjs", ".svelte"]);
 
 async function sourceFiles(directory) {
@@ -25,34 +22,43 @@ async function sourceFiles(directory) {
   return files;
 }
 
-const violations = [];
-for (const rule of policy.rules) {
-  for (const rootPath of rule.roots) {
-    const absoluteRoot = join(root, rootPath);
-    let files;
-    try {
-      files = await sourceFiles(absoluteRoot);
-    } catch (error) {
-      if (error?.code === "ENOENT") {
-        continue;
+export async function findBoundaryViolations(scanRoot, policy) {
+  const violations = [];
+  for (const rule of policy.rules) {
+    for (const rootPath of rule.roots) {
+      const absoluteRoot = join(scanRoot, rootPath);
+      let files;
+      try {
+        files = await sourceFiles(absoluteRoot);
+      } catch (error) {
+        if (error?.code === "ENOENT") {
+          continue;
+        }
+        throw error;
       }
-      throw error;
-    }
-    for (const file of files) {
-      const content = await readFile(file, "utf8");
-      for (const pattern of rule.forbidden_patterns) {
-        if (content.toLowerCase().includes(pattern.toLowerCase())) {
-          violations.push(
-            `${rule.id}: ${relative(root, file).replaceAll("\\", "/")} contains ${pattern}`
-          );
+      for (const file of files) {
+        const content = await readFile(file, "utf8");
+        for (const pattern of rule.forbidden_patterns) {
+          if (content.toLowerCase().includes(pattern.toLowerCase())) {
+            violations.push(
+              `${rule.id}: ${relative(scanRoot, file).replaceAll("\\", "/")} contains ${pattern}`
+            );
+          }
         }
       }
     }
   }
+  return violations;
 }
 
-if (violations.length > 0) {
-  console.error(violations.join("\n"));
-  process.exit(1);
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  const policy = JSON.parse(
+    await readFile(join(root, "architecture/boundary-policy.json"), "utf8")
+  );
+  const violations = await findBoundaryViolations(root, policy);
+  if (violations.length > 0) {
+    console.error(violations.join("\n"));
+    process.exit(1);
+  }
+  console.log("architecture boundary check: passed");
 }
-console.log("architecture boundary check: passed");
