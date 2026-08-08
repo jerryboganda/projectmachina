@@ -1,0 +1,64 @@
+{
+  "schema_version": "0.1.0",
+  "type": "task-evidence",
+  "task_id": "M0-T05",
+  "status": "released",
+  "agent_id": "copilot-boundaries",
+  "identity": {
+    "task": "M0-T05",
+    "agent": "copilot-boundaries",
+    "branch": "agent/M0-T05-boundaries",
+    "worktree": "D:\\Projects\\machina-worktrees\\M0-T05-boundaries",
+    "base_commit": "unknown",
+    "current_commit": "unknown"
+  },
+  "generated_at": "2026-08-08T23:09:23.481Z",
+  "objective": "",
+  "acceptance_criteria": [],
+  "claim": {
+    "schema_version": 1,
+    "claim_id": "58ba6275-abe7-4cdd-b4ab-eefd8fea6dc3",
+    "task_id": "M0-T05",
+    "agent_id": "copilot-boundaries",
+    "branch": "agent/M0-T05-boundaries",
+    "worktree": "D:\\Projects\\machina-worktrees\\M0-T05-boundaries",
+    "write_scope": [
+      "architecture/**",
+      "scripts/architecture/**"
+    ],
+    "dependencies": [
+      "M0-T01",
+      "M0-T04"
+    ],
+    "contract_dependencies": [],
+    "base_commit": "unknown",
+    "current_commit": "unknown",
+    "lease_minutes": 90,
+    "grace_minutes": 20,
+    "claimed_at": "2026-08-08T22:53:44.321Z",
+    "heartbeat_at": "2026-08-08T22:53:44.321Z",
+    "lease_expires_at": "2026-08-09T00:23:44.321Z",
+    "grace_expires_at": "2026-08-09T00:43:44.321Z",
+    "status": "released",
+    "lock_fence": "9bd312f8-694d-488b-ad63-7fe7dce6d1c9",
+    "release_reason": "merged-to-main",
+    "released_at": "2026-08-08T23:09:23.481Z"
+  },
+  "commands": [
+    {
+      "type": "release",
+      "status": "released",
+      "at": "2026-08-08T23:09:23.481Z",
+      "reason": "merged-to-main"
+    }
+  ],
+  "artifacts": [],
+  "changed_files": [
+    "architecture/**",
+    "scripts/architecture/**"
+  ],
+  "decisions": [],
+  "failures": [],
+  "risks": [],
+  "next_action": ""
+}
