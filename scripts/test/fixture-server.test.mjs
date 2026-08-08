@@ -1,6 +1,12 @@
 import assert from "node:assert/strict";
 import http from "node:http";
+import https from "node:https";
+import { existsSync } from "node:fs";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
 import net from "node:net";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
+import { spawnSync } from "node:child_process";
 import test from "node:test";
 import { createFixtureServer } from "./fixture-server.mjs";
 
@@ -134,8 +140,104 @@ test("serves a deterministic WebSocket upgrade handshake", async () => {
       });
     });
     assert.match(response, /HTTP\/1\.1 101 Switching Protocols/);
-    assert.match(response, /Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK\+xOo=/);
+    assert.match(
+      response,
+      /Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK\+xOo=/
+    );
   } finally {
     await fixture.stop();
+  }
+});
+
+test("supports injected short-lived HTTPS fixture certificates", async () => {
+  const certificateRoot = await mkdtemp(join(tmpdir(), "machina-fixture-tls-"));
+  const keyPath = join(certificateRoot, "key.pem");
+  const certificatePath = join(certificateRoot, "cert.pem");
+  try {
+    const opensslBinary =
+      process.env.OPENSSL_BIN ??
+      (process.platform === "win32"
+        ? join(
+            process.env.USERPROFILE ?? "",
+            "scoop",
+            "apps",
+            "openssl",
+            "current",
+            "bin",
+            "openssl.exe"
+          )
+        : "openssl");
+    const openssl = spawnSync(
+      existsSync(opensslBinary) ? opensslBinary : "openssl",
+      [
+        "req",
+        "-x509",
+        "-newkey",
+        "rsa:2048",
+        "-nodes",
+        "-keyout",
+        keyPath,
+        "-out",
+        certificatePath,
+        "-days",
+        "1",
+        "-subj",
+        "/CN=one.localhost"
+      ],
+      {
+        encoding: "utf8",
+        shell: false,
+        stdio: "pipe",
+        env: {
+          ...process.env,
+          OPENSSL_CONF:
+            process.env.OPENSSL_CONF ??
+            join(dirname(opensslBinary), "cnf", "openssl.cnf")
+        }
+      }
+    );
+    assert.equal(
+      openssl.status,
+      0,
+      openssl.stderr || "openssl certificate generation failed"
+    );
+    const fixture = createFixtureServer({
+      tlsOptions: {
+        key: await readFile(keyPath),
+        cert: await readFile(certificatePath)
+      }
+    });
+    const address = await fixture.start();
+    try {
+      const response = await new Promise((resolve, reject) => {
+        https
+          .get(
+            {
+              hostname: address.host,
+              port: address.port,
+              path: "/health",
+              rejectUnauthorized: false,
+              headers: { host: `one.localhost:${address.port}` }
+            },
+            (incoming) => {
+              let body = "";
+              incoming.setEncoding("utf8");
+              incoming.on("data", (chunk) => {
+                body += chunk;
+              });
+              incoming.on("end", () =>
+                resolve({ status: incoming.statusCode, body: JSON.parse(body) })
+              );
+            }
+          )
+          .on("error", reject);
+      });
+      assert.equal(response.status, 200);
+      assert.equal(response.body.fixture_set, "machina-foundation");
+    } finally {
+      await fixture.stop();
+    }
+  } finally {
+    await rm(certificateRoot, { recursive: true, force: true });
   }
 });
