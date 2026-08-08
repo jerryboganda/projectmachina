@@ -12,7 +12,7 @@ const outputRoot = process.env.MACHINA_CONTRACT_OUTPUT_DIR
 const rustPath = join(outputRoot, "crates/command-model/src/generated.rs");
 const typescriptPath = join(outputRoot, "packages/contracts-ts/src/command-model.ts");
 
-const schemaText = await readFile(schemaPath, "utf8");
+const schemaText = (await readFile(schemaPath, "utf8")).replace(/\r\n/g, "\n");
 const schema = JSON.parse(schemaText);
 const sourceHash = createHash("sha256").update(schemaText).digest("hex");
 const codegen = schema["x-machina-codegen"];

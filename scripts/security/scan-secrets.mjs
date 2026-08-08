@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 
 const root = fileURLToPath(new URL("../..", import.meta.url));
 const highConfidencePatterns = [
@@ -15,6 +16,16 @@ export function findSecretIndicators(content) {
   return highConfidencePatterns
     .filter(({ pattern }) => pattern.test(content))
     .map(({ name }) => name);
+}
+
+export function isScannablePath(relativePath) {
+  const pathSegments = relativePath.replaceAll("\\", "/").split("/");
+  return !(
+    pathSegments.includes("node_modules") ||
+    pathSegments.includes(".svelte-kit") ||
+    (pathSegments.length > 1 && pathSegments[0] === "target") ||
+    (pathSegments.length > 1 && pathSegments[0] === "build")
+  );
 }
 
 function trackedAndUntrackedFiles() {
@@ -39,19 +50,17 @@ function trackedAndUntrackedFiles() {
 
 const failures = [];
 for (const relativePath of trackedAndUntrackedFiles()) {
-  if (
-    relativePath.includes("node_modules/") ||
-    relativePath.includes(".svelte-kit/") ||
-    relativePath.includes("target/") ||
-    relativePath.includes("build/")
-  ) {
+  if (!isScannablePath(relativePath)) {
     continue;
   }
   let content;
   try {
-    content = await readFile(`${root}\\${relativePath}`, "utf8");
-  } catch {
-    continue;
+    content = await readFile(join(root, relativePath), "utf8");
+  } catch (error) {
+    if (error?.code === "ENOENT") {
+      continue;
+    }
+    throw error;
   }
   for (const indicator of findSecretIndicators(content)) {
     failures.push(`${relativePath}: ${indicator}`);

@@ -5,6 +5,10 @@ import { fileURLToPath } from "node:url";
 import { spawnProjectCommand } from "./command.mjs";
 
 const root = fileURLToPath(new URL("../..", import.meta.url));
+const toolchainManifest = await readFile(
+  join(root, "toolchains/versions.toml"),
+  "utf8"
+);
 const requiredFiles = [
   "Cargo.toml",
   "rust-toolchain.toml",
@@ -43,7 +47,7 @@ if (packageJson.packageManager !== "pnpm@9.15.0") {
 }
 
 const versions = new Map();
-for (const command of ["git", "cargo", "cmake", "ninja", "clang", "buf", "node", "pnpm"]) {
+for (const command of ["git", "cargo", "rustc", "cmake", "ninja", "clang", "buf", "node", "pnpm"]) {
   const result = spawnProjectCommand(command, ["--version"], {
     cwd: root,
     encoding: "utf8",
@@ -84,6 +88,40 @@ if (versions.get("buf") !== "1.47.2") {
 const clangVersion = versions.get("clang")?.match(/clang version (\d+)\./);
 if (!clangVersion || Number(clangVersion[1]) < 18) {
   failures.push(`Clang must satisfy >=18 (found ${versions.get("clang") ?? "unknown"})`);
+}
+
+function manifestVersion(section, key) {
+  const sectionMatch = toolchainManifest.match(
+    new RegExp(`\\[${section}\\]([\\s\\S]*?)(?=\\n\\[|$)`)
+  );
+  return sectionMatch?.[1]
+    ?.match(new RegExp(`^${key}\\s*=\\s*"([^"]+)"`, "m"))?.[1];
+}
+
+if (process.env.MACHINA_STRICT_TOOLCHAIN === "1" || process.argv.includes("--strict")) {
+  const expected = {
+    rust: manifestVersion("rust", "channel"),
+    node: manifestVersion("node", "version"),
+    cmake: manifestVersion("cmake", "version"),
+    clang: manifestVersion("clang", "version"),
+    ninja: manifestVersion("ninja", "version"),
+    buf: manifestVersion("buf", "version")
+  };
+  const actual = {
+    rust: versions.get("rustc")?.match(/rustc ([0-9.]+)/)?.[1] ?? "",
+    node: versions.get("node")?.replace(/^v/, "") ?? "",
+    cmake: versions.get("cmake")?.match(/cmake version ([0-9.]+)/)?.[1] ?? "",
+    clang: versions.get("clang")?.match(/clang version ([0-9.]+)/)?.[1] ?? "",
+    ninja: versions.get("ninja") ?? "",
+    buf: versions.get("buf") ?? ""
+  };
+  for (const [name, expectedVersion] of Object.entries(expected)) {
+    if (expectedVersion && actual[name] !== expectedVersion) {
+      failures.push(
+        `${name} must be exactly ${expectedVersion} in strict mode (found ${actual[name] || "unknown"})`
+      );
+    }
+  }
 }
 
 if (failures.length > 0) {

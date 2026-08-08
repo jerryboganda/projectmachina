@@ -20,6 +20,7 @@ export async function runAutonomousLoopRehearsal() {
       branch: "agent/REHEARSAL-A-fixtures",
       worktree: "../machina-worktrees/REHEARSAL-A",
       writeScope: ["tests/fixtures/**"],
+      allowNonGit: true,
       now
     });
     const second = await claimTask({
@@ -29,6 +30,7 @@ export async function runAutonomousLoopRehearsal() {
       branch: "agent/REHEARSAL-B-benchmarks",
       worktree: "../machina-worktrees/REHEARSAL-B",
       writeScope: ["benchmarks/**"],
+      allowNonGit: true,
       now
     });
 
@@ -41,6 +43,7 @@ export async function runAutonomousLoopRehearsal() {
         branch: "agent/REHEARSAL-C-overlap",
         worktree: "../machina-worktrees/REHEARSAL-C",
         writeScope: ["tests/fixtures/manifest.json"],
+        allowNonGit: true,
         now
       });
     } catch (error) {
@@ -55,12 +58,18 @@ export async function runAutonomousLoopRehearsal() {
       root,
       task: first.task_id,
       agent: first.agent_id,
+      branch: first.branch,
+      worktree: first.worktree,
+      allowNonGit: true,
       now: new Date("2026-08-09T01:10:00.000Z")
     });
     const secondHeartbeat = await heartbeatTask({
       root,
       task: second.task_id,
       agent: second.agent_id,
+      branch: second.branch,
+      worktree: second.worktree,
+      allowNonGit: true,
       now: new Date("2026-08-09T01:10:00.000Z")
     });
 
@@ -86,6 +95,9 @@ export async function runAutonomousLoopRehearsal() {
       root,
       task: first.task_id,
       agent: first.agent_id,
+      branch: first.branch,
+      worktree: first.worktree,
+      allowNonGit: true,
       reason: "independent review simulated",
       now: new Date("2026-08-09T01:20:00.000Z")
     });
@@ -93,6 +105,9 @@ export async function runAutonomousLoopRehearsal() {
       root,
       task: second.task_id,
       agent: second.agent_id,
+      branch: second.branch,
+      worktree: second.worktree,
+      allowNonGit: true,
       reason: "independent review simulated",
       now: new Date("2026-08-09T01:20:00.000Z")
     });

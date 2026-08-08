@@ -10,6 +10,41 @@ function assertLocalEnvironment() {
   if (environment !== "local") {
     throw new Error(`local command refused outside MACHINA_ENV=local (got ${environment})`);
   }
+  if (process.env.DOCKER_HOST) {
+    throw new Error("local command refuses an ambient DOCKER_HOST; unset it before continuing");
+  }
+  if (process.env.DOCKER_CONTEXT && process.env.DOCKER_CONTEXT !== "default") {
+    throw new Error("local command requires the default Docker context");
+  }
+  const context = spawnSync("docker", ["context", "show"], {
+    cwd: root,
+    encoding: "utf8",
+    shell: false,
+    stdio: "pipe"
+  });
+  if (context.error || context.status !== 0) {
+    throw new Error("Docker is unavailable; local lifecycle commands cannot proceed");
+  }
+  if (context.stdout.trim() !== "default") {
+    throw new Error(`local command requires Docker context default (got ${context.stdout.trim()})`);
+  }
+  const endpoint = spawnSync(
+    "docker",
+    ["context", "inspect", "default", "--format", "{{.Endpoints.docker.Host}}"],
+    {
+      cwd: root,
+      encoding: "utf8",
+      shell: false,
+      stdio: "pipe"
+    }
+  );
+  if (endpoint.error || endpoint.status !== 0) {
+    throw new Error("unable to inspect the default Docker endpoint");
+  }
+  const host = endpoint.stdout.trim().toLowerCase();
+  if (host.startsWith("tcp://") || host.startsWith("ssh://") || host.startsWith("http://") || host.startsWith("https://")) {
+    throw new Error(`local command refuses remote Docker endpoint: ${host}`);
+  }
 }
 
 function run(args) {

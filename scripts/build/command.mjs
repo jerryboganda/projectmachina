@@ -2,7 +2,7 @@ import { spawnSync } from "node:child_process";
 
 function quoteCmdArgument(argument) {
   const value = String(argument);
-  if (/^[A-Za-z0-9_./:=+-]+$/.test(value)) {
+  if (/^[A-Za-z0-9_@./:=+-]+$/.test(value)) {
     return value;
   }
   return `"${value.replaceAll('"', '""')}"`;

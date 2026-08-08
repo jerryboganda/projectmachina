@@ -15,6 +15,7 @@ import {
 test("normalizes repository-relative scopes and rejects escapes", () => {
   const root = "D:/repo";
   assert.equal(normalizeScope(".\\crates\\dom\\**", root), "crates/dom/**");
+  assert.equal(normalizeScope("security//redact.mjs", root), "security/redact.mjs");
   assert.throws(() => normalizeScope("../outside", root), /escapes repository root/);
   assert.throws(() => normalizeScope("D:\\outside", root), /repository-relative/);
 });
@@ -26,6 +27,10 @@ test("detects overlapping literal and glob scopes conservatively", () => {
   assert.equal(scopesOverlap("src/foo?.txt", "src/foo1.txt"), true);
   assert.equal(scopesOverlap("src/foo*", "src/foobar"), true);
   assert.equal(scopesOverlap("src/a[0-9].json", "src/a1.json"), true);
+  assert.equal(
+    scopesOverlap("src/Foo/**", "src/foo/bar.ts"),
+    process.platform === "win32"
+  );
 });
 
 test("rejects overlapping claims and preserves release evidence", async () => {
@@ -39,6 +44,7 @@ test("rejects overlapping claims and preserves release evidence", async () => {
       branch: "agent/M0-T02-claims",
       worktree: "../machina-worktrees/M0-T02-test-agent-a",
       writeScope: ["scripts/agent/**"],
+      allowNonGit: true,
       now
     });
     assert.equal(first.status, "active");
@@ -50,6 +56,7 @@ test("rejects overlapping claims and preserves release evidence", async () => {
         branch: "agent/M0-T03-ci",
         worktree: "../machina-worktrees/M0-T03-test-agent-b",
         writeScope: ["scripts/agent/claims.mjs"],
+        allowNonGit: true,
         now
       }),
       /overlaps active claim M0-T02/
@@ -58,6 +65,9 @@ test("rejects overlapping claims and preserves release evidence", async () => {
       root,
       task: "M0-T02",
       agent: "test-agent-a",
+      branch: first.branch,
+      worktree: first.worktree,
+      allowNonGit: true,
       now: new Date("2026-08-09T00:10:00.000Z")
     });
     assert.equal(heartbeat.heartbeat_at, "2026-08-09T00:10:00.000Z");
@@ -65,6 +75,9 @@ test("rejects overlapping claims and preserves release evidence", async () => {
       root,
       task: "M0-T02",
       agent: "test-agent-a",
+      branch: first.branch,
+      worktree: first.worktree,
+      allowNonGit: true,
       reason: "test complete",
       now: new Date("2026-08-09T00:11:00.000Z")
     });
@@ -90,6 +103,7 @@ test("requires explicit recovery for expired claims", async () => {
       writeScope: ["scripts/agent/**"],
       leaseMinutes: 1,
       graceMinutes: 1,
+      allowNonGit: true,
       now: new Date("2026-08-09T00:00:00.000Z")
     });
     const recovered = await recoverExpiredTask({
@@ -105,6 +119,9 @@ test("requires explicit recovery for expired claims", async () => {
         root,
         task: "M0-T02",
         agent: "test-agent-a",
+        branch: "agent/M0-T02-claims",
+        worktree: "../machina-worktrees/M0-T02-test-agent-a",
+        allowNonGit: true,
         now: new Date("2026-08-09T00:03:00.000Z")
       }),
       /not active/

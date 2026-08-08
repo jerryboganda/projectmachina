@@ -17,13 +17,13 @@ purpose: "Provide the durable, human-readable snapshot that each autonomous cycl
 - Active milestone: `M0 — Foundation and governance`
 - Current release target: `0.1.0-alpha`
 - Last reconciled: `2026-08-09`
-- Default branch: `main` (Git initialized; bootstrap commit pending review)
+- Default branch: `main` (bootstrap branch head is verified with `git rev-parse HEAD`; review branch active)
 
 ## Active tasks
 
 | Task | Owner | Branch/worktree | State | Heartbeat | Blocker |
 | --- | --- | --- | --- | --- | --- |
-| M0-T01 | local implementation | local working tree | in-review | 2026-08-09T01:35+05:00 | Independent review and first commit pending |
+| M0-T01 | copilot-foundation | `D:\Projects\machina-worktrees\M0-T01-bootstrap` | in-review | 2026-08-09T01:40+05:00 | Independent review and hosted CI pending |
 
 ## Recently completed
 
@@ -48,7 +48,6 @@ purpose: "Provide the durable, human-readable snapshot that each autonomous cycl
 
 ## Reconciliation notes
 
-The first commit will replace the bootstrap placeholder with the actual commit, branch,
-worktree, and review evidence. M0-T02 through M0-T12 must be split into separate claims
-and reviewed after the bootstrap commit; the current local foundation batch is not
-evidence that those tasks are complete.
+The bootstrap branch contains the isolated
+claim-helper, reproducibility, and cross-platform scanner repairs pending review.
+M0-T02 through M0-T12 must be split into separate claims after bootstrap merge.

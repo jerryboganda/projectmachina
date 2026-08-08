@@ -4,6 +4,9 @@ bootstrap:
 doctor:
     node scripts/build/doctor.mjs
 
+doctor-strict:
+    node scripts/build/doctor.mjs --strict
+
 build:
     node scripts/build/run.mjs build
 

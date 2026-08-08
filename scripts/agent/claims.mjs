@@ -1,4 +1,5 @@
 import { constants } from "node:fs";
+import { realpathSync } from "node:fs";
 import {
   access,
   mkdir,
@@ -44,9 +45,63 @@ function lockDirectory(root) {
   return join(claimStoreRoot(root), "claims.lock");
 }
 
+function coordinationLockDirectory(root) {
+  return join(claimStoreRoot(root), "coordination.lock");
+}
+
 function claimPath(root, taskId) {
   const safeTaskId = taskId.replace(/[^A-Za-z0-9._-]/g, "_");
   return join(claimsDirectory(root), `${safeTaskId}.json`);
+}
+
+function canonicalPath(root, path) {
+  const absolute = resolve(root, path);
+  let real = absolute;
+  try {
+    real = realpathSync.native(absolute);
+  } catch {
+    real = absolute;
+  }
+  return process.platform === "win32" ? real.toLowerCase() : real;
+}
+
+function validateWorktree(root, branch, worktree, allowNonGit) {
+  const repository = spawnSync("git", ["rev-parse", "--show-toplevel"], {
+    cwd: root,
+    encoding: "utf8",
+    shell: false,
+    stdio: "pipe"
+  });
+  if (repository.error || repository.status !== 0) {
+    if (allowNonGit) {
+      return;
+    }
+    throw new Error("claim worktree validation requires a Git repository");
+  }
+  const result = spawnSync("git", ["worktree", "list", "--porcelain"], {
+    cwd: root,
+    encoding: "utf8",
+    shell: false,
+    stdio: "pipe"
+  });
+  if (result.error || result.status !== 0) {
+    throw new Error("unable to verify Git worktree ownership");
+  }
+  const expectedPath = canonicalPath(root, worktree);
+  const blocks = result.stdout.trim().split(/\r?\n\r?\n/).filter(Boolean);
+  const match = blocks.find((block) => {
+    const lines = block.split(/\r?\n/);
+    const path = lines.find((line) => line.startsWith("worktree "))?.slice(9);
+    const actualBranch = lines.find((line) => line.startsWith("branch "))?.slice(7);
+    return (
+      path &&
+      actualBranch === `refs/heads/${branch}` &&
+      canonicalPath(root, path) === expectedPath
+    );
+  });
+  if (!match) {
+    throw new Error(`worktree is not registered on the claimed branch: ${worktree}`);
+  }
 }
 
 export function normalizeScope(scope, root) {
@@ -59,7 +114,9 @@ export function normalizeScope(scope, root) {
     throw new Error(`write scope must be repository-relative: ${scope}`);
   }
 
-  const segments = normalized.split("/").filter((segment) => segment !== ".");
+  const segments = normalized
+    .split("/")
+    .filter((segment) => segment.length > 0 && segment !== ".");
   if (segments.some((segment) => segment === "..")) {
     throw new Error(`write scope escapes repository root: ${scope}`);
   }
@@ -81,8 +138,9 @@ function literalPrefix(scope) {
 }
 
 export function scopesOverlap(left, right) {
-  const leftScope = left.replaceAll("\\", "/");
-  const rightScope = right.replaceAll("\\", "/");
+  const foldCase = process.platform === "win32";
+  const leftScope = (foldCase ? left.toLowerCase() : left).replaceAll("\\", "/");
+  const rightScope = (foldCase ? right.toLowerCase() : right).replaceAll("\\", "/");
   const leftPrefix = literalPrefix(leftScope);
   const rightPrefix = literalPrefix(rightScope);
   const leftHasWildcard = /[*?[\]]/.test(leftScope);
@@ -101,13 +159,15 @@ export function scopesOverlap(left, right) {
   );
 }
 
-async function acquireLock(root) {
+async function acquireCoordinationLock(root) {
   await mkdir(claimStoreRoot(root), { recursive: true });
+  const lockId = randomUUID();
   try {
-    await mkdir(lockDirectory(root));
+    await mkdir(coordinationLockDirectory(root));
     await writeFile(
-      join(lockDirectory(root), "owner.json"),
+      join(coordinationLockDirectory(root), "owner.json"),
       `${JSON.stringify({
+        lock_id: lockId,
         pid: process.pid,
         acquired_at: new Date().toISOString()
       })}\n`,
@@ -117,32 +177,97 @@ async function acquireLock(root) {
     if (error?.code === "EEXIST") {
       let age = 0;
       try {
-        age = Date.now() - (await stat(lockDirectory(root))).mtimeMs;
+        age = Date.now() - (await stat(coordinationLockDirectory(root))).mtimeMs;
       } catch {
         age = 0;
       }
       if (age >= STALE_LOCK_MINUTES * 60 * 1000) {
-        throw new Error("claim state has a stale lock; inspect and run recover-lock");
+        const stalePath = `${coordinationLockDirectory(root)}.stale-${randomUUID()}`;
+        await rename(coordinationLockDirectory(root), stalePath);
+        await rm(stalePath, { recursive: true, force: true });
+        return acquireCoordinationLock(root);
       }
-      throw new Error("claim state is locked by another operation");
+      throw new Error("claim coordination is locked by another operation");
     }
     throw error;
   }
+  return lockId;
 }
 
-async function releaseLock(root) {
-  await rm(lockDirectory(root), { recursive: true, force: true });
+async function releaseCoordinationLock(root, lockId) {
+  const owner = JSON.parse(
+    await readFile(join(coordinationLockDirectory(root), "owner.json"), "utf8")
+  );
+  if (owner.lock_id !== lockId) {
+    throw new Error("claim coordination ownership changed before release");
+  }
+  const releasePath = `${coordinationLockDirectory(root)}.release-${lockId}`;
+  await rename(coordinationLockDirectory(root), releasePath);
+  await rm(releasePath, { recursive: true, force: true });
 }
 
-async function withLock(root, operation) {
-  await acquireLock(root);
+async function withCoordinationLock(root, operation) {
+  const lockId = await acquireCoordinationLock(root);
   try {
     return await operation();
   } finally {
-    await releaseLock(root);
+    await releaseCoordinationLock(root, lockId);
   }
 }
 
+async function acquireLock(root) {
+  return withCoordinationLock(root, async () => {
+    const lockId = randomUUID();
+    try {
+      await mkdir(lockDirectory(root));
+      await writeFile(
+        join(lockDirectory(root), "owner.json"),
+        `${JSON.stringify({
+          lock_id: lockId,
+          pid: process.pid,
+          acquired_at: new Date().toISOString()
+        })}\n`,
+        "utf8"
+      );
+    } catch (error) {
+      if (error?.code === "EEXIST") {
+        let age = 0;
+        try {
+          age = Date.now() - (await stat(lockDirectory(root))).mtimeMs;
+        } catch {
+          age = 0;
+        }
+        if (age >= STALE_LOCK_MINUTES * 60 * 1000) {
+          throw new Error("claim state has a stale lock; inspect and run recover-lock");
+        }
+        throw new Error("claim state is locked by another operation");
+      }
+      throw error;
+    }
+    return lockId;
+  });
+}
+
+async function releaseLock(root, lockId) {
+  return withCoordinationLock(root, async () => {
+    const owner = JSON.parse(await readFile(join(lockDirectory(root), "owner.json"), "utf8"));
+    if (owner.lock_id !== lockId) {
+      throw new Error("claim lock ownership changed before release");
+    }
+    const releasePath = `${lockDirectory(root)}.release-${lockId}`;
+    await rename(lockDirectory(root), releasePath);
+    await rm(releasePath, { recursive: true, force: true });
+  });
+}
+
+async function withLock(root, operation) {
+  const lockId = await acquireLock(root);
+  try {
+    return await operation();
+  } finally {
+    await releaseLock(root, lockId);
+  }
+}
 async function writeJsonAtomic(path, value, flag = "w") {
   const temporaryPath = `${path}.${randomUUID()}.tmp`;
   await writeFile(temporaryPath, `${JSON.stringify(value, null, 2)}\n`, {
@@ -219,6 +344,7 @@ export async function claimTask({
   dependencies = [],
   leaseMinutes = DEFAULT_LEASE_MINUTES,
   graceMinutes = DEFAULT_GRACE_MINUTES,
+  allowNonGit = false,
   now = new Date()
 }) {
   validateIdentity({ task, agent, branch, worktree });
@@ -226,9 +352,10 @@ export async function claimTask({
   if (branch === "main" || branch === "master") {
     throw new Error("active task claims require a task branch, not the protected default branch");
   }
-  if (resolve(root) === resolve(root, worktree)) {
-    throw new Error("active task claims require an isolated worktree");
+  if (canonicalPath(root, ".") === canonicalPath(root, worktree)) {
+    throw new Error("active task claims require a separate worktree");
   }
+  validateWorktree(root, branch, worktree, allowNonGit);
   if (!Array.isArray(writeScope) || writeScope.length === 0) {
     throw new Error("at least one write scope is required");
   }
@@ -293,11 +420,30 @@ export async function claimTask({
   });
 }
 
+function validateClaimOwner(root, claim, branch, worktree, allowNonGit) {
+  if (!branch || !worktree) {
+    throw new Error("--branch and --worktree are required for claim mutation");
+  }
+  if (claim.branch !== branch) {
+    throw new Error("claim branch does not match the caller branch");
+  }
+  if (canonicalPath(root, claim.worktree) !== canonicalPath(root, worktree)) {
+    throw new Error("claim worktree does not match the caller worktree");
+  }
+  if (canonicalPath(root, ".") === canonicalPath(root, worktree)) {
+    throw new Error("claim mutation requires a separate worktree");
+  }
+  validateWorktree(root, branch, worktree, allowNonGit);
+}
+
 export async function heartbeatTask({
   root,
   task,
   agent,
+  branch,
+  worktree,
   leaseMinutes = DEFAULT_LEASE_MINUTES,
+  allowNonGit = false,
   now = new Date()
 }) {
   if (!task || !agent) {
@@ -313,6 +459,7 @@ export async function heartbeatTask({
     if (claim.agent_id !== agent) {
       throw new Error(`claim ${task} belongs to another agent`);
     }
+    validateClaimOwner(root, claim, branch, worktree, allowNonGit);
     if (isExpiredClaim(claim, now.getTime())) {
       throw new Error(`claim ${task} is expired; recover it after the grace period`);
     }
@@ -332,7 +479,16 @@ export async function heartbeatTask({
   });
 }
 
-export async function releaseTask({ root, task, agent, reason = "completed", now = new Date() }) {
+export async function releaseTask({
+  root,
+  task,
+  agent,
+  branch,
+  worktree,
+  reason = "completed",
+  allowNonGit = false,
+  now = new Date()
+}) {
   if (!task || !agent) {
     throw new Error("--task and --agent are required");
   }
@@ -346,6 +502,7 @@ export async function releaseTask({ root, task, agent, reason = "completed", now
     if (claim.agent_id !== agent) {
       throw new Error(`claim ${task} belongs to another agent`);
     }
+    validateClaimOwner(root, claim, branch, worktree, allowNonGit);
     if (isExpiredClaim(claim, now.getTime())) {
       throw new Error(`claim ${task} is expired; recover it after the grace period`);
     }
@@ -402,33 +559,50 @@ export async function recoverStaleLock({
   if (!actor || !reason) {
     throw new Error("--actor and --reason are required");
   }
-  let lockStats;
-  try {
-    lockStats = await stat(lockDirectory(root));
-  } catch (error) {
-    if (error?.code === "ENOENT") {
-      return { recovered: false, reason: "no lock exists" };
+  return withCoordinationLock(root, async () => {
+    let lockStats;
+    let owner;
+    try {
+      lockStats = await stat(lockDirectory(root));
+      try {
+        owner = JSON.parse(
+          await readFile(join(lockDirectory(root), "owner.json"), "utf8")
+        );
+      } catch (error) {
+        if (error?.code !== "ENOENT") {
+          throw error;
+        }
+        owner = { status: "unknown-owner-metadata" };
+      }
+    } catch (error) {
+      if (error?.code === "ENOENT") {
+        return { recovered: false, reason: "no lock exists" };
+      }
+      throw error;
     }
-    throw error;
-  }
-  const ageMs = now.getTime() - lockStats.mtimeMs;
-  if (ageMs < STALE_LOCK_MINUTES * 60 * 1000) {
-    throw new Error("claim lock is not stale enough for recovery");
-  }
-  await mkdir(claimsDirectory(root), { recursive: true });
-  const audit = {
-    schema_version: CLAIM_SCHEMA_VERSION,
-    actor,
-    reason,
-    recovered_at: now.toISOString(),
-    lock_age_ms: ageMs
-  };
-  await writeJsonAtomic(
-    join(claimsDirectory(root), `lock-recovery-${randomUUID()}.json`),
-    audit
-  );
-  await rm(lockDirectory(root), { recursive: true, force: true });
-  return { recovered: true, audit };
+    const ageMs = now.getTime() - lockStats.mtimeMs;
+    if (ageMs < STALE_LOCK_MINUTES * 60 * 1000) {
+      throw new Error("claim lock is not stale enough for recovery");
+    }
+    await mkdir(claimsDirectory(root), { recursive: true });
+    const audit = {
+      schema_version: CLAIM_SCHEMA_VERSION,
+      actor,
+      reason,
+      recovered_at: now.toISOString(),
+      lock_age_ms: ageMs,
+      previous_owner: owner
+    };
+    const recoveryPath = `${lockDirectory(root)}.recovery-${randomUUID()}`;
+    await rename(lockDirectory(root), recoveryPath);
+    audit.recovered_lock_path = recoveryPath;
+    await writeJsonAtomic(
+      join(claimsDirectory(root), `lock-recovery-${randomUUID()}.json`),
+      audit
+    );
+    await rm(recoveryPath, { recursive: true, force: true });
+    return { recovered: true, audit };
+  });
 }
 
 function parseFlags(args) {
@@ -459,8 +633,8 @@ function usage() {
     "usage:",
     "  claims.mjs inspect",
     "  claims.mjs claim --task ID --agent ID --branch BRANCH --worktree PATH --scope GLOB [--scope GLOB]",
-    "  claims.mjs heartbeat --task ID --agent ID [--lease-minutes N]",
-    "  claims.mjs release --task ID --agent ID [--reason TEXT]",
+    "  claims.mjs heartbeat --task ID --agent ID --branch BRANCH --worktree PATH [--lease-minutes N]",
+    "  claims.mjs release --task ID --agent ID --branch BRANCH --worktree PATH [--reason TEXT]",
     "  claims.mjs recover --task ID --actor ID --reason TEXT",
     "  claims.mjs recover-lock --actor ID --reason TEXT"
   ].join("\n");
@@ -498,6 +672,8 @@ async function main(args = process.argv.slice(2)) {
           root,
           task: flags.task,
           agent: flags.agent,
+          branch: flags.branch,
+          worktree: flags.worktree,
           leaseMinutes: Number(flags["lease-minutes"] ?? DEFAULT_LEASE_MINUTES)
         }),
         null,
@@ -513,6 +689,8 @@ async function main(args = process.argv.slice(2)) {
           root,
           task: flags.task,
           agent: flags.agent,
+          branch: flags.branch,
+          worktree: flags.worktree,
           reason: flags.reason
         }),
         null,

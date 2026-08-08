@@ -8,13 +8,20 @@ version = "20.18.0"
 version = "9.15.0"
 
 [cmake]
+version = "4.4.2"
 minimum = "3.24"
 
 [clang]
+version = "21.1.6"
 minimum = "18"
 
 [buf]
 version = "1.47.2"
+windows_x86_64_sha256 = "42a1310377e7d0f0931ac9b5a073a531d9b843fe3045938c0d0ecc5d1f1ab93f"
+linux_x86_64_sha256 = "3a0c4da8d46eea8136affa63db202c76a44f8112384160b73c3fffb1cf14b5d8"
+
+[ninja]
+version = "1.13.2"
 
 [v8]
 version = "13.1.201.12"

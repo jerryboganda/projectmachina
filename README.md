@@ -50,6 +50,10 @@ pnpm security:check
 pnpm test
 ```
 
+Use `just doctor-strict` before committing toolchain-sensitive changes; it
+enforces the exact Rust, Node, CMake, Clang, Ninja, and Buf versions recorded
+under `toolchains/versions.toml`.
+
 The first commit should contain the complete bootstrap diff and be pushed to the
 protected `main` branch through the repository review policy. Do not add secrets,
 raw traces, build output, or claim files to the commit.
