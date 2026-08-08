@@ -87,3 +87,15 @@ jobs:
 
       - name: Focused JavaScript tests
         run: pnpm test
+
+      - name: Policy negative fixtures
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from "node:assert/strict";
+          import { findSecretIndicators } from "./scripts/security/scan-secrets.mjs";
+          import { scopesOverlap } from "./scripts/agent/claims.mjs";
+          assert.deepEqual(findSecretIndicators(`gh${"p_"}${"1".repeat(30)}`), ["GitHub token"]);
+          assert.equal(scopesOverlap("src/foo*", "src/foobar"), true);
+          assert.equal(scopesOverlap("src/dom/**", "src/network/**"), false);
+          NODE
