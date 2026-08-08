@@ -1,0 +1,63 @@
+{
+  "schema_version": "0.1.0",
+  "type": "task-evidence",
+  "task_id": "M0-T08",
+  "status": "released",
+  "agent_id": "copilot-fixtures",
+  "identity": {
+    "task": "M0-T08",
+    "agent": "copilot-fixtures",
+    "branch": "agent/M0-T08-fixtures",
+    "worktree": "D:\\Projects\\machina-worktrees\\M0-T08-fixtures",
+    "base_commit": "unknown",
+    "current_commit": "unknown"
+  },
+  "generated_at": "2026-08-08T23:42:22.081Z",
+  "objective": "",
+  "acceptance_criteria": [],
+  "claim": {
+    "schema_version": 1,
+    "claim_id": "c02a5f7a-8dec-4815-8043-fb80fe03e460",
+    "task_id": "M0-T08",
+    "agent_id": "copilot-fixtures",
+    "branch": "agent/M0-T08-fixtures",
+    "worktree": "D:\\Projects\\machina-worktrees\\M0-T08-fixtures",
+    "write_scope": [
+      "scripts/test/**",
+      "tests/fixtures/**"
+    ],
+    "dependencies": [
+      "M0-T01"
+    ],
+    "contract_dependencies": [],
+    "base_commit": "unknown",
+    "current_commit": "unknown",
+    "lease_minutes": 90,
+    "grace_minutes": 20,
+    "claimed_at": "2026-08-08T23:21:25.773Z",
+    "heartbeat_at": "2026-08-08T23:21:25.773Z",
+    "lease_expires_at": "2026-08-09T00:51:25.773Z",
+    "grace_expires_at": "2026-08-09T01:11:25.773Z",
+    "status": "released",
+    "lock_fence": "12480f9d-b51f-4f14-ba15-d1038c32cd46",
+    "release_reason": "merged-to-main",
+    "released_at": "2026-08-08T23:42:22.081Z"
+  },
+  "commands": [
+    {
+      "type": "release",
+      "status": "released",
+      "at": "2026-08-08T23:42:22.081Z",
+      "reason": "merged-to-main"
+    }
+  ],
+  "artifacts": [],
+  "changed_files": [
+    "scripts/test/**",
+    "tests/fixtures/**"
+  ],
+  "decisions": [],
+  "failures": [],
+  "risks": [],
+  "next_action": ""
+}

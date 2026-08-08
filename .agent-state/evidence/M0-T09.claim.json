@@ -1,0 +1,64 @@
+{
+  "schema_version": "0.1.0",
+  "type": "task-evidence",
+  "task_id": "M0-T09",
+  "status": "released",
+  "agent_id": "copilot-telemetry",
+  "identity": {
+    "task": "M0-T09",
+    "agent": "copilot-telemetry",
+    "branch": "agent/M0-T09-telemetry",
+    "worktree": "D:\\Projects\\machina-worktrees\\M0-T09-telemetry",
+    "base_commit": "unknown",
+    "current_commit": "unknown"
+  },
+  "generated_at": "2026-08-08T23:30:54.647Z",
+  "objective": "",
+  "acceptance_criteria": [],
+  "claim": {
+    "schema_version": 1,
+    "claim_id": "bd6de473-447e-4894-88b6-178b6b1bf720",
+    "task_id": "M0-T09",
+    "agent_id": "copilot-telemetry",
+    "branch": "agent/M0-T09-telemetry",
+    "worktree": "D:\\Projects\\machina-worktrees\\M0-T09-telemetry",
+    "write_scope": [
+      "crates/telemetry/**",
+      "scripts/evidence/**"
+    ],
+    "dependencies": [
+      "M0-T04",
+      "M0-T06"
+    ],
+    "contract_dependencies": [],
+    "base_commit": "unknown",
+    "current_commit": "unknown",
+    "lease_minutes": 90,
+    "grace_minutes": 20,
+    "claimed_at": "2026-08-08T23:21:26.539Z",
+    "heartbeat_at": "2026-08-08T23:21:26.539Z",
+    "lease_expires_at": "2026-08-09T00:51:26.539Z",
+    "grace_expires_at": "2026-08-09T01:11:26.539Z",
+    "status": "released",
+    "lock_fence": "dbb0ffa5-967a-44fc-b477-96192e5abb09",
+    "release_reason": "merged-to-main",
+    "released_at": "2026-08-08T23:30:54.647Z"
+  },
+  "commands": [
+    {
+      "type": "release",
+      "status": "released",
+      "at": "2026-08-08T23:30:54.647Z",
+      "reason": "merged-to-main"
+    }
+  ],
+  "artifacts": [],
+  "changed_files": [
+    "crates/telemetry/**",
+    "scripts/evidence/**"
+  ],
+  "decisions": [],
+  "failures": [],
+  "risks": [],
+  "next_action": ""
+}
