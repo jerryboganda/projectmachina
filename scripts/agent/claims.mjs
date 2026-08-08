@@ -627,15 +627,15 @@ export async function claimTask({
       await assertLockFence(lock);
       await writeJsonAtomic(path, record);
       await assertLockFence(lock);
+      await projectClaim(record, root, {
+        type: "claim",
+        status: "active",
+        at: claimedAt
+      });
       return record;
     },
     { now }
   );
-  await projectClaim(claim, root, {
-    type: "claim",
-    status: "active",
-    at: claimedAt
-  });
   return claim;
 }
 
@@ -731,15 +731,15 @@ export async function heartbeatTask({
       };
       await writeJsonAtomic(path, next);
       await assertLockFence(lock);
+      await projectClaim(next, root, {
+        type: "heartbeat",
+        status: "active",
+        at: next.heartbeat_at
+      });
       return next;
     },
     { now }
   );
-  await projectClaim(updated, root, {
-    type: "heartbeat",
-    status: "active",
-    at: updated.heartbeat_at
-  });
   return updated;
 }
 
@@ -785,16 +785,16 @@ export async function releaseTask({
       };
       await writeJsonAtomic(path, next);
       await assertLockFence(lock);
+      await projectClaim(next, root, {
+        type: "release",
+        status: "released",
+        at: next.released_at,
+        reason: next.release_reason
+      });
       return next;
     },
     { now }
   );
-  await projectClaim(released, root, {
-    type: "release",
-    status: "released",
-    at: released.released_at,
-    reason: released.release_reason
-  });
   return released;
 }
 
@@ -834,17 +834,17 @@ export async function recoverExpiredTask({
       };
       await writeJsonAtomic(path, next);
       await assertLockFence(lock);
+      await projectClaim(next, root, {
+        type: "recovery",
+        status: "recovered",
+        at: next.recovered_at,
+        actor,
+        reason
+      });
       return next;
     },
     { now }
   );
-  await projectClaim(recovered, root, {
-    type: "recovery",
-    status: "recovered",
-    at: recovered.recovered_at,
-    actor,
-    reason
-  });
   return recovered;
 }
 
