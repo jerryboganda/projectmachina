@@ -14,6 +14,14 @@ const toolchains = await readFile(
   join(root, "toolchains/versions.toml"),
   "utf8"
 );
+const commandModelManifest = await readFile(
+  join(root, "crates/command-model/Cargo.toml"),
+  "utf8"
+);
+const commandBusManifest = await readFile(
+  join(root, "crates/command-bus/Cargo.toml"),
+  "utf8"
+);
 
 const requiredFields = ["name", "version", "source", "license", "purpose", "integrity"];
 const failures = [];
@@ -55,6 +63,14 @@ for (const packageName of declaredPackages) {
   ]) {
     if (!toolchains.includes(requiredMarker)) {
       failures.push(`toolchain metadata is missing ${requiredMarker}`);
+    }
+  }
+  for (const cargoDependency of ["serde", "serde_json"]) {
+    if (
+      !commandModelManifest.includes(cargoDependency) &&
+      !commandBusManifest.includes(cargoDependency)
+    ) {
+      failures.push(`Cargo manifests are missing direct dependency: ${cargoDependency}`);
     }
   }
 }

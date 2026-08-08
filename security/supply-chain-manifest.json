@@ -11,6 +11,22 @@
       "integrity": "toolchain-channel-pinned"
     },
     {
+      "name": "serde",
+      "version": "1.0.229",
+      "source": "https://crates.io/crates/serde",
+      "license": "MIT OR Apache-2.0",
+      "purpose": "generated Rust contract serialization",
+      "integrity": "Cargo.lock-resolved"
+    },
+    {
+      "name": "serde_json",
+      "version": "1.0.151",
+      "source": "https://crates.io/crates/serde_json",
+      "license": "MIT OR Apache-2.0",
+      "purpose": "structured canonical error and contract details",
+      "integrity": "Cargo.lock-resolved"
+    },
+    {
       "name": "node",
       "version": "20.18.0",
       "source": "https://nodejs.org/",
@@ -129,6 +145,30 @@
       "license": "BSD-3-Clause",
       "purpose": "external compatibility runtime",
       "integrity": "revision-and-signature-required-before-runtime-use"
+    },
+    {
+      "name": "postgres",
+      "version": "16.4",
+      "source": "https://hub.docker.com/_/postgres",
+      "license": "PostgreSQL",
+      "purpose": "local durable control-plane development service",
+      "integrity": "local-only-tag;digest-required-before-production"
+    },
+    {
+      "name": "redis",
+      "version": "7.4.1",
+      "source": "https://hub.docker.com/_/redis",
+      "license": "BSD-3-Clause",
+      "purpose": "local coordination development service",
+      "integrity": "local-only-tag;digest-required-before-production"
+    },
+    {
+      "name": "minio",
+      "version": "RELEASE.2024-12-18T13-15-44Z",
+      "source": "https://hub.docker.com/r/minio/minio",
+      "license": "AGPL-3.0",
+      "purpose": "local S3-compatible artifact development service",
+      "integrity": "local-only-tag;digest-required-before-production"
     }
   ],
   "review_policy": {
