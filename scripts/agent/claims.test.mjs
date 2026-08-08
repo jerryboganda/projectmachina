@@ -20,9 +20,30 @@ test("normalizes repository-relative scopes and rejects escapes", () => {
   assert.throws(() => normalizeScope("D:\\outside", root), /repository-relative/);
 });
 
+test("preserves protected-main ownership rules", async () => {
+  const root = await mkdtemp(join(tmpdir(), "machina-protected-branch-"));
+  try {
+    await assert.rejects(
+      claimTask({
+        root,
+        task: "M0-T02",
+        agent: "test-agent",
+        branch: "main",
+        worktree: "../machina-worktrees/M0-T02-test-agent",
+        writeScope: ["scripts/agent/**"],
+        allowNonGit: true
+      }),
+      /protected default branch/
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test("detects overlapping literal and glob scopes conservatively", () => {
   assert.equal(scopesOverlap("crates/dom/**", "crates/dom/src/lib.rs"), true);
   assert.equal(scopesOverlap("crates/dom/**", "crates/html/**"), false);
+  assert.equal(scopesOverlap("crates/dom/**", "crates/dom2/**"), false);
   assert.equal(scopesOverlap("**", "crates/html/**"), true);
   assert.equal(scopesOverlap("src/foo?.txt", "src/foo1.txt"), true);
   assert.equal(scopesOverlap("src/foo*", "src/foobar"), true);
@@ -67,16 +88,31 @@ test("rejects overlapping claims and preserves release evidence", async () => {
       agent: "test-agent-a",
       branch: first.branch,
       worktree: first.worktree,
+      ownerToken: first.owner_token,
       allowNonGit: true,
       now: new Date("2026-08-09T00:10:00.000Z")
     });
     assert.equal(heartbeat.heartbeat_at, "2026-08-09T00:10:00.000Z");
+    await assert.rejects(
+      heartbeatTask({
+        root,
+        task: "M0-T02",
+        agent: "wrong-agent",
+        branch: first.branch,
+        worktree: first.worktree,
+        ownerToken: first.owner_token,
+        allowNonGit: true,
+        now: new Date("2026-08-09T00:10:00.000Z")
+      }),
+      /belongs to another agent/
+    );
     const released = await releaseTask({
       root,
       task: "M0-T02",
       agent: "test-agent-a",
       branch: first.branch,
       worktree: first.worktree,
+      ownerToken: first.owner_token,
       allowNonGit: true,
       reason: "test complete",
       now: new Date("2026-08-09T00:11:00.000Z")
@@ -111,6 +147,7 @@ test("requires explicit recovery for expired claims", async () => {
       task: "M0-T02",
       actor: "orchestrator",
       reason: "lease expired with no process evidence",
+      inspection: "verified lease, grace period, and absent worker process",
       now: new Date("2026-08-09T00:03:00.000Z")
     });
     assert.equal(recovered.status, "recovered");

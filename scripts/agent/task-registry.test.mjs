@@ -3,7 +3,11 @@ import test from "node:test";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { parseMilestoneTasks } from "./task-registry.mjs";
+import {
+  loadTaskRegistry,
+  parseMilestoneTasks,
+  validateTaskDependencies
+} from "./task-registry.mjs";
 
 test("parses task metadata and dependencies from a milestone packet", () => {
   const markdown = [
@@ -55,4 +59,24 @@ test("canonical milestone packets contain the complete task graph", async () => 
     count += parseMilestoneTasks(markdown, `planning/${file}`).length;
   }
   assert.equal(count, 121);
+});
+
+test("validates registry task identity and declared dependencies", async () => {
+  const root = fileURLToPath(new URL("../..", import.meta.url));
+  const registry = await loadTaskRegistry(root);
+  assert.equal(registry.byId.has("M0-T02"), true);
+  const result = await validateTaskDependencies({ root, task: "M0-T02" });
+  assert.deepEqual(result.dependencies, ["M0-T01"]);
+  await assert.rejects(
+    validateTaskDependencies({
+      root,
+      task: "M0-T02",
+      dependencies: ["M0-T04"]
+    }),
+    /do not match the task registry/
+  );
+  await assert.rejects(
+    validateTaskDependencies({ root, task: "M0-NOT-A-TASK" }),
+    /unknown task ID/
+  );
 });
