@@ -58,12 +58,18 @@ export async function runAutonomousLoopRehearsal() {
       root,
       task: first.task_id,
       agent: first.agent_id,
+      branch: first.branch,
+      worktree: first.worktree,
+      allowNonGit: true,
       now: new Date("2026-08-09T01:10:00.000Z")
     });
     const secondHeartbeat = await heartbeatTask({
       root,
       task: second.task_id,
       agent: second.agent_id,
+      branch: second.branch,
+      worktree: second.worktree,
+      allowNonGit: true,
       now: new Date("2026-08-09T01:10:00.000Z")
     });
 
@@ -89,6 +95,9 @@ export async function runAutonomousLoopRehearsal() {
       root,
       task: first.task_id,
       agent: first.agent_id,
+      branch: first.branch,
+      worktree: first.worktree,
+      allowNonGit: true,
       reason: "independent review simulated",
       now: new Date("2026-08-09T01:20:00.000Z")
     });
@@ -96,6 +105,9 @@ export async function runAutonomousLoopRehearsal() {
       root,
       task: second.task_id,
       agent: second.agent_id,
+      branch: second.branch,
+      worktree: second.worktree,
+      allowNonGit: true,
       reason: "independent review simulated",
       now: new Date("2026-08-09T01:20:00.000Z")
     });

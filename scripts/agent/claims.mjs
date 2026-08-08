@@ -358,11 +358,30 @@ export async function claimTask({
   });
 }
 
+function validateClaimOwner(root, claim, branch, worktree, allowNonGit) {
+  if (!branch || !worktree) {
+    throw new Error("--branch and --worktree are required for claim mutation");
+  }
+  if (claim.branch !== branch) {
+    throw new Error("claim branch does not match the caller branch");
+  }
+  if (canonicalPath(root, claim.worktree) !== canonicalPath(root, worktree)) {
+    throw new Error("claim worktree does not match the caller worktree");
+  }
+  if (canonicalPath(root, ".") === canonicalPath(root, worktree)) {
+    throw new Error("claim mutation requires a separate worktree");
+  }
+  validateWorktree(root, branch, worktree, allowNonGit);
+}
+
 export async function heartbeatTask({
   root,
   task,
   agent,
+  branch,
+  worktree,
   leaseMinutes = DEFAULT_LEASE_MINUTES,
+  allowNonGit = false,
   now = new Date()
 }) {
   if (!task || !agent) {
@@ -378,6 +397,7 @@ export async function heartbeatTask({
     if (claim.agent_id !== agent) {
       throw new Error(`claim ${task} belongs to another agent`);
     }
+    validateClaimOwner(root, claim, branch, worktree, allowNonGit);
     if (isExpiredClaim(claim, now.getTime())) {
       throw new Error(`claim ${task} is expired; recover it after the grace period`);
     }
@@ -397,7 +417,16 @@ export async function heartbeatTask({
   });
 }
 
-export async function releaseTask({ root, task, agent, reason = "completed", now = new Date() }) {
+export async function releaseTask({
+  root,
+  task,
+  agent,
+  branch,
+  worktree,
+  reason = "completed",
+  allowNonGit = false,
+  now = new Date()
+}) {
   if (!task || !agent) {
     throw new Error("--task and --agent are required");
   }
@@ -411,6 +440,7 @@ export async function releaseTask({ root, task, agent, reason = "completed", now
     if (claim.agent_id !== agent) {
       throw new Error(`claim ${task} belongs to another agent`);
     }
+    validateClaimOwner(root, claim, branch, worktree, allowNonGit);
     if (isExpiredClaim(claim, now.getTime())) {
       throw new Error(`claim ${task} is expired; recover it after the grace period`);
     }
@@ -532,8 +562,8 @@ function usage() {
     "usage:",
     "  claims.mjs inspect",
     "  claims.mjs claim --task ID --agent ID --branch BRANCH --worktree PATH --scope GLOB [--scope GLOB]",
-    "  claims.mjs heartbeat --task ID --agent ID [--lease-minutes N]",
-    "  claims.mjs release --task ID --agent ID [--reason TEXT]",
+    "  claims.mjs heartbeat --task ID --agent ID --branch BRANCH --worktree PATH [--lease-minutes N]",
+    "  claims.mjs release --task ID --agent ID --branch BRANCH --worktree PATH [--reason TEXT]",
     "  claims.mjs recover --task ID --actor ID --reason TEXT",
     "  claims.mjs recover-lock --actor ID --reason TEXT"
   ].join("\n");
@@ -571,6 +601,8 @@ async function main(args = process.argv.slice(2)) {
           root,
           task: flags.task,
           agent: flags.agent,
+          branch: flags.branch,
+          worktree: flags.worktree,
           leaseMinutes: Number(flags["lease-minutes"] ?? DEFAULT_LEASE_MINUTES)
         }),
         null,
@@ -586,6 +618,8 @@ async function main(args = process.argv.slice(2)) {
           root,
           task: flags.task,
           agent: flags.agent,
+          branch: flags.branch,
+          worktree: flags.worktree,
           reason: flags.reason
         }),
         null,

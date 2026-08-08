@@ -65,6 +65,9 @@ test("rejects overlapping claims and preserves release evidence", async () => {
       root,
       task: "M0-T02",
       agent: "test-agent-a",
+      branch: first.branch,
+      worktree: first.worktree,
+      allowNonGit: true,
       now: new Date("2026-08-09T00:10:00.000Z")
     });
     assert.equal(heartbeat.heartbeat_at, "2026-08-09T00:10:00.000Z");
@@ -72,6 +75,9 @@ test("rejects overlapping claims and preserves release evidence", async () => {
       root,
       task: "M0-T02",
       agent: "test-agent-a",
+      branch: first.branch,
+      worktree: first.worktree,
+      allowNonGit: true,
       reason: "test complete",
       now: new Date("2026-08-09T00:11:00.000Z")
     });
@@ -113,6 +119,9 @@ test("requires explicit recovery for expired claims", async () => {
         root,
         task: "M0-T02",
         agent: "test-agent-a",
+        branch: "agent/M0-T02-claims",
+        worktree: "../machina-worktrees/M0-T02-test-agent-a",
+        allowNonGit: true,
         now: new Date("2026-08-09T00:03:00.000Z")
       }),
       /not active/
