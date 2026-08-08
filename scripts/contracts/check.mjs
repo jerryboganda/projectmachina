@@ -109,5 +109,15 @@ for (const output of requiredOutputs) {
   assert.match(generated, new RegExp(`source_schema_sha256: ${sourceHash}`));
 }
 
+const typecheck = spawnSync(process.execPath, ["scripts/contracts/typecheck.mjs"], {
+  cwd: root,
+  encoding: "utf8",
+  shell: false,
+  stdio: "inherit"
+});
+if (typecheck.error || typecheck.status !== 0) {
+  process.exit(typecheck.status ?? 1);
+}
+
 await rm(generatedRoot, { recursive: true, force: true });
 console.log("command model contract check: passed");
