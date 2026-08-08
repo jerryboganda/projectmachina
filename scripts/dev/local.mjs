@@ -89,7 +89,13 @@ function main([command, ...args]) {
     const output = capture(["ps", "--all", "--format", "json"]);
     const parsed = JSON.parse(output);
     const services = Array.isArray(parsed) ? parsed : [parsed];
-    const expectedServices = new Set(["postgres", "redis", "object-store"]);
+    const expectedServices = new Set([
+      "postgres",
+      "redis",
+      "object-store",
+      "fixture",
+      "observability"
+    ]);
     const names = new Set(services.map((service) => service.Service));
     if (
       services.length !== expectedServices.size ||
