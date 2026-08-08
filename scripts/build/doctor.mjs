@@ -5,6 +5,10 @@ import { fileURLToPath } from "node:url";
 import { spawnProjectCommand } from "./command.mjs";
 
 const root = fileURLToPath(new URL("../..", import.meta.url));
+const toolchainManifest = await readFile(
+  join(root, "toolchains/versions.toml"),
+  "utf8"
+);
 const requiredFiles = [
   "Cargo.toml",
   "rust-toolchain.toml",
@@ -84,6 +88,36 @@ if (versions.get("buf") !== "1.47.2") {
 const clangVersion = versions.get("clang")?.match(/clang version (\d+)\./);
 if (!clangVersion || Number(clangVersion[1]) < 18) {
   failures.push(`Clang must satisfy >=18 (found ${versions.get("clang") ?? "unknown"})`);
+}
+
+function manifestVersion(section, key) {
+  const sectionMatch = toolchainManifest.match(
+    new RegExp(`\\[${section}\\]([\\s\\S]*?)(?=\\n\\[|$)`)
+  );
+  return sectionMatch?.[1]
+    ?.match(new RegExp(`^${key}\\s*=\\s*"([^"]+)"`, "m"))?.[1];
+}
+
+if (process.env.MACHINA_STRICT_TOOLCHAIN === "1") {
+  const expected = {
+    cmake: manifestVersion("cmake", "version"),
+    clang: manifestVersion("clang", "version"),
+    ninja: manifestVersion("ninja", "version"),
+    buf: manifestVersion("buf", "version")
+  };
+  const actual = {
+    cmake: versions.get("cmake")?.match(/cmake version ([0-9.]+)/)?.[1] ?? "",
+    clang: versions.get("clang")?.match(/clang version ([0-9.]+)/)?.[1] ?? "",
+    ninja: versions.get("ninja") ?? "",
+    buf: versions.get("buf") ?? ""
+  };
+  for (const [name, expectedVersion] of Object.entries(expected)) {
+    if (expectedVersion && actual[name] !== expectedVersion) {
+      failures.push(
+        `${name} must be exactly ${expectedVersion} in strict mode (found ${actual[name] || "unknown"})`
+      );
+    }
+  }
 }
 
 if (failures.length > 0) {
