@@ -11,6 +11,22 @@ purpose: "Track only proven blockers with evidence, impact, owner, and recommend
 
 ## Open blockers
 
+## BLK-002 — Docker/Compose unavailable for M0-T11 health evidence
+
+- Related task(s): M0-T11
+- First observed: 2026-08-09
+- Owner: platform
+- Class: external
+- Severity: medium
+- Exact reproduction/evidence: `Get-Command docker` returns no executable in the current host.
+- Work attempted: Compose source and local-only lifecycle scripts were implemented; source checks and non-Docker tests pass.
+- Why autonomous repair is exhausted: Docker installation/runtime requires host provisioning outside the repository.
+- Impacted descendants: M0-T11 exit and M0-T12 full local-stack rehearsal.
+- Unaffected work that may continue: M0-T01 through M0-T10 source review and all tasks not requiring container health.
+- Recommended resolution: Install Docker Desktop/Engine, run `just dev-up`, `just dev-health`, and `just dev-reset --confirm` against the local project only.
+- Human decision required, if any: None.
+- Review date: Before M0 exit.
+
 ## Closed blockers
 
 ## BLK-001 — Terminal validation and repository integration unavailable in current session
@@ -28,22 +44,6 @@ purpose: "Track only proven blockers with evidence, impact, owner, and recommend
 - Recommended resolution: Closed by enabling terminal/Git tooling and running the available fast gate.
 - Human decision required, if any: None.
 - Review date: Before first commit.
-
-## BLK-002 — Docker/Compose unavailable for M0-T11 health evidence
-
-- Related task(s): M0-T11
-- First observed: 2026-08-09
-- Owner: platform
-- Class: external
-- Severity: medium
-- Exact reproduction/evidence: `Get-Command docker` returns no executable in the current host.
-- Work attempted: Compose source and local-only lifecycle scripts were implemented; source checks and non-Docker tests pass.
-- Why autonomous repair is exhausted: Docker installation/runtime requires host provisioning outside the repository.
-- Impacted descendants: M0-T11 exit and M0-T12 full local-stack rehearsal.
-- Unaffected work that may continue: M0-T01 through M0-T10 source review and all tasks not requiring container health.
-- Recommended resolution: Install Docker Desktop/Engine, run `just dev-up`, `just dev-health`, and `just dev-reset --confirm` against the local project only.
-- Human decision required, if any: None.
-- Review date: Before M0 exit.
 
 ## Blocker template
 
