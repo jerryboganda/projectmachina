@@ -99,3 +99,12 @@ jobs:
           assert.equal(scopesOverlap("src/foo*", "src/foobar"), true);
           assert.equal(scopesOverlap("src/dom/**", "src/network/**"), false);
           NODE
+
+      - name: Architecture boundary fixtures
+        shell: bash
+        run: |
+          if [[ -f scripts/architecture/check-boundaries.test.mjs ]]; then
+            node --test scripts/architecture/check-boundaries.test.mjs
+            node scripts/architecture/dependency-report.mjs
+            git diff --exit-code -- architecture/dependency-report.json
+          fi
