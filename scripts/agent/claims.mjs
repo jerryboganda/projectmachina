@@ -59,6 +59,33 @@ function currentBranch(root) {
   return !result.error && result.status === 0 ? result.stdout.trim() : "";
 }
 
+function validateWorktree(root, branch, worktree) {
+  const result = spawnSync("git", ["worktree", "list", "--porcelain"], {
+    cwd: root,
+    encoding: "utf8",
+    shell: false,
+    stdio: "pipe"
+  });
+  if (result.error || result.status !== 0) {
+    return;
+  }
+  const expectedPath = resolve(worktree).toLowerCase();
+  const blocks = result.stdout.trim().split(/\r?\n\r?\n/).filter(Boolean);
+  const match = blocks.find((block) => {
+    const lines = block.split(/\r?\n/);
+    const path = lines.find((line) => line.startsWith("worktree "))?.slice(9);
+    const actualBranch = lines.find((line) => line.startsWith("branch "))?.slice(7);
+    return (
+      path &&
+      actualBranch === `refs/heads/${branch}` &&
+      resolve(path).toLowerCase() === expectedPath
+    );
+  });
+  if (!match) {
+    throw new Error(`worktree is not registered on the claimed branch: ${worktree}`);
+  }
+}
+
 export function normalizeScope(scope, root) {
   if (typeof scope !== "string" || scope.trim().length === 0) {
     throw new Error("write scope must be a non-empty path glob");
@@ -69,7 +96,9 @@ export function normalizeScope(scope, root) {
     throw new Error(`write scope must be repository-relative: ${scope}`);
   }
 
-  const segments = normalized.split("/").filter((segment) => segment !== ".");
+  const segments = normalized
+    .split("/")
+    .filter((segment) => segment.length > 0 && segment !== ".");
   if (segments.some((segment) => segment === "..")) {
     throw new Error(`write scope escapes repository root: ${scope}`);
   }
@@ -113,11 +142,13 @@ export function scopesOverlap(left, right) {
 
 async function acquireLock(root) {
   await mkdir(claimStoreRoot(root), { recursive: true });
+  const lockId = randomUUID();
   try {
     await mkdir(lockDirectory(root));
     await writeFile(
       join(lockDirectory(root), "owner.json"),
       `${JSON.stringify({
+        lock_id: lockId,
         pid: process.pid,
         acquired_at: new Date().toISOString()
       })}\n`,
@@ -138,18 +169,23 @@ async function acquireLock(root) {
     }
     throw error;
   }
+  return lockId;
 }
 
-async function releaseLock(root) {
+async function releaseLock(root, lockId) {
+  const owner = JSON.parse(await readFile(join(lockDirectory(root), "owner.json"), "utf8"));
+  if (owner.lock_id !== lockId) {
+    throw new Error("claim lock ownership changed before release");
+  }
   await rm(lockDirectory(root), { recursive: true, force: true });
 }
 
 async function withLock(root, operation) {
-  await acquireLock(root);
+  const lockId = await acquireLock(root);
   try {
     return await operation();
   } finally {
-    await releaseLock(root);
+    await releaseLock(root, lockId);
   }
 }
 
@@ -239,6 +275,7 @@ export async function claimTask({
   if (resolve(root) === resolve(root, worktree) && currentBranch(root) !== branch) {
     throw new Error("claim worktree must be checked out on the claimed task branch");
   }
+  validateWorktree(root, branch, worktree);
   if (!Array.isArray(writeScope) || writeScope.length === 0) {
     throw new Error("at least one write scope is required");
   }
@@ -433,11 +470,14 @@ export async function recoverStaleLock({
     recovered_at: now.toISOString(),
     lock_age_ms: ageMs
   };
+  const recoveryPath = `${lockDirectory(root)}.recovery-${randomUUID()}`;
+  await rename(lockDirectory(root), recoveryPath);
+  audit.recovered_lock_path = recoveryPath;
   await writeJsonAtomic(
     join(claimsDirectory(root), `lock-recovery-${randomUUID()}.json`),
     audit
   );
-  await rm(lockDirectory(root), { recursive: true, force: true });
+  await rm(recoveryPath, { recursive: true, force: true });
   return { recovered: true, audit };
 }
 
