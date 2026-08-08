@@ -1,0 +1,67 @@
+{
+  "schema_version": "0.1.0",
+  "type": "task-evidence",
+  "task_id": "M0-T07",
+  "status": "released",
+  "agent_id": "copilot-supply-chain",
+  "identity": {
+    "task": "M0-T07",
+    "agent": "copilot-supply-chain",
+    "branch": "agent/M0-T07-supply-chain",
+    "worktree": "D:\\Projects\\machina-worktrees\\M0-T07-supply-chain",
+    "base_commit": "unknown",
+    "current_commit": "unknown"
+  },
+  "generated_at": "2026-08-08T23:20:28.577Z",
+  "objective": "",
+  "acceptance_criteria": [],
+  "claim": {
+    "schema_version": 1,
+    "claim_id": "1f7d292c-a650-4ca3-a63e-1f0234281a01",
+    "task_id": "M0-T07",
+    "agent_id": "copilot-supply-chain",
+    "branch": "agent/M0-T07-supply-chain",
+    "worktree": "D:\\Projects\\machina-worktrees\\M0-T07-supply-chain",
+    "write_scope": [
+      "scripts/security/check-supply-chain.mjs",
+      "security/CLEAN_ROOM_CONTRIBUTION.md",
+      "security/supply-chain-manifest.json",
+      "toolchains/**"
+    ],
+    "dependencies": [
+      "M0-T01"
+    ],
+    "contract_dependencies": [],
+    "base_commit": "unknown",
+    "current_commit": "unknown",
+    "lease_minutes": 90,
+    "grace_minutes": 20,
+    "claimed_at": "2026-08-08T23:11:06.679Z",
+    "heartbeat_at": "2026-08-08T23:11:06.679Z",
+    "lease_expires_at": "2026-08-09T00:41:06.679Z",
+    "grace_expires_at": "2026-08-09T01:01:06.679Z",
+    "status": "released",
+    "lock_fence": "fcc63ed9-4ec9-44ef-9e35-9233fc03de0f",
+    "release_reason": "merged-to-main",
+    "released_at": "2026-08-08T23:20:28.577Z"
+  },
+  "commands": [
+    {
+      "type": "release",
+      "status": "released",
+      "at": "2026-08-08T23:20:28.577Z",
+      "reason": "merged-to-main"
+    }
+  ],
+  "artifacts": [],
+  "changed_files": [
+    "scripts/security/check-supply-chain.mjs",
+    "security/CLEAN_ROOM_CONTRIBUTION.md",
+    "security/supply-chain-manifest.json",
+    "toolchains/**"
+  ],
+  "decisions": [],
+  "failures": [],
+  "risks": [],
+  "next_action": ""
+}

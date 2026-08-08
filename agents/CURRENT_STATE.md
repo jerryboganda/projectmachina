@@ -17,7 +17,7 @@ purpose: "Provide the durable, human-readable snapshot that each autonomous cycl
 - Active milestone: `M0 — Foundation and governance`
 - Current release target: `0.1.0-alpha`
 - Last reconciled: `2026-08-09`
-- Default branch: `main` (M0-T01 through M0-T05 dependency-ready work merged)
+- Default branch: `main` (M0-T01 through M0-T07 dependency-ready work merged)
 
 ## Active tasks
 
@@ -31,14 +31,15 @@ purpose: "Provide the durable, human-readable snapshot that each autonomous cycl
 - Recommended architecture and testing policy established.
 - M0-T01 bootstrap, M0-T02 shared claim/worktree/evidence tooling, M0-T03 protected
   fast-gate policy, M0-T04 command contract validation, and M0-T05 architecture
-  boundary fixtures/reporting are merged.
+  boundary fixtures/reporting, M0-T06 security baseline, and M0-T07 supply-chain
+  provenance controls are merged.
 - Runtime foundation continuation adds capability snapshots, the single command bus, explicit fallback metadata, and bounded session/page resource accounting.
 
 ## Next ready tasks
 
-1. `M0-T06` — Establish executable security baseline and threat controls.
-2. `M0-T07` — Create SBOM, provenance, license and clean-room controls.
-3. `M0-T08` — Build deterministic multi-origin fixture and test harness foundations.
+1. `M0-T08` — Build deterministic multi-origin fixture and test harness foundations.
+2. `M0-T09` — Implement telemetry, correlation, redaction and evidence primitives.
+3. `M0-T10` — Create fair benchmark harness and baseline corpus manifest.
 
 ## Human gates pending
 
@@ -50,5 +51,5 @@ purpose: "Provide the durable, human-readable snapshot that each autonomous cycl
 
 ## Reconciliation notes
 
-M0-T01 through M0-T05 have merged hosted-gate evidence. M0-T06, M0-T07, and M0-T08
+M0-T01 through M0-T07 have merged hosted-gate evidence. M0-T08, M0-T09, and M0-T10
 are the next dependency-ready tasks. Docker remains an external M0-T11 blocker.

@@ -1,0 +1,76 @@
+{
+  "schema_version": "0.1.0",
+  "type": "task-evidence",
+  "task_id": "M0-T06",
+  "status": "released",
+  "agent_id": "copilot-security",
+  "identity": {
+    "task": "M0-T06",
+    "agent": "copilot-security",
+    "branch": "agent/M0-T06-security",
+    "worktree": "D:\\Projects\\machina-worktrees\\M0-T06-security",
+    "base_commit": "unknown",
+    "current_commit": "unknown"
+  },
+  "generated_at": "2026-08-08T23:20:28.121Z",
+  "objective": "",
+  "acceptance_criteria": [],
+  "claim": {
+    "schema_version": 1,
+    "claim_id": "f2fe591b-af32-49d2-93bb-6a2a9340b2d1",
+    "task_id": "M0-T06",
+    "agent_id": "copilot-security",
+    "branch": "agent/M0-T06-security",
+    "worktree": "D:\\Projects\\machina-worktrees\\M0-T06-security",
+    "write_scope": [
+      ".github/ISSUE_TEMPLATE/**",
+      "scripts/security/check-requirements.mjs",
+      "scripts/security/check.mjs",
+      "scripts/security/redact.mjs",
+      "scripts/security/scan-secrets.mjs",
+      "scripts/security/scan-secrets.test.mjs",
+      "security/redaction-policy.json",
+      "security/requirements.json"
+    ],
+    "dependencies": [
+      "M0-T01",
+      "M0-T04"
+    ],
+    "contract_dependencies": [],
+    "base_commit": "unknown",
+    "current_commit": "unknown",
+    "lease_minutes": 90,
+    "grace_minutes": 20,
+    "claimed_at": "2026-08-08T23:11:05.708Z",
+    "heartbeat_at": "2026-08-08T23:11:05.708Z",
+    "lease_expires_at": "2026-08-09T00:41:05.708Z",
+    "grace_expires_at": "2026-08-09T01:01:05.708Z",
+    "status": "released",
+    "lock_fence": "84e91d60-47eb-4424-b27e-7d7aa438826c",
+    "release_reason": "merged-to-main",
+    "released_at": "2026-08-08T23:20:28.121Z"
+  },
+  "commands": [
+    {
+      "type": "release",
+      "status": "released",
+      "at": "2026-08-08T23:20:28.121Z",
+      "reason": "merged-to-main"
+    }
+  ],
+  "artifacts": [],
+  "changed_files": [
+    ".github/ISSUE_TEMPLATE/**",
+    "scripts/security/check-requirements.mjs",
+    "scripts/security/check.mjs",
+    "scripts/security/redact.mjs",
+    "scripts/security/scan-secrets.mjs",
+    "scripts/security/scan-secrets.test.mjs",
+    "security/redaction-policy.json",
+    "security/requirements.json"
+  ],
+  "decisions": [],
+  "failures": [],
+  "risks": [],
+  "next_action": ""
+}
