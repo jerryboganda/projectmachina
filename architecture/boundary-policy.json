@@ -1,0 +1,33 @@
+{
+  "version": "0.1.0",
+  "rules": [
+    {
+      "id": "protocol-adapter-inward-only",
+      "roots": [
+        "crates/protocol-cdp",
+        "crates/protocol-bidi",
+        "crates/protocol-mcp",
+        "crates/protocol-http"
+      ],
+      "forbidden_patterns": [
+        "native-core",
+        "runtime-v8",
+        "crates/dom",
+        "cpp/v8-bridge"
+      ]
+    },
+    {
+      "id": "frontend-contract-only",
+      "roots": [
+        "apps",
+        "packages"
+      ],
+      "forbidden_patterns": [
+        "postgres",
+        "sqlite",
+        "database_url",
+        "services/session-control"
+      ]
+    }
+  ]
+}

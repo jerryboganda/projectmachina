@@ -1,0 +1,622 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://projectmachina.dev/schemas/command-model/v0.1/command-model.json",
+  "title": "Project Machina canonical command model",
+  "description": "Transport-neutral commands, outcomes, events, errors, and capability status.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "command": {
+      "$ref": "#/$defs/CommandEnvelope"
+    },
+    "outcome": {
+      "$ref": "#/$defs/CommandOutcome"
+    },
+    "event": {
+      "$ref": "#/$defs/EventEnvelope"
+    },
+    "capability": {
+      "$ref": "#/$defs/CapabilityStatusRecord"
+    }
+  },
+  "required": [
+    "command",
+    "outcome",
+    "event",
+    "capability"
+  ],
+  "x-machina-versioning": {
+    "unknown_fields": "reject",
+    "additive_fields": "new_version_or_extension_namespace",
+    "breaking_change": "new_command_or_event_version"
+  },
+  "$defs": {
+    "EngineKind": {
+      "type": "string",
+      "enum": [
+        "chromium",
+        "native"
+      ]
+    },
+    "DataClassification": {
+      "type": "string",
+      "enum": [
+        "public",
+        "tenant",
+        "sensitive",
+        "restricted"
+      ]
+    },
+    "CommandKind": {
+      "type": "string",
+      "enum": [
+        "session.create.v1",
+        "navigation.goto.v1",
+        "dom.semantic_query.v1",
+        "interaction.click.v1",
+        "session.close.v1"
+      ]
+    },
+    "OutcomeStatus": {
+      "type": "string",
+      "enum": [
+        "succeeded",
+        "failed",
+        "cancelled",
+        "deadline_exceeded"
+      ]
+    },
+    "CapabilityStatus": {
+      "type": "string",
+      "enum": [
+        "native",
+        "native-limited",
+        "hybrid",
+        "chromium",
+        "experimental",
+        "unsupported",
+        "disabled-by-policy"
+      ]
+    },
+    "CanonicalErrorCode": {
+      "type": "string",
+      "enum": [
+        "INVALID_ARGUMENT",
+        "UNAUTHENTICATED",
+        "PERMISSION_DENIED",
+        "POLICY_DENIED",
+        "QUOTA_EXCEEDED",
+        "RATE_LIMITED",
+        "SESSION_NOT_READY",
+        "SESSION_CLOSED",
+        "SESSION_EXPIRED",
+        "CAPACITY_UNAVAILABLE",
+        "WORKER_LOST",
+        "COMMAND_CANCELLED",
+        "DEADLINE_EXCEEDED",
+        "UNSUPPORTED_CAPABILITY",
+        "CAPABILITY_DISABLED",
+        "RENDERER_REQUIRED",
+        "FALLBACK_PROHIBITED",
+        "MIGRATION_FAILED",
+        "STATE_TRANSFER_PARTIAL",
+        "INVALID_URL",
+        "NETWORK_POLICY_BLOCKED",
+        "NAVIGATION_FAILED",
+        "SELECTOR_INVALID",
+        "ELEMENT_NOT_FOUND",
+        "ELEMENT_AMBIGUOUS",
+        "ELEMENT_NOT_INTERACTABLE",
+        "ACTION_POSTCONDITION_FAILED",
+        "WORKFLOW_INVALID",
+        "APPROVAL_REQUIRED",
+        "SECRET_UNAVAILABLE"
+      ]
+    },
+    "EventType": {
+      "type": "string",
+      "enum": [
+        "session.lifecycle.v1",
+        "navigation.lifecycle.v1",
+        "network.request.v1",
+        "network.response.v1",
+        "script.console.v1",
+        "script.error.v1",
+        "dom.revision.v1",
+        "interaction.verified.v1",
+        "capability.decision.v1",
+        "workflow.approval.v1",
+        "resource.health.v1"
+      ]
+    },
+    "CommandMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "correlation_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "causation_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "client": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "correlation_id",
+        "client"
+      ]
+    },
+    "SessionCreatePayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "engine_policy": {
+          "type": "string",
+          "enum": [
+            "native-only",
+            "prefer-native",
+            "prefer-compatible",
+            "chromium-only"
+          ]
+        },
+        "fidelity_profile": {
+          "type": "string",
+          "enum": [
+            "extract",
+            "agent",
+            "test",
+            "visual",
+            "custom"
+          ]
+        }
+      },
+      "required": [
+        "engine_policy",
+        "fidelity_profile"
+      ]
+    },
+    "NavigationGotoPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "url": {
+          "type": "string",
+          "format": "uri",
+          "minLength": 1
+        },
+        "wait_until": {
+          "type": "string",
+          "enum": [
+            "commit",
+            "domcontentloaded",
+            "load",
+            "networkidle"
+          ]
+        }
+      },
+      "required": [
+        "url"
+      ]
+    },
+    "SemanticQueryPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "query": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "query"
+      ]
+    },
+    "ClickPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "selector": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "selector"
+      ]
+    },
+    "SessionClosePayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "CommandPayload": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/SessionCreatePayload"
+        },
+        {
+          "$ref": "#/$defs/NavigationGotoPayload"
+        },
+        {
+          "$ref": "#/$defs/SemanticQueryPayload"
+        },
+        {
+          "$ref": "#/$defs/ClickPayload"
+        },
+        {
+          "$ref": "#/$defs/SessionClosePayload"
+        }
+      ]
+    },
+    "CommandEnvelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "oneOf": [
+        {
+          "properties": {
+            "kind": {
+              "const": "session.create.v1"
+            },
+            "payload": {
+              "$ref": "#/$defs/SessionCreatePayload"
+            }
+          }
+        },
+        {
+          "properties": {
+            "kind": {
+              "const": "navigation.goto.v1"
+            },
+            "payload": {
+              "$ref": "#/$defs/NavigationGotoPayload"
+            }
+          }
+        },
+        {
+          "properties": {
+            "kind": {
+              "const": "dom.semantic_query.v1"
+            },
+            "payload": {
+              "$ref": "#/$defs/SemanticQueryPayload"
+            }
+          }
+        },
+        {
+          "properties": {
+            "kind": {
+              "const": "interaction.click.v1"
+            },
+            "payload": {
+              "$ref": "#/$defs/ClickPayload"
+            }
+          }
+        },
+        {
+          "properties": {
+            "kind": {
+              "const": "session.close.v1"
+            },
+            "payload": {
+              "$ref": "#/$defs/SessionClosePayload"
+            }
+          }
+        }
+      ],
+      "properties": {
+        "command_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "session_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "context_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "page_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "$ref": "#/$defs/CommandKind"
+        },
+        "payload": {
+          "$ref": "#/$defs/CommandPayload"
+        },
+        "idempotency_key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "deadline_ms": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "required_capabilities": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "metadata": {
+          "$ref": "#/$defs/CommandMetadata"
+        }
+      },
+      "required": [
+        "command_id",
+        "session_id",
+        "kind",
+        "payload",
+        "deadline_ms",
+        "required_capabilities",
+        "metadata"
+      ]
+    },
+    "EngineExecution": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "requested_engine_policy": {
+          "type": "string"
+        },
+        "engine": {
+          "$ref": "#/$defs/EngineKind"
+        },
+        "engine_version": {
+          "type": "string"
+        },
+        "capability_snapshot": {
+          "type": "string"
+        },
+        "fallback_used": {
+          "type": "boolean"
+        },
+        "fallback_reason": {
+          "type": "string"
+        },
+        "migration_id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "requested_engine_policy",
+        "engine",
+        "engine_version",
+        "capability_snapshot",
+        "fallback_used"
+      ]
+    },
+    "CanonicalError": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "$ref": "#/$defs/CanonicalErrorCode"
+        },
+        "category": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "retryable": {
+          "type": "boolean"
+        },
+        "retry_after_ms": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "engine": {
+          "$ref": "#/$defs/EngineKind"
+        },
+        "capability": {
+          "type": "string"
+        },
+        "command_id": {
+          "type": "string"
+        },
+        "correlation_id": {
+          "type": "string"
+        },
+        "details": {
+          "type": "string"
+        },
+        "cause_code": {
+          "$ref": "#/$defs/CanonicalErrorCode"
+        },
+        "documentation_ref": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "category",
+        "message",
+        "retryable",
+        "command_id",
+        "correlation_id",
+        "details",
+        "documentation_ref"
+      ]
+    },
+    "CommandOutcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "command_id": {
+          "type": "string"
+        },
+        "attempt": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "status": {
+          "$ref": "#/$defs/OutcomeStatus"
+        },
+        "result": {
+          "type": "string"
+        },
+        "error": {
+          "$ref": "#/$defs/CanonicalError"
+        },
+        "execution": {
+          "$ref": "#/$defs/EngineExecution"
+        },
+        "trace_ref": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "command_id",
+        "attempt",
+        "status",
+        "execution"
+      ]
+    },
+    "EventEnvelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "event_id": {
+          "type": "string"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "event_type": {
+          "$ref": "#/$defs/EventType"
+        },
+        "session_id": {
+          "type": "string"
+        },
+        "context_id": {
+          "type": "string"
+        },
+        "page_id": {
+          "type": "string"
+        },
+        "command_id": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "correlation_id": {
+          "type": "string"
+        },
+        "engine": {
+          "$ref": "#/$defs/EngineKind"
+        },
+        "payload": {
+          "type": "string"
+        },
+        "classification": {
+          "$ref": "#/$defs/DataClassification"
+        }
+      },
+      "required": [
+        "event_id",
+        "sequence",
+        "event_type",
+        "session_id",
+        "timestamp",
+        "correlation_id",
+        "engine",
+        "payload",
+        "classification"
+      ]
+    },
+    "CapabilityStatusRecord": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "capability_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "$ref": "#/$defs/CapabilityStatus"
+        },
+        "engine_build": {
+          "type": "string"
+        },
+        "protocol_surfaces": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "last_verified": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "owner": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "capability_id",
+        "status",
+        "engine_build",
+        "protocol_surfaces",
+        "limitations",
+        "owner"
+      ]
+    }
+  },
+  "x-machina-codegen": {
+    "version": "0.1.0",
+    "payload_variants": [
+      {
+        "name": "SessionCreate",
+        "kind": "session.create.v1",
+        "type": "SessionCreatePayload"
+      },
+      {
+        "name": "NavigationGoto",
+        "kind": "navigation.goto.v1",
+        "type": "NavigationGotoPayload"
+      },
+      {
+        "name": "SemanticQuery",
+        "kind": "dom.semantic_query.v1",
+        "type": "SemanticQueryPayload"
+      },
+      {
+        "name": "Click",
+        "kind": "interaction.click.v1",
+        "type": "ClickPayload"
+      },
+      {
+        "name": "SessionClose",
+        "kind": "session.close.v1",
+        "type": "SessionClosePayload"
+      }
+    ],
+    "generated_outputs": [
+      "crates/command-model/src/generated.rs",
+      "packages/contracts-ts/src/command-model.ts"
+    ]
+  }
+}

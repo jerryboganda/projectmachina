@@ -1,0 +1,21 @@
+{
+  "version": "0.1.0",
+  "default_classification": "restricted",
+  "secret_key_patterns": [
+    "authorization",
+    "cookie",
+    "set-cookie",
+    "password",
+    "passphrase",
+    "secret",
+    "token",
+    "api-key",
+    "apikey",
+    "private-key",
+    "proxy"
+  ],
+  "redaction_marker": "[REDACTED]",
+  "page_content_logging": "disabled",
+  "unknown_fields": "redact",
+  "canary_secret": "only-in-tests-never-in-production"
+}

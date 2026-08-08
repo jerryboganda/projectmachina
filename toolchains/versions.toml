@@ -1,0 +1,29 @@
+[rust]
+channel = "1.86.0"
+
+[node]
+version = "20.18.0"
+
+[pnpm]
+version = "9.15.0"
+
+[cmake]
+minimum = "3.24"
+
+[clang]
+minimum = "18"
+
+[buf]
+version = "1.47.2"
+
+[v8]
+version = "13.1.201.12"
+source = "https://chromium.googlesource.com/v8/v8.git"
+
+[chromium]
+version = "131.0.6778.85"
+source = "https://chromium.googlesource.com/chromium/src.git"
+
+[acquisition]
+policy = "external-runtime-only"
+clean_room = true

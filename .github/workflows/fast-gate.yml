@@ -1,0 +1,90 @@
+name: fast-gate
+
+on:
+  pull_request:
+  merge_group:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fast-gate-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fast-gate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        # v4.2.2
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+
+      - name: Set up Node
+        # v4.4.0
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: "20.18.0"
+
+      - name: Enable pinned package manager
+        run: corepack enable && corepack prepare pnpm@9.15.0 --activate
+
+      - name: Install pinned Buf
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="1.47.2"
+          curl --fail --silent --show-error --location \
+            --output /tmp/buf \
+            "https://github.com/bufbuild/buf/releases/download/v${version}/buf-Linux-x86_64"
+          curl --fail --silent --show-error --location \
+            --output /tmp/buf-sha256.txt \
+            "https://github.com/bufbuild/buf/releases/download/v${version}/sha256.txt"
+          grep "buf-Linux-x86_64$" /tmp/buf-sha256.txt | sha256sum --check
+          chmod +x /tmp/buf
+          sudo mv /tmp/buf /usr/local/bin/buf
+
+      - name: Check repository policy and scripts
+        run: |
+          node --check scripts/build/doctor.mjs
+          node --check scripts/contracts/generate.mjs
+          node --check scripts/agent/claims.mjs
+          node --check scripts/security/redact.mjs
+          node scripts/build/doctor.mjs
+
+      - name: Install JavaScript dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      - name: Contract and security checks
+        run: |
+          pnpm contract:generate
+          pnpm contract:check
+          git diff --exit-code -- crates/command-model/src/generated.rs packages/contracts-ts/src/command-model.ts
+          pnpm architecture:check
+          pnpm security:check
+          pnpm supply-chain:check
+          pnpm security:traceability
+          pnpm secrets:scan
+
+      - name: Rust checks
+        run: |
+          cargo fmt --all -- --check
+          cargo check --workspace
+          cargo test --workspace
+          cargo clippy --workspace --all-targets -- -D warnings
+
+      - name: CMake bridge build
+        run: |
+          cmake --preset release
+          cmake --build --preset release
+
+      - name: Frontend checks
+        run: |
+          pnpm --filter @machina/console check
+          pnpm --filter @machina/console build
+
+      - name: Focused JavaScript tests
+        run: pnpm test

@@ -1,0 +1,10 @@
+[package]
+name = "machina-capability"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Versioned engine capability snapshots and eligibility checks."
+
+[dependencies]
+machina-command-model = { path = "../command-model" }

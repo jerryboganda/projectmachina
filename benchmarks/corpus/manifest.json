@@ -1,0 +1,38 @@
+{
+  "schema_version": "0.1.0",
+  "corpus_id": "machina-foundation",
+  "build_id": "local-uncommitted",
+  "environment": {
+    "network": "fixture-only",
+    "cache": "declared-by-runner",
+    "hardware": "recorded-at-run",
+    "concurrency": 1,
+    "seed": "machina-foundation-2026-08-09"
+  },
+  "workloads": [
+    {
+      "id": "fixture-navigation",
+      "category": "navigation",
+      "description": "Load the deterministic navigation fixture and verify its title.",
+      "fixture_version": "2026-08-09.1",
+      "postcondition": "title == Machina fixture",
+      "max_retries": 0
+    },
+    {
+      "id": "fixture-extraction",
+      "category": "extraction",
+      "description": "Extract a stable text value and verify the expected postcondition.",
+      "fixture_version": "2026-08-09.1",
+      "postcondition": "text == Mutated",
+      "max_retries": 0
+    },
+    {
+      "id": "fixture-form",
+      "category": "interaction",
+      "description": "Submit a deterministic form and verify the accepted result.",
+      "fixture_version": "2026-08-09.1",
+      "postcondition": "accepted == true",
+      "max_retries": 0
+    }
+  ]
+}

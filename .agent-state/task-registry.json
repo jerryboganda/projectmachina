@@ -1,0 +1,1736 @@
+{
+  "schema_version": "0.1.0",
+  "generated_by": "scripts/agent/task-registry.mjs",
+  "task_count": 121,
+  "tasks": [
+    {
+      "id": "M0-T01",
+      "title": "Initialize the polyglot monorepo and pinned toolchains",
+      "milestone": "M0",
+      "primary_role": "platform",
+      "dependencies": [],
+      "risk": "high",
+      "may_run_in_parallel": "constrained",
+      "source": "planning/MILESTONE_00_FOUNDATION_AND_GOVERNANCE.md"
+    },
+    {
+      "id": "M0-T02",
+      "title": "Implement task claims, leases, worktree and evidence helpers",
+      "milestone": "M0",
+      "primary_role": "platform",
+      "dependencies": [
+        "M0-T01"
+      ],
+      "risk": "high",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_00_FOUNDATION_AND_GOVERNANCE.md"
+    },
+    {
+      "id": "M0-T03",
+      "title": "Configure protected fast-gate CI and repository policy",
+      "milestone": "M0",
+      "primary_role": "platform + security",
+      "dependencies": [
+        "M0-T01",
+        "M0-T02"
+      ],
+      "risk": "high",
+      "may_run_in_parallel": "constrained",
+      "source": "planning/MILESTONE_00_FOUNDATION_AND_GOVERNANCE.md"
+    },
+    {
+      "id": "M0-T04",
+      "title": "Create the canonical command, event, error and capability schema skeleton",
+      "milestone": "M0",
+      "primary_role": "architect + protocol",
+      "dependencies": [
+        "M0-T01"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "constrained",
+      "source": "planning/MILESTONE_00_FOUNDATION_AND_GOVERNANCE.md"
+    },
+    {
+      "id": "M0-T05",
+      "title": "Enforce architecture boundaries and ADR workflow",
+      "milestone": "M0",
+      "primary_role": "architect",
+      "dependencies": [
+        "M0-T01",
+        "M0-T04"
+      ],
+      "risk": "medium",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_00_FOUNDATION_AND_GOVERNANCE.md"
+    },
+    {
+      "id": "M0-T06",
+      "title": "Establish the executable security baseline and threat controls",
+      "milestone": "M0",
+      "primary_role": "security",
+      "dependencies": [
+        "M0-T01",
+        "M0-T04"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_00_FOUNDATION_AND_GOVERNANCE.md"
+    },
+    {
+      "id": "M0-T07",
+      "title": "Create SBOM, provenance, license and clean-room controls",
+      "milestone": "M0",
+      "primary_role": "security + release",
+      "dependencies": [
+        "M0-T01"
+      ],
+      "risk": "high",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_00_FOUNDATION_AND_GOVERNANCE.md"
+    },
+    {
+      "id": "M0-T08",
+      "title": "Build deterministic multi-origin fixture and test harness foundations",
+      "milestone": "M0",
+      "primary_role": "quality",
+      "dependencies": [
+        "M0-T01"
+      ],
+      "risk": "high",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_00_FOUNDATION_AND_GOVERNANCE.md"
+    },
+    {
+      "id": "M0-T09",
+      "title": "Implement telemetry, correlation, redaction and evidence primitives",
+      "milestone": "M0",
+      "primary_role": "platform + observability",
+      "dependencies": [
+        "M0-T04",
+        "M0-T06"
+      ],
+      "risk": "high",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_00_FOUNDATION_AND_GOVERNANCE.md"
+    },
+    {
+      "id": "M0-T10",
+      "title": "Create fair benchmark harness and baseline corpus manifest",
+      "milestone": "M0",
+      "primary_role": "performance + quality",
+      "dependencies": [
+        "M0-T01",
+        "M0-T08",
+        "M0-T09"
+      ],
+      "risk": "medium",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_00_FOUNDATION_AND_GOVERNANCE.md"
+    },
+    {
+      "id": "M0-T11",
+      "title": "Deliver reproducible local full-stack development environment",
+      "milestone": "M0",
+      "primary_role": "platform",
+      "dependencies": [
+        "M0-T01",
+        "M0-T08",
+        "M0-T09"
+      ],
+      "risk": "medium",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_00_FOUNDATION_AND_GOVERNANCE.md"
+    },
+    {
+      "id": "M0-T12",
+      "title": "Rehearse the two-agent autonomous loop and approve M0 exit",
+      "milestone": "M0",
+      "primary_role": "orchestrator + reviewer",
+      "dependencies": [
+        "M0-T02",
+        "M0-T03",
+        "M0-T04",
+        "M0-T05",
+        "M0-T06",
+        "M0-T07",
+        "M0-T08",
+        "M0-T09",
+        "M0-T10",
+        "M0-T11"
+      ],
+      "risk": "high",
+      "may_run_in_parallel": "no",
+      "source": "planning/MILESTONE_00_FOUNDATION_AND_GOVERNANCE.md"
+    },
+    {
+      "id": "M1-T01",
+      "title": "Implement control-plane database schema and durable event outbox",
+      "milestone": "M1",
+      "primary_role": "platform",
+      "dependencies": [
+        "M0-T01",
+        "M0-T04",
+        "M0-T09"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "constrained",
+      "source": "planning/MILESTONE_01_COMPATIBILITY_FIRST_PLATFORM.md"
+    },
+    {
+      "id": "M1-T02",
+      "title": "Implement authentication, tenancy, authorization and project policy",
+      "milestone": "M1",
+      "primary_role": "security + platform",
+      "dependencies": [
+        "M0-T06",
+        "M1-T01"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "constrained",
+      "source": "planning/MILESTONE_01_COMPATIBILITY_FIRST_PLATFORM.md"
+    },
+    {
+      "id": "M1-T03",
+      "title": "Implement session lifecycle service and idempotent control API",
+      "milestone": "M1",
+      "primary_role": "platform",
+      "dependencies": [
+        "M0-T04",
+        "M1-T01",
+        "M1-T02"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_01_COMPATIBILITY_FIRST_PLATFORM.md"
+    },
+    {
+      "id": "M1-T04",
+      "title": "Implement scheduler, worker registry, leases and fair queue",
+      "milestone": "M1",
+      "primary_role": "platform",
+      "dependencies": [
+        "M1-T01",
+        "M1-T03"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "constrained",
+      "source": "planning/MILESTONE_01_COMPATIBILITY_FIRST_PLATFORM.md"
+    },
+    {
+      "id": "M1-T05",
+      "title": "Build prewarmed Chromium worker pool and isolation controls",
+      "milestone": "M1",
+      "primary_role": "platform + security",
+      "dependencies": [
+        "M0-T11",
+        "M1-T04"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_01_COMPATIBILITY_FIRST_PLATFORM.md"
+    },
+    {
+      "id": "M1-T06",
+      "title": "Implement Chromium canonical engine adapter",
+      "milestone": "M1",
+      "primary_role": "protocol + platform",
+      "dependencies": [
+        "M0-T04",
+        "M1-T05"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_01_COMPATIBILITY_FIRST_PLATFORM.md"
+    },
+    {
+      "id": "M1-T07",
+      "title": "Expose initial HTTP, gRPC and event-stream adapters",
+      "milestone": "M1",
+      "primary_role": "protocol",
+      "dependencies": [
+        "M1-T03",
+        "M1-T06"
+      ],
+      "risk": "high",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_01_COMPATIBILITY_FIRST_PLATFORM.md"
+    },
+    {
+      "id": "M1-T08",
+      "title": "Implement ordered events, idempotent delivery and backpressure",
+      "milestone": "M1",
+      "primary_role": "platform + protocol",
+      "dependencies": [
+        "M1-T01",
+        "M1-T07"
+      ],
+      "risk": "high",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_01_COMPATIBILITY_FIRST_PLATFORM.md"
+    },
+    {
+      "id": "M1-T09",
+      "title": "Implement capability registry and router version zero",
+      "milestone": "M1",
+      "primary_role": "architect + platform",
+      "dependencies": [
+        "M0-T04",
+        "M1-T04",
+        "M1-T06"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_01_COMPATIBILITY_FIRST_PLATFORM.md"
+    },
+    {
+      "id": "M1-T10",
+      "title": "Implement traces, classified artifacts and reproduction bundle version zero",
+      "milestone": "M1",
+      "primary_role": "observability + platform",
+      "dependencies": [
+        "M0-T09",
+        "M1-T06",
+        "M1-T08"
+      ],
+      "risk": "high",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_01_COMPATIBILITY_FIRST_PLATFORM.md"
+    },
+    {
+      "id": "M1-T11",
+      "title": "Publish TypeScript and Python alpha SDKs",
+      "milestone": "M1",
+      "primary_role": "protocol",
+      "dependencies": [
+        "M1-T07",
+        "M1-T08"
+      ],
+      "risk": "medium",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_01_COMPATIBILITY_FIRST_PLATFORM.md"
+    },
+    {
+      "id": "M1-T12",
+      "title": "Deliver compatibility-first end-to-end platform slice",
+      "milestone": "M1",
+      "primary_role": "orchestrator + quality",
+      "dependencies": [
+        "M1-T01",
+        "M1-T02",
+        "M1-T03",
+        "M1-T04",
+        "M1-T05",
+        "M1-T06",
+        "M1-T07",
+        "M1-T08",
+        "M1-T09",
+        "M1-T10",
+        "M1-T11"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "no",
+      "source": "planning/MILESTONE_01_COMPATIBILITY_FIRST_PLATFORM.md"
+    },
+    {
+      "id": "M2-T01",
+      "title": "Implement native engine session, context, page and resource accounting",
+      "milestone": "M2",
+      "primary_role": "native-engine",
+      "dependencies": [
+        "M0-T04",
+        "M1-T03",
+        "M1-T04"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "constrained",
+      "source": "planning/MILESTONE_02_NATIVE_ENGINE_FUNDAMENTALS.md"
+    },
+    {
+      "id": "M2-T02",
+      "title": "Implement native URL, DNS, TLS and HTTP streaming loader",
+      "milestone": "M2",
+      "primary_role": "native-engine + security",
+      "dependencies": [
+        "M0-T06",
+        "M0-T08",
+        "M2-T01"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_02_NATIVE_ENGINE_FUNDAMENTALS.md"
+    },
+    {
+      "id": "M2-T03",
+      "title": "Implement streaming HTML tokenizer",
+      "milestone": "M2",
+      "primary_role": "native-engine",
+      "dependencies": [
+        "M0-T08",
+        "M2-T01"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_02_NATIVE_ENGINE_FUNDAMENTALS.md"
+    },
+    {
+      "id": "M2-T04",
+      "title": "Implement HTML tree builder and document construction",
+      "milestone": "M2",
+      "primary_role": "native-engine",
+      "dependencies": [
+        "M2-T03",
+        "M2-T05"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "constrained",
+      "source": "planning/MILESTONE_02_NATIVE_ENGINE_FUNDAMENTALS.md"
+    },
+    {
+      "id": "M2-T05",
+      "title": "Implement compact DOM nodes, handles, mutation and lifecycle",
+      "milestone": "M2",
+      "primary_role": "native-engine",
+      "dependencies": [
+        "M0-T04",
+        "M2-T01"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "constrained",
+      "source": "planning/MILESTONE_02_NATIVE_ENGINE_FUNDAMENTALS.md"
+    },
+    {
+      "id": "M2-T06",
+      "title": "Build the narrow C++ V8 bridge and safe Rust facade",
+      "milestone": "M2",
+      "primary_role": "native-engine + security",
+      "dependencies": [
+        "M0-T01",
+        "M2-T01"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "constrained",
+      "source": "planning/MILESTONE_02_NATIVE_ENGINE_FUNDAMENTALS.md"
+    },
+    {
+      "id": "M2-T07",
+      "title": "Create V8 startup snapshot and browser binding scaffold",
+      "milestone": "M2",
+      "primary_role": "native-engine",
+      "dependencies": [
+        "M2-T05",
+        "M2-T06"
+      ],
+      "risk": "high",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_02_NATIVE_ENGINE_FUNDAMENTALS.md"
+    },
+    {
+      "id": "M2-T08",
+      "title": "Implement web event loop, tasks, microtasks and timers",
+      "milestone": "M2",
+      "primary_role": "native-engine",
+      "dependencies": [
+        "M2-T02",
+        "M2-T06",
+        "M2-T07"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "constrained",
+      "source": "planning/MILESTONE_02_NATIVE_ENGINE_FUNDAMENTALS.md"
+    },
+    {
+      "id": "M2-T09",
+      "title": "Integrate navigation lifecycle, parser, scripts and history skeleton",
+      "milestone": "M2",
+      "primary_role": "native-engine",
+      "dependencies": [
+        "M2-T02",
+        "M2-T04",
+        "M2-T07",
+        "M2-T08"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "no",
+      "source": "planning/MILESTONE_02_NATIVE_ENGINE_FUNDAMENTALS.md"
+    },
+    {
+      "id": "M2-T10",
+      "title": "Implement CSS selector queries and initial XPath",
+      "milestone": "M2",
+      "primary_role": "native-engine",
+      "dependencies": [
+        "M2-T05"
+      ],
+      "risk": "high",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_02_NATIVE_ENGINE_FUNDAMENTALS.md"
+    },
+    {
+      "id": "M2-T11",
+      "title": "Implement event dispatch, focus and basic input model",
+      "milestone": "M2",
+      "primary_role": "native-engine",
+      "dependencies": [
+        "M2-T05",
+        "M2-T08"
+      ],
+      "risk": "high",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_02_NATIVE_ENGINE_FUNDAMENTALS.md"
+    },
+    {
+      "id": "M2-T12",
+      "title": "Implement fetch, XHR, cookies and web storage foundations",
+      "milestone": "M2",
+      "primary_role": "native-engine",
+      "dependencies": [
+        "M2-T02",
+        "M2-T07",
+        "M2-T08",
+        "M2-T09"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_02_NATIVE_ENGINE_FUNDAMENTALS.md"
+    },
+    {
+      "id": "M2-T13",
+      "title": "Implement initial semantic index, markdown and structured extraction",
+      "milestone": "M2",
+      "primary_role": "native-engine",
+      "dependencies": [
+        "M2-T05",
+        "M2-T10",
+        "M2-T11"
+      ],
+      "risk": "high",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_02_NATIVE_ENGINE_FUNDAMENTALS.md"
+    },
+    {
+      "id": "M2-T14",
+      "title": "Integrate native worker and pass the first native corpus gate",
+      "milestone": "M2",
+      "primary_role": "orchestrator + quality",
+      "dependencies": [
+        "M1-T09",
+        "M2-T01",
+        "M2-T02",
+        "M2-T03",
+        "M2-T04",
+        "M2-T05",
+        "M2-T06",
+        "M2-T07",
+        "M2-T08",
+        "M2-T09",
+        "M2-T10",
+        "M2-T11",
+        "M2-T12",
+        "M2-T13"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "no",
+      "source": "planning/MILESTONE_02_NATIVE_ENGINE_FUNDAMENTALS.md"
+    },
+    {
+      "id": "M3-T01",
+      "title": "Implement forms, controls, validation and default actions",
+      "milestone": "M3",
+      "primary_role": "native-engine",
+      "dependencies": [
+        "M2-T11",
+        "M2-T12"
+      ],
+      "risk": "high",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_03_NATIVE_WEB_APIS_AND_AUTOMATION.md"
+    },
+    {
+      "id": "M3-T02",
+      "title": "Implement verified keyboard, mouse, click, fill, select and check actions",
+      "milestone": "M3",
+      "primary_role": "native-engine + agent-runtime",
+      "dependencies": [
+        "M2-T10",
+        "M2-T11",
+        "M3-T01"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_03_NATIVE_WEB_APIS_AND_AUTOMATION.md"
+    },
+    {
+      "id": "M3-T03",
+      "title": "Complete history, same-document navigation and task-ready waits",
+      "milestone": "M3",
+      "primary_role": "native-engine",
+      "dependencies": [
+        "M2-T09",
+        "M2-T10",
+        "M2-T13"
+      ],
+      "risk": "high",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_03_NATIVE_WEB_APIS_AND_AUTOMATION.md"
+    },
+    {
+      "id": "M3-T04",
+      "title": "Implement Shadow DOM, slots and custom elements",
+      "milestone": "M3",
+      "primary_role": "native-engine",
+      "dependencies": [
+        "M2-T05",
+        "M2-T07",
+        "M2-T08",
+        "M2-T11"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_03_NATIVE_WEB_APIS_AND_AUTOMATION.md"
+    },
+    {
+      "id": "M3-T05",
+      "title": "Implement frames and browsing contexts",
+      "milestone": "M3",
+      "primary_role": "native-engine",
+      "dependencies": [
+        "M2-T09",
+        "M2-T12",
+        "M3-T04"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "constrained",
+      "source": "planning/MILESTONE_03_NATIVE_WEB_APIS_AND_AUTOMATION.md"
+    },
+    {
+      "id": "M3-T06",
+      "title": "Harden CORS, referrer, cache, redirects and network semantics",
+      "milestone": "M3",
+      "primary_role": "native-engine + security",
+      "dependencies": [
+        "M2-T02",
+        "M2-T12"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_03_NATIVE_WEB_APIS_AND_AUTOMATION.md"
+    },
+    {
+      "id": "M3-T07",
+      "title": "Implement WebSocket lifecycle and limits",
+      "milestone": "M3",
+      "primary_role": "native-engine",
+      "dependencies": [
+        "M2-T02",
+        "M2-T07",
+        "M2-T08"
+      ],
+      "risk": "high",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_03_NATIVE_WEB_APIS_AND_AUTOMATION.md"
+    },
+    {
+      "id": "M3-T08",
+      "title": "Implement dedicated and shared worker primitives",
+      "milestone": "M3",
+      "primary_role": "native-engine",
+      "dependencies": [
+        "M2-T06",
+        "M2-T08",
+        "M2-T12"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_03_NATIVE_WEB_APIS_AND_AUTOMATION.md"
+    },
+    {
+      "id": "M3-T09",
+      "title": "Implement prioritized service worker and IndexedDB capabilities",
+      "milestone": "M3",
+      "primary_role": "native-engine",
+      "dependencies": [
+        "M3-T06",
+        "M3-T08"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_03_NATIVE_WEB_APIS_AND_AUTOMATION.md"
+    },
+    {
+      "id": "M3-T10",
+      "title": "Implement network interception, proxy authentication and routing hooks",
+      "milestone": "M3",
+      "primary_role": "native-engine + protocol",
+      "dependencies": [
+        "M1-T09",
+        "M3-T06"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_03_NATIVE_WEB_APIS_AND_AUTOMATION.md"
+    },
+    {
+      "id": "M3-T11",
+      "title": "Implement controlled uploads, downloads, dialogs and popups",
+      "milestone": "M3",
+      "primary_role": "native-engine + security",
+      "dependencies": [
+        "M3-T01",
+        "M3-T05",
+        "M3-T06"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_03_NATIVE_WEB_APIS_AND_AUTOMATION.md"
+    },
+    {
+      "id": "M3-T12",
+      "title": "Implement semantic CSS, visibility, geometry and hit-testing subset",
+      "milestone": "M3",
+      "primary_role": "native-engine",
+      "dependencies": [
+        "M2-T13",
+        "M3-T04",
+        "M3-T05"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_03_NATIVE_WEB_APIS_AND_AUTOMATION.md"
+    },
+    {
+      "id": "M3-T13",
+      "title": "Implement semantic deltas and single-pass multi-output extraction",
+      "milestone": "M3",
+      "primary_role": "native-engine + agent-runtime",
+      "dependencies": [
+        "M2-T13",
+        "M3-T12"
+      ],
+      "risk": "high",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_03_NATIVE_WEB_APIS_AND_AUTOMATION.md"
+    },
+    {
+      "id": "M3-T14",
+      "title": "Implement native state export and verified action history",
+      "milestone": "M3",
+      "primary_role": "native-engine + platform",
+      "dependencies": [
+        "M3-T02",
+        "M3-T03",
+        "M3-T05",
+        "M3-T10"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_03_NATIVE_WEB_APIS_AND_AUTOMATION.md"
+    },
+    {
+      "id": "M3-T15",
+      "title": "Reach the target native automation and extraction coverage gate",
+      "milestone": "M3",
+      "primary_role": "orchestrator + quality",
+      "dependencies": [
+        "M2-T14",
+        "M3-T01",
+        "M3-T02",
+        "M3-T03",
+        "M3-T04",
+        "M3-T05",
+        "M3-T06",
+        "M3-T07",
+        "M3-T08",
+        "M3-T09",
+        "M3-T10",
+        "M3-T11",
+        "M3-T12",
+        "M3-T13",
+        "M3-T14"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "no",
+      "source": "planning/MILESTONE_03_NATIVE_WEB_APIS_AND_AUTOMATION.md"
+    },
+    {
+      "id": "M4-T01",
+      "title": "Stabilize command model version one and compatibility tooling",
+      "milestone": "M4",
+      "primary_role": "architect + protocol",
+      "dependencies": [
+        "M1-T12",
+        "M3-T15"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "no",
+      "source": "planning/MILESTONE_04_PROTOCOLS_AND_SDKS.md"
+    },
+    {
+      "id": "M4-T02",
+      "title": "Complete HTTP API version one",
+      "milestone": "M4",
+      "primary_role": "protocol",
+      "dependencies": [
+        "M1-T07",
+        "M1-T08",
+        "M4-T01"
+      ],
+      "risk": "high",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_04_PROTOCOLS_AND_SDKS.md"
+    },
+    {
+      "id": "M4-T03",
+      "title": "Complete gRPC commands, bidirectional events and backpressure",
+      "milestone": "M4",
+      "primary_role": "protocol",
+      "dependencies": [
+        "M1-T07",
+        "M1-T08",
+        "M4-T01"
+      ],
+      "risk": "high",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_04_PROTOCOLS_AND_SDKS.md"
+    },
+    {
+      "id": "M4-T04",
+      "title": "Implement CDP Target, Browser, Page and Runtime domains",
+      "milestone": "M4",
+      "primary_role": "protocol",
+      "dependencies": [
+        "M3-T15",
+        "M4-T01"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "constrained",
+      "source": "planning/MILESTONE_04_PROTOCOLS_AND_SDKS.md"
+    },
+    {
+      "id": "M4-T05",
+      "title": "Implement CDP DOM, Network, Input, Emulation and supporting domains",
+      "milestone": "M4",
+      "primary_role": "protocol",
+      "dependencies": [
+        "M3-T02",
+        "M3-T10",
+        "M3-T11",
+        "M4-T04"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_04_PROTOCOLS_AND_SDKS.md"
+    },
+    {
+      "id": "M4-T06",
+      "title": "Certify initial Playwright and Puppeteer version matrix",
+      "milestone": "M4",
+      "primary_role": "protocol + quality",
+      "dependencies": [
+        "M4-T04",
+        "M4-T05"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "no",
+      "source": "planning/MILESTONE_04_PROTOCOLS_AND_SDKS.md"
+    },
+    {
+      "id": "M4-T07",
+      "title": "Implement WebDriver BiDi session, browsing context and script modules",
+      "milestone": "M4",
+      "primary_role": "protocol",
+      "dependencies": [
+        "M3-T05",
+        "M4-T01"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_04_PROTOCOLS_AND_SDKS.md"
+    },
+    {
+      "id": "M4-T08",
+      "title": "Implement WebDriver BiDi network, storage and input modules",
+      "milestone": "M4",
+      "primary_role": "protocol",
+      "dependencies": [
+        "M3-T02",
+        "M3-T10",
+        "M3-T12",
+        "M4-T07"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_04_PROTOCOLS_AND_SDKS.md"
+    },
+    {
+      "id": "M4-T09",
+      "title": "Integrate Selenium and WPT through WebDriver BiDi",
+      "milestone": "M4",
+      "primary_role": "protocol + quality",
+      "dependencies": [
+        "M4-T07",
+        "M4-T08"
+      ],
+      "risk": "high",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_04_PROTOCOLS_AND_SDKS.md"
+    },
+    {
+      "id": "M4-T10",
+      "title": "Implement production MCP server and agent-native tools",
+      "milestone": "M4",
+      "primary_role": "protocol + agent-runtime",
+      "dependencies": [
+        "M3-T02",
+        "M3-T13",
+        "M4-T01"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_04_PROTOCOLS_AND_SDKS.md"
+    },
+    {
+      "id": "M4-T11",
+      "title": "Promote TypeScript and Python SDKs to production beta quality",
+      "milestone": "M4",
+      "primary_role": "protocol",
+      "dependencies": [
+        "M4-T02",
+        "M4-T03",
+        "M4-T10"
+      ],
+      "risk": "high",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_04_PROTOCOLS_AND_SDKS.md"
+    },
+    {
+      "id": "M4-T12",
+      "title": "Deliver Go, Java and Rust SDKs and publish version policy",
+      "milestone": "M4",
+      "primary_role": "protocol",
+      "dependencies": [
+        "M4-T02",
+        "M4-T03"
+      ],
+      "risk": "medium",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_04_PROTOCOLS_AND_SDKS.md"
+    },
+    {
+      "id": "M5-T01",
+      "title": "Define the versioned deterministic workflow DSL and schema",
+      "milestone": "M5",
+      "primary_role": "agent-runtime + architect",
+      "dependencies": [
+        "M4-T01",
+        "M4-T10"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "constrained",
+      "source": "planning/MILESTONE_05_DETERMINISTIC_AGENT_WORKFLOWS.md"
+    },
+    {
+      "id": "M5-T02",
+      "title": "Build the session recorder and normalized action log",
+      "milestone": "M5",
+      "primary_role": "agent-runtime",
+      "dependencies": [
+        "M3-T14",
+        "M4-T10",
+        "M5-T01"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_05_DETERMINISTIC_AGENT_WORKFLOWS.md"
+    },
+    {
+      "id": "M5-T03",
+      "title": "Implement workflow compiler and static analyzer",
+      "milestone": "M5",
+      "primary_role": "agent-runtime",
+      "dependencies": [
+        "M5-T01",
+        "M5-T02"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_05_DETERMINISTIC_AGENT_WORKFLOWS.md"
+    },
+    {
+      "id": "M5-T04",
+      "title": "Implement deterministic executor, checkpoints, pause and resume",
+      "milestone": "M5",
+      "primary_role": "agent-runtime",
+      "dependencies": [
+        "M3-T14",
+        "M4-T01",
+        "M5-T03"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "constrained",
+      "source": "planning/MILESTONE_05_DETERMINISTIC_AGENT_WORKFLOWS.md"
+    },
+    {
+      "id": "M5-T05",
+      "title": "Implement stable semantic locators and repair candidates",
+      "milestone": "M5",
+      "primary_role": "agent-runtime + native-engine",
+      "dependencies": [
+        "M3-T13",
+        "M5-T03"
+      ],
+      "risk": "high",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_05_DETERMINISTIC_AGENT_WORKFLOWS.md"
+    },
+    {
+      "id": "M5-T06",
+      "title": "Implement schema-guided extraction and validation",
+      "milestone": "M5",
+      "primary_role": "agent-runtime + native-engine",
+      "dependencies": [
+        "M3-T13",
+        "M5-T03"
+      ],
+      "risk": "high",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_05_DETERMINISTIC_AGENT_WORKFLOWS.md"
+    },
+    {
+      "id": "M5-T07",
+      "title": "Implement secret references, action policy and approval service",
+      "milestone": "M5",
+      "primary_role": "agent-runtime + security",
+      "dependencies": [
+        "M1-T02",
+        "M5-T04"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_05_DETERMINISTIC_AGENT_WORKFLOWS.md"
+    },
+    {
+      "id": "M5-T08",
+      "title": "Implement bounded recovery and selector repair using optional AI",
+      "milestone": "M5",
+      "primary_role": "agent-runtime + security",
+      "dependencies": [
+        "M5-T05",
+        "M5-T07"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_05_DETERMINISTIC_AGENT_WORKFLOWS.md"
+    },
+    {
+      "id": "M5-T09",
+      "title": "Implement workflow versions, schedules, runs and retention service",
+      "milestone": "M5",
+      "primary_role": "platform + agent-runtime",
+      "dependencies": [
+        "M1-T01",
+        "M5-T04",
+        "M5-T07"
+      ],
+      "risk": "high",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_05_DETERMINISTIC_AGENT_WORKFLOWS.md"
+    },
+    {
+      "id": "M5-T10",
+      "title": "Certify deterministic workflow corpus and milestone exit",
+      "milestone": "M5",
+      "primary_role": "quality + orchestrator",
+      "dependencies": [
+        "M5-T01",
+        "M5-T02",
+        "M5-T03",
+        "M5-T04",
+        "M5-T05",
+        "M5-T06",
+        "M5-T07",
+        "M5-T08",
+        "M5-T09"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "no",
+      "source": "planning/MILESTONE_05_DETERMINISTIC_AGENT_WORKFLOWS.md"
+    },
+    {
+      "id": "M6-T01",
+      "title": "Create SvelteKit application shell and accessible design system",
+      "milestone": "M6",
+      "primary_role": "frontend",
+      "dependencies": [
+        "M0-T01",
+        "M1-T07",
+        "M4-T02"
+      ],
+      "risk": "high",
+      "may_run_in_parallel": "constrained",
+      "source": "planning/MILESTONE_06_SVELTE_CONSOLE_AND_DEVELOPER_EXPERIENCE.md"
+    },
+    {
+      "id": "M6-T02",
+      "title": "Implement authentication, organization, project and policy console",
+      "milestone": "M6",
+      "primary_role": "frontend + security",
+      "dependencies": [
+        "M1-T02",
+        "M4-T02",
+        "M6-T01"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_06_SVELTE_CONSOLE_AND_DEVELOPER_EXPERIENCE.md"
+    },
+    {
+      "id": "M6-T03",
+      "title": "Implement session launch, list, filters and lifecycle controls",
+      "milestone": "M6",
+      "primary_role": "frontend",
+      "dependencies": [
+        "M4-T02",
+        "M4-T03",
+        "M6-T01"
+      ],
+      "risk": "high",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_06_SVELTE_CONSOLE_AND_DEVELOPER_EXPERIENCE.md"
+    },
+    {
+      "id": "M6-T04",
+      "title": "Build live session timeline, trace and reproduction explorer",
+      "milestone": "M6",
+      "primary_role": "frontend + observability",
+      "dependencies": [
+        "M1-T10",
+        "M4-T03",
+        "M6-T03"
+      ],
+      "risk": "high",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_06_SVELTE_CONSOLE_AND_DEVELOPER_EXPERIENCE.md"
+    },
+    {
+      "id": "M6-T05",
+      "title": "Build semantic inspector and verified action playground",
+      "milestone": "M6",
+      "primary_role": "frontend",
+      "dependencies": [
+        "M3-T13",
+        "M4-T10",
+        "M6-T04"
+      ],
+      "risk": "high",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_06_SVELTE_CONSOLE_AND_DEVELOPER_EXPERIENCE.md"
+    },
+    {
+      "id": "M6-T06",
+      "title": "Build workflow editor, recorder, versions and run history",
+      "milestone": "M6",
+      "primary_role": "frontend",
+      "dependencies": [
+        "M5-T09",
+        "M6-T01"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_06_SVELTE_CONSOLE_AND_DEVELOPER_EXPERIENCE.md"
+    },
+    {
+      "id": "M6-T07",
+      "title": "Build secrets, policies and approval decision experience",
+      "milestone": "M6",
+      "primary_role": "frontend + security",
+      "dependencies": [
+        "M5-T07",
+        "M6-T02",
+        "M6-T06"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_06_SVELTE_CONSOLE_AND_DEVELOPER_EXPERIENCE.md"
+    },
+    {
+      "id": "M6-T08",
+      "title": "Build fleet, usage, quotas, alerts and incident administration",
+      "milestone": "M6",
+      "primary_role": "frontend + platform",
+      "dependencies": [
+        "M1-T04",
+        "M4-T02",
+        "M6-T01"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "constrained",
+      "source": "planning/MILESTONE_06_SVELTE_CONSOLE_AND_DEVELOPER_EXPERIENCE.md"
+    },
+    {
+      "id": "M6-T09",
+      "title": "Build prerendered documentation site, API explorer and quick starts",
+      "milestone": "M6",
+      "primary_role": "frontend + developer-experience",
+      "dependencies": [
+        "M4-T11",
+        "M4-T12",
+        "M6-T01"
+      ],
+      "risk": "medium",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_06_SVELTE_CONSOLE_AND_DEVELOPER_EXPERIENCE.md"
+    },
+    {
+      "id": "M6-T10",
+      "title": "Complete frontend accessibility, security and performance milestone gate",
+      "milestone": "M6",
+      "primary_role": "frontend + quality + security",
+      "dependencies": [
+        "M6-T01",
+        "M6-T02",
+        "M6-T03",
+        "M6-T04",
+        "M6-T05",
+        "M6-T06",
+        "M6-T07",
+        "M6-T08",
+        "M6-T09"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "no",
+      "source": "planning/MILESTONE_06_SVELTE_CONSOLE_AND_DEVELOPER_EXPERIENCE.md"
+    },
+    {
+      "id": "M7-T01",
+      "title": "Harden dedicated-process worker sandbox",
+      "milestone": "M7",
+      "primary_role": "security + platform",
+      "dependencies": [
+        "M0-T06",
+        "M1-T05",
+        "M3-T15"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "constrained",
+      "source": "planning/MILESTONE_07_SECURITY_AND_CLOUD_OPERATIONS.md"
+    },
+    {
+      "id": "M7-T02",
+      "title": "Validate and constrain shared-performance isolation tier",
+      "milestone": "M7",
+      "primary_role": "security + native-engine",
+      "dependencies": [
+        "M2-T14",
+        "M7-T01"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_07_SECURITY_AND_CLOUD_OPERATIONS.md"
+    },
+    {
+      "id": "M7-T03",
+      "title": "Deliver hardened container or microVM isolation tier",
+      "milestone": "M7",
+      "primary_role": "security + platform",
+      "dependencies": [
+        "M7-T01"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_07_SECURITY_AND_CLOUD_OPERATIONS.md"
+    },
+    {
+      "id": "M7-T04",
+      "title": "Enforce production network egress, SSRF and DNS rebinding controls",
+      "milestone": "M7",
+      "primary_role": "security + platform",
+      "dependencies": [
+        "M3-T06",
+        "M3-T10",
+        "M7-T01"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_07_SECURITY_AND_CLOUD_OPERATIONS.md"
+    },
+    {
+      "id": "M7-T05",
+      "title": "Harden authentication, authorization and just-in-time administration",
+      "milestone": "M7",
+      "primary_role": "security + platform",
+      "dependencies": [
+        "M1-T02",
+        "M6-T02"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_07_SECURITY_AND_CLOUD_OPERATIONS.md"
+    },
+    {
+      "id": "M7-T06",
+      "title": "Integrate production secret vault and centralized redaction",
+      "milestone": "M7",
+      "primary_role": "security + platform",
+      "dependencies": [
+        "M5-T07",
+        "M7-T01"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_07_SECURITY_AND_CLOUD_OPERATIONS.md"
+    },
+    {
+      "id": "M7-T07",
+      "title": "Implement quotas, rate limits, abuse controls and responsible crawling defaults",
+      "milestone": "M7",
+      "primary_role": "security + platform",
+      "dependencies": [
+        "M1-T02",
+        "M7-T04"
+      ],
+      "risk": "high",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_07_SECURITY_AND_CLOUD_OPERATIONS.md"
+    },
+    {
+      "id": "M7-T08",
+      "title": "Create Kubernetes, Helm and infrastructure-as-code production topology",
+      "milestone": "M7",
+      "primary_role": "platform + security",
+      "dependencies": [
+        "M1-T12",
+        "M7-T01",
+        "M7-T03"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_07_SECURITY_AND_CLOUD_OPERATIONS.md"
+    },
+    {
+      "id": "M7-T09",
+      "title": "Implement autoscaling, fleet operations, metering and cost controls",
+      "milestone": "M7",
+      "primary_role": "platform",
+      "dependencies": [
+        "M1-T04",
+        "M6-T08",
+        "M7-T08"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_07_SECURITY_AND_CLOUD_OPERATIONS.md"
+    },
+    {
+      "id": "M7-T10",
+      "title": "Implement production backup, restore, retention and disaster-recovery foundations",
+      "milestone": "M7",
+      "primary_role": "platform + security",
+      "dependencies": [
+        "M1-T01",
+        "M7-T08"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_07_SECURITY_AND_CLOUD_OPERATIONS.md"
+    },
+    {
+      "id": "M7-T11",
+      "title": "Operationalize SLOs, alerting, on-call, incident and emergency controls",
+      "milestone": "M7",
+      "primary_role": "platform + security",
+      "dependencies": [
+        "M7-T08",
+        "M7-T09",
+        "M7-T10"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_07_SECURITY_AND_CLOUD_OPERATIONS.md"
+    },
+    {
+      "id": "M7-T12",
+      "title": "Launch and evaluate a controlled production beta",
+      "milestone": "M7",
+      "primary_role": "product + release + security",
+      "dependencies": [
+        "M4-T11",
+        "M5-T10",
+        "M6-T10",
+        "M7-T01",
+        "M7-T02",
+        "M7-T03",
+        "M7-T04",
+        "M7-T05",
+        "M7-T06",
+        "M7-T07",
+        "M7-T08",
+        "M7-T09",
+        "M7-T10",
+        "M7-T11"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "no",
+      "source": "planning/MILESTONE_07_SECURITY_AND_CLOUD_OPERATIONS.md"
+    },
+    {
+      "id": "M8-T01",
+      "title": "Expand and triage prioritized Web Platform Tests",
+      "milestone": "M8",
+      "primary_role": "quality + native-engine",
+      "dependencies": [
+        "M3-T15",
+        "M4-T09"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_08_COMPATIBILITY_PERFORMANCE_AND_RELIABILITY_HARDENING.md"
+    },
+    {
+      "id": "M8-T02",
+      "title": "Expand deterministic and approved real-workload differential corpus",
+      "milestone": "M8",
+      "primary_role": "quality + native-engine",
+      "dependencies": [
+        "M3-T15",
+        "M7-T12"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_08_COMPATIBILITY_PERFORMANCE_AND_RELIABILITY_HARDENING.md"
+    },
+    {
+      "id": "M8-T03",
+      "title": "Harden full protocol and ecosystem client matrices",
+      "milestone": "M8",
+      "primary_role": "protocol + quality",
+      "dependencies": [
+        "M4-T06",
+        "M4-T09",
+        "M4-T10",
+        "M4-T12"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_08_COMPATIBILITY_PERFORMANCE_AND_RELIABILITY_HARDENING.md"
+    },
+    {
+      "id": "M8-T04",
+      "title": "Run sustained parser, DOM, protocol and V8 bridge fuzzing/sanitizers",
+      "milestone": "M8",
+      "primary_role": "quality + security + native-engine",
+      "dependencies": [
+        "M2-T03",
+        "M2-T05",
+        "M2-T06",
+        "M4-T01"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_08_COMPATIBILITY_PERFORMANCE_AND_RELIABILITY_HARDENING.md"
+    },
+    {
+      "id": "M8-T05",
+      "title": "Harden tenant, sandbox, egress, secrets and workflow security suites",
+      "milestone": "M8",
+      "primary_role": "security + quality",
+      "dependencies": [
+        "M7-T01",
+        "M7-T02",
+        "M7-T03",
+        "M7-T04",
+        "M7-T05",
+        "M7-T06",
+        "M7-T07"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_08_COMPATIBILITY_PERFORMANCE_AND_RELIABILITY_HARDENING.md"
+    },
+    {
+      "id": "M8-T06",
+      "title": "Optimize startup snapshots, memory, scheduling and native effective throughput",
+      "milestone": "M8",
+      "primary_role": "performance + native-engine",
+      "dependencies": [
+        "M2-T07",
+        "M3-T15",
+        "M7-T09"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_08_COMPATIBILITY_PERFORMANCE_AND_RELIABILITY_HARDENING.md"
+    },
+    {
+      "id": "M8-T07",
+      "title": "Improve routing prediction, migration success and fallback economics",
+      "milestone": "M8",
+      "primary_role": "architect + performance + platform",
+      "dependencies": [
+        "M3-T14",
+        "M7-T12",
+        "M8-T02"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_08_COMPATIBILITY_PERFORMANCE_AND_RELIABILITY_HARDENING.md"
+    },
+    {
+      "id": "M8-T08",
+      "title": "Execute qualification load, soak, chaos and recovery testing",
+      "milestone": "M8",
+      "primary_role": "quality + platform",
+      "dependencies": [
+        "M7-T09",
+        "M7-T11",
+        "M8-T06",
+        "M8-T07"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_08_COMPATIBILITY_PERFORMANCE_AND_RELIABILITY_HARDENING.md"
+    },
+    {
+      "id": "M8-T09",
+      "title": "Complete supported platform and architecture builds",
+      "milestone": "M8",
+      "primary_role": "platform + native-engine",
+      "dependencies": [
+        "M7-T08",
+        "M8-T04"
+      ],
+      "risk": "high",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_08_COMPATIBILITY_PERFORMANCE_AND_RELIABILITY_HARDENING.md"
+    },
+    {
+      "id": "M8-T10",
+      "title": "Verify API, schema, workflow and data backward compatibility",
+      "milestone": "M8",
+      "primary_role": "architect + protocol + platform",
+      "dependencies": [
+        "M4-T01",
+        "M5-T09",
+        "M7-T10"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_08_COMPATIBILITY_PERFORMANCE_AND_RELIABILITY_HARDENING.md"
+    },
+    {
+      "id": "M8-T11",
+      "title": "Generate documentation, capability, evidence and release-candidate reports",
+      "milestone": "M8",
+      "primary_role": "developer-experience + release",
+      "dependencies": [
+        "M8-T01",
+        "M8-T02",
+        "M8-T03",
+        "M8-T04",
+        "M8-T05",
+        "M8-T06",
+        "M8-T07",
+        "M8-T08",
+        "M8-T09",
+        "M8-T10"
+      ],
+      "risk": "high",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_08_COMPATIBILITY_PERFORMANCE_AND_RELIABILITY_HARDENING.md"
+    },
+    {
+      "id": "M8-T12",
+      "title": "Conduct independent release-candidate readiness review",
+      "milestone": "M8",
+      "primary_role": "release + independent reviewer",
+      "dependencies": [
+        "M8-T01",
+        "M8-T02",
+        "M8-T03",
+        "M8-T04",
+        "M8-T05",
+        "M8-T06",
+        "M8-T07",
+        "M8-T08",
+        "M8-T09",
+        "M8-T10",
+        "M8-T11"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "no",
+      "source": "planning/MILESTONE_08_COMPATIBILITY_PERFORMANCE_AND_RELIABILITY_HARDENING.md"
+    },
+    {
+      "id": "M9-T01",
+      "title": "Freeze release candidate and initialize certification evidence registry",
+      "milestone": "M9",
+      "primary_role": "release + quality",
+      "dependencies": [
+        "M8-T12"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "no",
+      "source": "planning/MILESTONE_09_FINAL_CERTIFICATION_AND_GENERAL_AVAILABILITY.md"
+    },
+    {
+      "id": "M9-T02",
+      "title": "Run clean build, install, upgrade, migration and rollback certification",
+      "milestone": "M9",
+      "primary_role": "release + platform",
+      "dependencies": [
+        "M9-T01"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_09_FINAL_CERTIFICATION_AND_GENERAL_AVAILABILITY.md"
+    },
+    {
+      "id": "M9-T03",
+      "title": "Run the full prioritized Web Platform Tests certification",
+      "milestone": "M9",
+      "primary_role": "quality + native-engine",
+      "dependencies": [
+        "M9-T01",
+        "M9-T02"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_09_FINAL_CERTIFICATION_AND_GENERAL_AVAILABILITY.md"
+    },
+    {
+      "id": "M9-T04",
+      "title": "Run the full native, hybrid and Chromium differential corpus",
+      "milestone": "M9",
+      "primary_role": "quality + native-engine",
+      "dependencies": [
+        "M9-T01",
+        "M9-T02"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_09_FINAL_CERTIFICATION_AND_GENERAL_AVAILABILITY.md"
+    },
+    {
+      "id": "M9-T05",
+      "title": "Run the full protocol, client and SDK conformance matrix",
+      "milestone": "M9",
+      "primary_role": "protocol + quality",
+      "dependencies": [
+        "M9-T01",
+        "M9-T02"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_09_FINAL_CERTIFICATION_AND_GENERAL_AVAILABILITY.md"
+    },
+    {
+      "id": "M9-T06",
+      "title": "Run extended fuzzing, sanitizers, penetration and security certification",
+      "milestone": "M9",
+      "primary_role": "security + quality",
+      "dependencies": [
+        "M9-T01",
+        "M9-T02"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_09_FINAL_CERTIFICATION_AND_GENERAL_AVAILABILITY.md"
+    },
+    {
+      "id": "M9-T07",
+      "title": "Run fair performance, load, capacity and cost certification",
+      "milestone": "M9",
+      "primary_role": "performance + independent reviewer",
+      "dependencies": [
+        "M9-T01",
+        "M9-T02",
+        "M9-T04"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_09_FINAL_CERTIFICATION_AND_GENERAL_AVAILABILITY.md"
+    },
+    {
+      "id": "M9-T08",
+      "title": "Run 24-hour and 72-hour soak plus chaos certification",
+      "milestone": "M9",
+      "primary_role": "quality + platform",
+      "dependencies": [
+        "M9-T01",
+        "M9-T02",
+        "M9-T07"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_09_FINAL_CERTIFICATION_AND_GENERAL_AVAILABILITY.md"
+    },
+    {
+      "id": "M9-T09",
+      "title": "Certify Svelte console accessibility, security, performance and developer experience",
+      "milestone": "M9",
+      "primary_role": "frontend + quality + security",
+      "dependencies": [
+        "M9-T01",
+        "M9-T02"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_09_FINAL_CERTIFICATION_AND_GENERAL_AVAILABILITY.md"
+    },
+    {
+      "id": "M9-T10",
+      "title": "Certify backup, restore, disaster recovery, incident and emergency operations",
+      "milestone": "M9",
+      "primary_role": "platform + security",
+      "dependencies": [
+        "M9-T01",
+        "M9-T02",
+        "M9-T08"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "yes",
+      "source": "planning/MILESTONE_09_FINAL_CERTIFICATION_AND_GENERAL_AVAILABILITY.md"
+    },
+    {
+      "id": "M9-T11",
+      "title": "Complete legal, license, privacy, release documentation and public-claim review",
+      "milestone": "M9",
+      "primary_role": "legal + release + product",
+      "dependencies": [
+        "M9-T02",
+        "M9-T03",
+        "M9-T04",
+        "M9-T05",
+        "M9-T06",
+        "M9-T07",
+        "M9-T08",
+        "M9-T09",
+        "M9-T10"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "no",
+      "source": "planning/MILESTONE_09_FINAL_CERTIFICATION_AND_GENERAL_AVAILABILITY.md"
+    },
+    {
+      "id": "M9-T12",
+      "title": "Obtain final approvals, release GA and close the autonomous program loop",
+      "milestone": "M9",
+      "primary_role": "release + product owner",
+      "dependencies": [
+        "M9-T01",
+        "M9-T02",
+        "M9-T03",
+        "M9-T04",
+        "M9-T05",
+        "M9-T06",
+        "M9-T07",
+        "M9-T08",
+        "M9-T09",
+        "M9-T10",
+        "M9-T11"
+      ],
+      "risk": "critical",
+      "may_run_in_parallel": "no",
+      "source": "planning/MILESTONE_09_FINAL_CERTIFICATION_AND_GENERAL_AVAILABILITY.md"
+    }
+  ]
+}

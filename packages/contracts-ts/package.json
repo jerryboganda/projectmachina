@@ -1,0 +1,11 @@
+{
+  "name": "@machina/contracts-ts",
+  "private": true,
+  "version": "0.1.0-alpha",
+  "type": "module",
+  "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./command-model": "./src/command-model.ts"
+  }
+}

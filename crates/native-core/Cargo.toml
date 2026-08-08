@@ -1,0 +1,13 @@
+[package]
+name = "machina-native-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Shared lifecycle engine adapter foundation for native and Chromium workers."
+
+[dependencies]
+machina-capability = { path = "../capability" }
+machina-command-bus = { path = "../command-bus" }
+machina-command-model = { path = "../command-model" }
+machina-session = { path = "../session" }

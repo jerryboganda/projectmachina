@@ -1,0 +1,13 @@
+[package]
+name = "machina-telemetry"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Typed, redaction-aware telemetry and evidence primitives."
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+machina-command-model = { path = "../command-model" }

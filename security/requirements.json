@@ -1,0 +1,113 @@
+{
+  "schema_version": "0.1.0",
+  "requirements": [
+    {
+      "id": "TM-01",
+      "owner": "native-engine",
+      "tasks": ["M2-T03", "M2-T05", "M8-T04"],
+      "test_tags": ["parser", "dom", "sanitizer", "fuzz"]
+    },
+    {
+      "id": "TM-02",
+      "owner": "security",
+      "tasks": ["M2-T06", "M7-T01", "M8-T05"],
+      "test_tags": ["v8-boundary", "sandbox", "escape"]
+    },
+    {
+      "id": "TM-03",
+      "owner": "security",
+      "tasks": ["M3-T06", "M7-T04"],
+      "test_tags": ["ssrf", "metadata", "redirect"]
+    },
+    {
+      "id": "TM-04",
+      "owner": "security",
+      "tasks": ["M3-T06", "M7-T04"],
+      "test_tags": ["dns-rebinding", "resolution", "redirect"]
+    },
+    {
+      "id": "TM-05",
+      "owner": "security",
+      "tasks": ["M1-T02", "M1-T10", "M7-T05"],
+      "test_tags": ["tenant-isolation", "idor", "audit"]
+    },
+    {
+      "id": "TM-06",
+      "owner": "security",
+      "tasks": ["M0-T06", "M0-T09", "M5-T07", "M7-T06"],
+      "test_tags": ["redaction", "canary", "secret-reference"]
+    },
+    {
+      "id": "TM-07",
+      "owner": "agent-runtime",
+      "tasks": ["M5-T07", "M5-T08"],
+      "test_tags": ["prompt-injection", "approval", "tool-policy"]
+    },
+    {
+      "id": "TM-08",
+      "owner": "agent-runtime",
+      "tasks": ["M5-T04", "M5-T09"],
+      "test_tags": ["replay", "checkpoint", "side-effect"]
+    },
+    {
+      "id": "TM-09",
+      "owner": "protocol",
+      "tasks": ["M1-T08", "M4-T01", "M4-T03"],
+      "test_tags": ["size-limit", "backpressure", "deadline"]
+    },
+    {
+      "id": "TM-10",
+      "owner": "security",
+      "tasks": ["M7-T07", "M7-T11"],
+      "test_tags": ["abuse", "quota", "emergency-block"]
+    },
+    {
+      "id": "TM-11",
+      "owner": "security",
+      "tasks": ["M3-T11", "M7-T01"],
+      "test_tags": ["upload", "download", "filesystem"]
+    },
+    {
+      "id": "TM-12",
+      "owner": "release",
+      "tasks": ["M0-T07", "M8-T11", "M9-T11"],
+      "test_tags": ["sbom", "provenance", "reproducible-build"]
+    },
+    {
+      "id": "TM-13",
+      "owner": "orchestrator",
+      "tasks": ["M0-T02", "M0-T03", "M0-T06"],
+      "test_tags": ["path-ownership", "review", "policy-integrity"]
+    },
+    {
+      "id": "TM-14",
+      "owner": "observability",
+      "tasks": ["M0-T09", "M1-T10", "M7-T06"],
+      "test_tags": ["classification", "redaction", "trace"]
+    },
+    {
+      "id": "TM-15",
+      "owner": "native-engine",
+      "tasks": ["M1-T05", "M2-T01", "M7-T02"],
+      "test_tags": ["worker-reset", "generation", "cross-session"]
+    },
+    {
+      "id": "TM-16",
+      "owner": "security",
+      "tasks": ["M1-T04", "M7-T05"],
+      "test_tags": ["grant", "expiry", "revocation"]
+    },
+    {
+      "id": "TM-17",
+      "owner": "platform",
+      "tasks": ["M1-T10", "M7-T06"],
+      "test_tags": ["signed-url", "artifact-auth", "retention"]
+    },
+    {
+      "id": "TM-18",
+      "owner": "agent-runtime",
+      "tasks": ["M5-T01", "M5-T03", "M5-T07"],
+      "test_tags": ["typed-dsl", "sandbox", "workflow-policy"]
+    }
+  ]
+}

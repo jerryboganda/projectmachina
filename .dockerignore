@@ -1,0 +1,14 @@
+.git
+.agent-state/claims
+.agent-state/raw
+target
+build
+node_modules
+apps/*/.svelte-kit
+coverage
+dist
+.env
+.env.*
+!.env.example
+*.log
+*.trace

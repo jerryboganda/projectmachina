@@ -1,0 +1,10 @@
+[package]
+name = "machina-session"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Lifecycle, cancellation, page identity, and resource accounting primitives."
+
+[dependencies]
+machina-command-bus = { path = "../command-bus" }

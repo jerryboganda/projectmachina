@@ -1,0 +1,42 @@
+{
+  "schema_version": "0.1.0",
+  "fixture_set": "machina-foundation",
+  "version": "2026-08-09.1",
+  "network": {
+    "bind_host": "127.0.0.1",
+    "external_network": false,
+    "origins": [
+      "http://one.localhost",
+      "http://two.localhost"
+    ],
+    "websocket_path": "/ws"
+  },
+  "routes": [
+    {
+      "id": "navigation",
+      "method": "GET",
+      "path": "/navigation"
+    },
+    {
+      "id": "redirect",
+      "method": "GET",
+      "path": "/redirect"
+    },
+    {
+      "id": "form-submit",
+      "method": "POST",
+      "path": "/form"
+    },
+    {
+      "id": "dom-mutation",
+      "method": "GET",
+      "path": "/dom-mutation"
+    },
+    {
+      "id": "network-policy",
+      "method": "GET",
+      "path": "/network-policy"
+    }
+  ],
+  "reproduction": "node --test scripts/test/fixture-server.test.mjs"
+}

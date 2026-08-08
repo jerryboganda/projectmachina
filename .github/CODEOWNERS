@@ -1,0 +1,9 @@
+# Shared contracts and security-sensitive boundaries require accountable review.
+* @jerryboganda
+/schemas/ @jerryboganda
+/proto/ @jerryboganda
+/crates/command-model/ @jerryboganda
+/cpp/v8-bridge/ @jerryboganda
+/security/ @jerryboganda
+/.github/ @jerryboganda
+/deploy/ @jerryboganda

@@ -1,0 +1,105 @@
+{
+  "schema_version": "0.1.0",
+  "clean_room_policy": "independent-implementation",
+  "direct_dependencies": [
+    {
+      "name": "rust",
+      "version": "1.86.0",
+      "source": "https://www.rust-lang.org/",
+      "license": "MIT OR Apache-2.0",
+      "purpose": "native engine and control-plane implementation",
+      "integrity": "toolchain-channel-pinned"
+    },
+    {
+      "name": "node",
+      "version": "20.18.0",
+      "source": "https://nodejs.org/",
+      "license": "MIT",
+      "purpose": "build, contract generation, local tooling, and frontend development",
+      "integrity": "version-pinned"
+    },
+    {
+      "name": "pnpm",
+      "version": "9.15.0",
+      "source": "https://pnpm.io/",
+      "license": "MIT",
+      "purpose": "JavaScript workspace dependency management",
+      "integrity": "version-pinned"
+    },
+    {
+      "name": "cmake",
+      "version": ">=3.24",
+      "source": "https://cmake.org/",
+      "license": "BSD-3-Clause",
+      "purpose": "C++ bridge build orchestration",
+      "integrity": "minimum-version-policy"
+    },
+    {
+      "name": "svelte",
+      "version": "5.20.0",
+      "source": "https://www.npmjs.com/package/svelte",
+      "license": "MIT",
+      "purpose": "SvelteKit console UI compiler/runtime",
+      "integrity": "pnpm-lock-resolved"
+    },
+    {
+      "name": "@sveltejs/kit",
+      "version": "2.16.0",
+      "source": "https://www.npmjs.com/package/@sveltejs/kit",
+      "license": "MIT",
+      "purpose": "console routing and server framework",
+      "integrity": "pnpm-lock-resolved"
+    },
+    {
+      "name": "@sveltejs/adapter-auto",
+      "version": "3.3.1",
+      "source": "https://www.npmjs.com/package/@sveltejs/adapter-auto",
+      "license": "MIT",
+      "purpose": "portable SvelteKit deployment adapter",
+      "integrity": "pnpm-lock-resolved"
+    },
+    {
+      "name": "@sveltejs/vite-plugin-svelte",
+      "version": "5.0.3",
+      "source": "https://www.npmjs.com/package/@sveltejs/vite-plugin-svelte",
+      "license": "MIT",
+      "purpose": "Svelte compiler integration for Vite",
+      "integrity": "pnpm-lock-resolved"
+    },
+    {
+      "name": "svelte-check",
+      "version": "4.1.4",
+      "source": "https://www.npmjs.com/package/svelte-check",
+      "license": "MIT",
+      "purpose": "Svelte and TypeScript diagnostics",
+      "integrity": "pnpm-lock-resolved"
+    },
+    {
+      "name": "typescript",
+      "version": "5.7.3",
+      "source": "https://www.npmjs.com/package/typescript",
+      "license": "Apache-2.0",
+      "purpose": "TypeScript compiler and contract consumer checks",
+      "integrity": "pnpm-lock-resolved"
+    },
+    {
+      "name": "vite",
+      "version": "6.1.0",
+      "source": "https://www.npmjs.com/package/vite",
+      "license": "MIT",
+      "purpose": "frontend development and production bundling",
+      "integrity": "pnpm-lock-resolved"
+    }
+  ],
+  "review_policy": {
+    "unknown_license": "block",
+    "new_runtime_parser_crypto_network_sandbox_dependency": "security-and-license-review",
+    "untrusted_pull_request_secrets": "deny",
+    "release_artifacts": [
+      "sbom",
+      "provenance",
+      "checksums",
+      "signatures"
+    ]
+  }
+}

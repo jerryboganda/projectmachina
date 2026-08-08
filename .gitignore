@@ -1,0 +1,16 @@
+/target/
+/build/
+/node_modules/
+/.pnpm-store/
+/apps/*/.svelte-kit/
+/apps/*/node_modules/
+/coverage/
+/dist/
+/.agent-state/claims/
+/.agent-state/claims.lock/
+/.agent-state/raw/
+/.env
+/.env.*
+!.env.example
+*.log
+*.trace

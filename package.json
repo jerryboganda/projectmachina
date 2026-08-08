@@ -1,0 +1,36 @@
+{
+  "name": "@project-machina/workspace",
+  "private": true,
+  "version": "0.1.0-alpha",
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=20.18.0 <23"
+  },
+  "scripts": {
+    "bootstrap": "node scripts/build/bootstrap.mjs",
+    "doctor": "node scripts/build/doctor.mjs",
+    "contract:generate": "node scripts/contracts/generate.mjs",
+    "contract:check": "node scripts/contracts/check.mjs",
+    "contract:roundtrip": "node scripts/contracts/roundtrip.mjs",
+    "architecture:check": "node scripts/architecture/check-boundaries.mjs",
+    "claims": "node scripts/agent/claims.mjs",
+    "agent:rehearsal": "node scripts/agent/rehearsal.mjs",
+    "task-registry:generate": "node scripts/agent/task-registry.mjs",
+    "security:check": "node scripts/security/check.mjs",
+    "supply-chain:check": "node scripts/security/check-supply-chain.mjs",
+    "security:traceability": "node scripts/security/check-requirements.mjs",
+    "secrets:scan": "node scripts/security/scan-secrets.mjs",
+    "evidence:smoke": "node --test scripts/evidence/manifest.test.mjs",
+    "benchmark:smoke": "node benchmarks/harness/smoke.mjs",
+    "build": "pnpm --filter @machina/console build",
+    "check": "pnpm --filter @machina/console check",
+    "fmt-check": "pnpm --filter @machina/console fmt-check",
+    "test": "node --test scripts/agent/claims.test.mjs scripts/agent/task-registry.test.mjs scripts/agent/rehearsal.test.mjs scripts/security/redact.test.mjs scripts/test/fixture-server.test.mjs benchmarks/harness/runner.test.mjs && pnpm --filter @machina/console test",
+    "clean": "node scripts/build/clean.mjs",
+    "dev:bootstrap": "node scripts/dev/bootstrap.mjs",
+    "dev:up": "node scripts/dev/local.mjs up",
+    "dev:down": "node scripts/dev/local.mjs down",
+    "dev:health": "node scripts/dev/local.mjs health",
+    "dev:reset": "node scripts/dev/local.mjs reset --confirm"
+  }
+}

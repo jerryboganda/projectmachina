@@ -1,0 +1,13 @@
+---
+title: "Milestone Alias"
+project: "Project Machina"
+document_status: "alias"
+version: "1.0.0"
+last_updated: "2026-08-08"
+owners: "Architecture and Program"
+purpose: "Provide a stable short link to the canonical milestone task document."
+---
+
+# Milestone Alias
+
+The canonical task document is [`MILESTONE_07_SECURITY_AND_CLOUD_OPERATIONS.md`](MILESTONE_07_SECURITY_AND_CLOUD_OPERATIONS.md).

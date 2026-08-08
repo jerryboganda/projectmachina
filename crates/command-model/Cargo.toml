@@ -1,0 +1,10 @@
+[package]
+name = "machina-command-model"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Bootstrap crate for Project Machina canonical command contracts."
+
+[lib]
+path = "src/lib.rs"
