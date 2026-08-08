@@ -1,0 +1,25 @@
+name: Security risk approval
+description: Record a bounded request for accountable security-risk approval.
+title: "[security approval] "
+labels:
+  - risk:security
+  - human-gate
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Never include secrets or restricted exploit details in this issue.
+        Material risk acceptance requires the H-SEC-01 owner gate.
+  - type: input
+    id: gate
+    attributes:
+      label: Approval gate
+      value: H-SEC-01
+    validations:
+      required: true
+  - type: textarea
+    id: risk
+    attributes:
+      label: Risk, mitigation, expiry, and rollback
+    validations:
+      required: true

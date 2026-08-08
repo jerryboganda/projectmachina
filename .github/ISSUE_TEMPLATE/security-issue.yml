@@ -1,0 +1,31 @@
+name: Security issue
+description: Report a suspected security defect without including secrets or sensitive page data.
+title: "[security] "
+labels:
+  - risk:security
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include credentials, private keys, cookies, customer data, or
+        exploit payloads. Use the private security contact for sensitive reports.
+  - type: input
+    id: threat
+    attributes:
+      label: Threat or control ID
+      placeholder: TM-03
+    validations:
+      required: true
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact and reproduction
+      description: Provide a minimal safe reproduction and affected boundary.
+    validations:
+      required: true
+  - type: textarea
+    id: mitigation
+    attributes:
+      label: Suggested mitigation
+    validations:
+      required: true
