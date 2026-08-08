@@ -49,17 +49,16 @@ function claimPath(root, taskId) {
   return join(claimsDirectory(root), `${safeTaskId}.json`);
 }
 
-function currentBranch(root) {
-  const result = spawnSync("git", ["branch", "--show-current"], {
+function validateWorktree(root, branch, worktree) {
+  const repository = spawnSync("git", ["rev-parse", "--show-toplevel"], {
     cwd: root,
     encoding: "utf8",
     shell: false,
     stdio: "pipe"
   });
-  return !result.error && result.status === 0 ? result.stdout.trim() : "";
-}
-
-function validateWorktree(root, branch, worktree) {
+  if (repository.error || repository.status !== 0) {
+    return;
+  }
   const result = spawnSync("git", ["worktree", "list", "--porcelain"], {
     cwd: root,
     encoding: "utf8",
@@ -67,7 +66,7 @@ function validateWorktree(root, branch, worktree) {
     stdio: "pipe"
   });
   if (result.error || result.status !== 0) {
-    return;
+    throw new Error("unable to verify Git worktree ownership");
   }
   const expectedPath = resolve(worktree).toLowerCase();
   const blocks = result.stdout.trim().split(/\r?\n\r?\n/).filter(Boolean);
@@ -120,8 +119,9 @@ function literalPrefix(scope) {
 }
 
 export function scopesOverlap(left, right) {
-  const leftScope = left.replaceAll("\\", "/");
-  const rightScope = right.replaceAll("\\", "/");
+  const foldCase = process.platform === "win32";
+  const leftScope = (foldCase ? left.toLowerCase() : left).replaceAll("\\", "/");
+  const rightScope = (foldCase ? right.toLowerCase() : right).replaceAll("\\", "/");
   const leftPrefix = literalPrefix(leftScope);
   const rightPrefix = literalPrefix(rightScope);
   const leftHasWildcard = /[*?[\]]/.test(leftScope);
@@ -272,8 +272,8 @@ export async function claimTask({
   if (branch === "main" || branch === "master") {
     throw new Error("active task claims require a task branch, not the protected default branch");
   }
-  if (resolve(root) === resolve(root, worktree) && currentBranch(root) !== branch) {
-    throw new Error("claim worktree must be checked out on the claimed task branch");
+  if (resolve(root) === resolve(root, worktree)) {
+    throw new Error("active task claims require a separate worktree");
   }
   validateWorktree(root, branch, worktree);
   if (!Array.isArray(writeScope) || writeScope.length === 0) {

@@ -40,11 +40,13 @@ function trackedAndUntrackedFiles() {
 
 const failures = [];
 for (const relativePath of trackedAndUntrackedFiles()) {
+  const normalizedPath = relativePath.replaceAll("\\", "/");
+  const pathSegments = normalizedPath.split("/");
   if (
-    relativePath.includes("node_modules/") ||
-    relativePath.includes(".svelte-kit/") ||
-    relativePath.includes("target/") ||
-    relativePath.includes("build/")
+    pathSegments.includes("node_modules") ||
+    pathSegments.includes(".svelte-kit") ||
+    pathSegments[0] === "target" ||
+    pathSegments[0] === "build"
   ) {
     continue;
   }

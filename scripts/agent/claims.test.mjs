@@ -15,6 +15,7 @@ import {
 test("normalizes repository-relative scopes and rejects escapes", () => {
   const root = "D:/repo";
   assert.equal(normalizeScope(".\\crates\\dom\\**", root), "crates/dom/**");
+  assert.equal(normalizeScope("security//redact.mjs", root), "security/redact.mjs");
   assert.throws(() => normalizeScope("../outside", root), /escapes repository root/);
   assert.throws(() => normalizeScope("D:\\outside", root), /repository-relative/);
 });
@@ -26,6 +27,7 @@ test("detects overlapping literal and glob scopes conservatively", () => {
   assert.equal(scopesOverlap("src/foo?.txt", "src/foo1.txt"), true);
   assert.equal(scopesOverlap("src/foo*", "src/foobar"), true);
   assert.equal(scopesOverlap("src/a[0-9].json", "src/a1.json"), true);
+  assert.equal(scopesOverlap("src/Foo/**", "src/foo/bar.ts"), true);
 });
 
 test("rejects overlapping claims and preserves release evidence", async () => {
