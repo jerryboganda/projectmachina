@@ -27,6 +27,14 @@
       "integrity": "version-pinned"
     },
     {
+      "name": "buf",
+      "version": "1.47.2",
+      "source": "https://github.com/bufbuild/buf/releases/tag/v1.47.2",
+      "license": "Apache-2.0",
+      "purpose": "protobuf and schema lint/compatibility tooling",
+      "integrity": "linux-x86_64:3a0c4da8d46eea8136affa63db202c76a44f8112384160b73c3fffb1cf14b5d8;windows-x86_64:42a1310377e7d0f0931ac9b5a073a531d9b843fe3045938c0d0ecc5d1f1ab93f"
+    },
+    {
       "name": "cmake",
       "version": ">=3.24",
       "source": "https://cmake.org/",

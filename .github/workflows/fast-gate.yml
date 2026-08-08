@@ -40,10 +40,9 @@ jobs:
           curl --fail --silent --show-error --location \
             --output /tmp/buf \
             "https://github.com/bufbuild/buf/releases/download/v${version}/buf-Linux-x86_64"
-          curl --fail --silent --show-error --location \
-            --output /tmp/buf-sha256.txt \
-            "https://github.com/bufbuild/buf/releases/download/v${version}/sha256.txt"
-          grep "buf-Linux-x86_64$" /tmp/buf-sha256.txt | sha256sum --check
+          printf '%s  /tmp/buf\n' \
+            '3a0c4da8d46eea8136affa63db202c76a44f8112384160b73c3fffb1cf14b5d8' \
+            | sha256sum --check
           chmod +x /tmp/buf
           sudo mv /tmp/buf /usr/local/bin/buf
 
