@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "noEmit": true,
+    "skipLibCheck": true
+  },
+  "files": [
+    "./typescript-consumer.fixture.ts",
+    "../../packages/contracts-ts/src/command-model.ts"
+  ]
+}

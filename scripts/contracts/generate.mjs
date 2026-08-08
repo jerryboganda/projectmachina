@@ -31,34 +31,136 @@ const enumNames = {
   EventType: "EventType"
 };
 
+const inlineEnumNames = {
+  "SessionCreatePayload.engine_policy": "EnginePolicy",
+  "SessionCreatePayload.fidelity_profile": "FidelityProfile",
+  "NavigationGotoPayload.wait_until": "WaitUntil"
+};
+
+const definitions = schema.$defs;
+
+function rustMemberName(value) {
+  return value
+    .split(/[-_.]/)
+    .filter(Boolean)
+    .map((part) => {
+      const normalized = part.toLowerCase();
+      return normalized[0].toUpperCase() + normalized.slice(1);
+    })
+    .join("");
+}
+
+function tsMemberName(value) {
+  return value
+    .split(/[-_.]/)
+    .filter(Boolean)
+    .map((part, index) => {
+      const normalized = part.toLowerCase();
+      return index === 0
+        ? normalized
+        : normalized[0].toUpperCase() + normalized.slice(1);
+    })
+    .join("");
+}
+
+function assertWireShape() {
+  const commandKinds = new Set(definitions.CommandKind.enum);
+  const branches = new Map(
+    definitions.CommandEnvelope.oneOf.map((branch) => [
+      branch.properties?.kind?.const,
+      branch.properties?.payload?.$ref
+    ])
+  );
+  const payloadRefs = new Set(
+    definitions.CommandPayload.oneOf.map((branch) => branch.$ref)
+  );
+
+  if (codegen.payload_variants.length !== definitions.CommandEnvelope.oneOf.length) {
+    throw new Error("codegen payload variants and command wire branches are out of sync");
+  }
+  if (codegen.payload_variants.length !== payloadRefs.size) {
+    throw new Error("codegen payload variants and payload union are out of sync");
+  }
+
+  const seenKinds = new Set();
+  for (const { kind, type } of codegen.payload_variants) {
+    if (seenKinds.has(kind)) {
+      throw new Error(`duplicate codegen payload variant ${kind}`);
+    }
+    seenKinds.add(kind);
+    if (!commandKinds.has(kind)) {
+      throw new Error(`codegen payload variant ${kind} is not a CommandKind`);
+    }
+    if (branches.get(kind) !== `#/$defs/${type}`) {
+      throw new Error(`command wire shape disagrees for ${kind}`);
+    }
+    if (!payloadRefs.has(`#/$defs/${type}`)) {
+      throw new Error(`payload wire shape disagrees for ${kind}`);
+    }
+  }
+}
+
+function inlineEnumDefinitions() {
+  return Object.entries(inlineEnumNames).map(([path, name]) => {
+    const [owner, fieldName] = path.split(".");
+    const field = definitions[owner]?.properties?.[fieldName];
+    if (!field?.enum) {
+      throw new Error(`named inline enum ${path} is missing an enum constraint`);
+    }
+    return { name, values: field.enum };
+  });
+}
+
+function rustInlineEnumMethods() {
+  return inlineEnumDefinitions()
+    .map(({ name, values }) => {
+      const asString = values
+        .map((value) => `            Self::${rustMemberName(value)} => ${JSON.stringify(value)},`)
+        .join("\n");
+      const parse = values
+        .map((value) => `            ${JSON.stringify(value)} => Some(Self::${rustMemberName(value)}),`)
+        .join("\n");
+      return `impl ${name} {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+${asString}
+        }
+    }
+
+    pub fn parse(value: &str) -> Option<Self> {
+        match value {
+${parse}
+            _ => None,
+        }
+    }
+}`;
+    })
+    .join("\n\n");
+}
+
+function rustConstraintAccessors() {
+  return Object.entries(inlineEnumNames)
+    .map(([path, enumName]) => {
+      const [owner, fieldName] = path.split(".");
+      return `impl ${owner} {
+    pub fn ${fieldName}_kind(&self) -> Option<${enumName}> {
+        ${enumName}::parse(&self.${fieldName})
+    }
+}`;
+    })
+    .join("\n\n");
+}
+
 function rustEnum(name, values) {
   const variants = values.map((value) => {
-    const variant = value
-      .split(/[-_.]/)
-      .filter(Boolean)
-      .map((part) => {
-        const normalized = part.toLowerCase();
-        return normalized[0].toUpperCase() + normalized.slice(1);
-      })
-      .join("");
-    return `    ${variant},`;
+    return `    ${rustMemberName(value)},`;
   });
   return `#[derive(Clone, Copy, Debug, Eq, PartialEq)]\npub enum ${name} {\n${variants.join("\n")}\n}`;
 }
 
 function tsEnum(name, values) {
   const entries = values.map((value) => {
-    const memberName = value
-      .split(/[-_.]/)
-      .filter(Boolean)
-      .map((part, index) => {
-        const normalized = part.toLowerCase();
-        return index === 0
-          ? normalized
-          : normalized[0].toUpperCase() + normalized.slice(1);
-      })
-      .join("");
-    return `  ${memberName} = ${JSON.stringify(value)},`;
+    return `  ${tsMemberName(value)} = ${JSON.stringify(value)},`;
   });
   return `export enum ${name} {\n${entries.join("\n")}\n}`;
 }
@@ -91,7 +193,10 @@ function rustStruct(name, fields) {
 function tsType(field) {
   if (field.type === "boolean") return "boolean";
   if (field.type === "integer") return "number";
-  if (field.type === "array") return "string[]";
+  if (field.type === "array") {
+    if (field.items?.$ref) return `${field.items.$ref.split("/").at(-1)}[]`;
+    return "string[]";
+  }
   if (field.$ref) return field.$ref.split("/").at(-1);
   return "string";
 }
@@ -129,21 +234,61 @@ function tsInterface(name, fields) {
   const required = new Set(fields.required ?? []);
   const rendered = Object.entries(fields.properties ?? {}).map(([fieldName, field]) => {
     const suffix = required.has(fieldName) ? "" : "?";
-    return `  ${fieldName}${suffix}: ${tsType(field)};`;
+    const namedEnum = inlineEnumNames[`${name}.${fieldName}`];
+    const type = namedEnum ?? tsType(field);
+    return `  ${fieldName}${suffix}: ${type};`;
   });
   return `export interface ${name} {\n${rendered.join("\n")}\n}`;
 }
 
-const definitions = schema.$defs;
+function rustDiscriminatorHelpers() {
+  const matches = codegen.payload_variants
+    .map(({ name, kind }) => `            Self::${name}(_) => CommandKind::${rustMemberName(kind)},`)
+    .join("\n");
+  return `impl CommandPayload {
+    pub const fn kind(&self) -> CommandKind {
+        match self {
+${matches}
+        }
+    }
+
+    pub fn matches_kind(&self, kind: CommandKind) -> bool {
+        self.kind() == kind
+    }
+}
+
+impl CommandEnvelope {
+    pub fn payload_matches_kind(&self) -> bool {
+        self.payload.matches_kind(self.kind)
+    }
+}`;
+}
+
+function tsPayloadMapping() {
+  const entries = codegen.payload_variants
+    .map(({ kind, type }) => `  [CommandKind.${tsMemberName(kind)}]: ${type};`)
+    .join("\n");
+  return `export interface CommandPayloadByKind {
+${entries}
+}
+
+export type CommandPayloadFor<Kind extends CommandKind> = CommandPayloadByKind[Kind];`;
+}
+
+assertWireShape();
 const rustParts = [
   "// @generated by scripts/contracts/generate.mjs; do not edit.",
   `// source_schema_sha256: ${sourceHash}`,
   `pub const SCHEMA_VERSION: &str = ${JSON.stringify(codegen.version)};`,
   `pub const SOURCE_SCHEMA_SHA256: &str = ${JSON.stringify(sourceHash)};`,
   ...Object.entries(enumNames).map(([schemaName, rustName]) => rustEnum(rustName, definitions[schemaName].enum)),
+  ...inlineEnumDefinitions().map(({ name, values }) => rustEnum(name, values)),
+  rustInlineEnumMethods(),
   ...["CommandMetadata", "SessionCreatePayload", "NavigationGotoPayload", "SemanticQueryPayload", "ClickPayload", "SessionClosePayload", "EngineExecution", "CanonicalError", "CommandOutcome", "EventEnvelope", "CapabilityStatusRecord"].map((name) => rustStruct(name, definitions[name])),
+  rustConstraintAccessors(),
   rustPayloadUnion(),
-  rustStruct("CommandEnvelope", definitions.CommandEnvelope)
+  rustStruct("CommandEnvelope", definitions.CommandEnvelope),
+  rustDiscriminatorHelpers()
 ];
 
 const tsParts = [
@@ -152,8 +297,10 @@ const tsParts = [
   `export const SCHEMA_VERSION = ${JSON.stringify(codegen.version)} as const;`,
   `export const SOURCE_SCHEMA_SHA256 = ${JSON.stringify(sourceHash)} as const;`,
   ...Object.entries(enumNames).map(([schemaName, tsName]) => tsEnum(tsName, definitions[schemaName].enum)),
+  ...inlineEnumDefinitions().map(({ name, values }) => tsEnum(name, values)),
   ...["CommandMetadata", "SessionCreatePayload", "NavigationGotoPayload", "SemanticQueryPayload", "ClickPayload", "SessionClosePayload", "EngineExecution", "CanonicalError", "CommandOutcome", "EventEnvelope", "CapabilityStatusRecord"].map((name) => tsInterface(name, definitions[name])),
   tsPayloadUnion(),
+  tsPayloadMapping(),
   tsInterface("CommandEnvelope", definitions.CommandEnvelope)
 ];
 

@@ -98,6 +98,96 @@ pub enum EventType {
     ResourceHealthV1,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum EnginePolicy {
+    NativeOnly,
+    PreferNative,
+    PreferCompatible,
+    ChromiumOnly,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum FidelityProfile {
+    Extract,
+    Agent,
+    Test,
+    Visual,
+    Custom,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum WaitUntil {
+    Commit,
+    Domcontentloaded,
+    Load,
+    Networkidle,
+}
+
+impl EnginePolicy {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::NativeOnly => "native-only",
+            Self::PreferNative => "prefer-native",
+            Self::PreferCompatible => "prefer-compatible",
+            Self::ChromiumOnly => "chromium-only",
+        }
+    }
+
+    pub fn parse(value: &str) -> Option<Self> {
+        match value {
+            "native-only" => Some(Self::NativeOnly),
+            "prefer-native" => Some(Self::PreferNative),
+            "prefer-compatible" => Some(Self::PreferCompatible),
+            "chromium-only" => Some(Self::ChromiumOnly),
+            _ => None,
+        }
+    }
+}
+
+impl FidelityProfile {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Extract => "extract",
+            Self::Agent => "agent",
+            Self::Test => "test",
+            Self::Visual => "visual",
+            Self::Custom => "custom",
+        }
+    }
+
+    pub fn parse(value: &str) -> Option<Self> {
+        match value {
+            "extract" => Some(Self::Extract),
+            "agent" => Some(Self::Agent),
+            "test" => Some(Self::Test),
+            "visual" => Some(Self::Visual),
+            "custom" => Some(Self::Custom),
+            _ => None,
+        }
+    }
+}
+
+impl WaitUntil {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Commit => "commit",
+            Self::Domcontentloaded => "domcontentloaded",
+            Self::Load => "load",
+            Self::Networkidle => "networkidle",
+        }
+    }
+
+    pub fn parse(value: &str) -> Option<Self> {
+        match value {
+            "commit" => Some(Self::Commit),
+            "domcontentloaded" => Some(Self::Domcontentloaded),
+            "load" => Some(Self::Load),
+            "networkidle" => Some(Self::Networkidle),
+            _ => None,
+        }
+    }
+}
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct CommandMetadata {
     pub correlation_id: String,
@@ -197,6 +287,24 @@ pub struct CapabilityStatusRecord {
     pub owner: String,
 }
 
+impl SessionCreatePayload {
+    pub fn engine_policy_kind(&self) -> Option<EnginePolicy> {
+        EnginePolicy::parse(&self.engine_policy)
+    }
+}
+
+impl SessionCreatePayload {
+    pub fn fidelity_profile_kind(&self) -> Option<FidelityProfile> {
+        FidelityProfile::parse(&self.fidelity_profile)
+    }
+}
+
+impl NavigationGotoPayload {
+    pub fn wait_until_kind(&self) -> Option<WaitUntil> {
+        WaitUntil::parse(&self.wait_until)
+    }
+}
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum CommandPayload {
     SessionCreate(SessionCreatePayload),
@@ -218,4 +326,26 @@ pub struct CommandEnvelope {
     pub deadline_ms: u64,
     pub required_capabilities: Vec<String>,
     pub metadata: CommandMetadata,
+}
+
+impl CommandPayload {
+    pub const fn kind(&self) -> CommandKind {
+        match self {
+            Self::SessionCreate(_) => CommandKind::SessionCreateV1,
+            Self::NavigationGoto(_) => CommandKind::NavigationGotoV1,
+            Self::SemanticQuery(_) => CommandKind::DomSemanticQueryV1,
+            Self::Click(_) => CommandKind::InteractionClickV1,
+            Self::SessionClose(_) => CommandKind::SessionCloseV1,
+        }
+    }
+
+    pub fn matches_kind(&self, kind: CommandKind) -> bool {
+        self.kind() == kind
+    }
+}
+
+impl CommandEnvelope {
+    pub fn payload_matches_kind(&self) -> bool {
+        self.payload.matches_kind(self.kind)
+    }
 }

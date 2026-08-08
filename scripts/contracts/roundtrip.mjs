@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { validate } from "./validator.mjs";
 
 const root = fileURLToPath(new URL("../..", import.meta.url));
 const schema = JSON.parse(
@@ -9,6 +10,13 @@ const schema = JSON.parse(
 );
 const fixture = JSON.parse(
   await readFile(join(root, "tests/contract/command-model.fixture.json"), "utf8")
+);
+
+const fixtureResult = validate(fixture, schema);
+assert.equal(
+  fixtureResult.valid,
+  true,
+  `command model fixture failed validation:\n${fixtureResult.errors.join("\n")}`
 );
 
 assert.equal(schema["x-machina-versioning"].unknown_fields, "reject");
@@ -25,4 +33,24 @@ assert.equal(fixture.capability.status, "native");
 
 const roundTripped = JSON.parse(JSON.stringify(fixture));
 assert.deepEqual(roundTripped, fixture);
+assert.equal(validate(roundTripped, schema).valid, true);
+
+const compatibility = JSON.parse(
+  await readFile(join(root, "tests/contract/compatibility-fixtures.json"), "utf8")
+);
+assert.equal(compatibility.schema_version, schema["x-machina-codegen"].version);
+assert.deepEqual(compatibility.policy, schema["x-machina-versioning"]);
+
+for (const { fixture: name, expected_valid: expectedValid } of compatibility.cases) {
+  const compatibilityFixture = JSON.parse(
+    await readFile(join(root, "tests/contract", name), "utf8")
+  );
+  const result = validate(compatibilityFixture, schema);
+  assert.equal(
+    result.valid,
+    expectedValid,
+    `${name} validation result did not match its compatibility policy:\n${result.errors.join("\n")}`
+  );
+}
+
 console.log("command model round-trip check: passed");

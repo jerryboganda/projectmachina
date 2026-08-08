@@ -90,6 +90,28 @@ export enum EventType {
   resourceHealthV1 = "resource.health.v1",
 }
 
+export enum EnginePolicy {
+  nativeOnly = "native-only",
+  preferNative = "prefer-native",
+  preferCompatible = "prefer-compatible",
+  chromiumOnly = "chromium-only",
+}
+
+export enum FidelityProfile {
+  extract = "extract",
+  agent = "agent",
+  test = "test",
+  visual = "visual",
+  custom = "custom",
+}
+
+export enum WaitUntil {
+  commit = "commit",
+  domcontentloaded = "domcontentloaded",
+  load = "load",
+  networkidle = "networkidle",
+}
+
 export interface CommandMetadata {
   correlation_id: string;
   causation_id?: string;
@@ -97,13 +119,13 @@ export interface CommandMetadata {
 }
 
 export interface SessionCreatePayload {
-  engine_policy: string;
-  fidelity_profile: string;
+  engine_policy: EnginePolicy;
+  fidelity_profile: FidelityProfile;
 }
 
 export interface NavigationGotoPayload {
   url: string;
-  wait_until?: string;
+  wait_until?: WaitUntil;
 }
 
 export interface SemanticQueryPayload {
@@ -184,6 +206,16 @@ export type CommandPayload =
   | SemanticQueryPayload
   | ClickPayload
   | SessionClosePayload;
+
+export interface CommandPayloadByKind {
+  [CommandKind.sessionCreateV1]: SessionCreatePayload;
+  [CommandKind.navigationGotoV1]: NavigationGotoPayload;
+  [CommandKind.domSemanticQueryV1]: SemanticQueryPayload;
+  [CommandKind.interactionClickV1]: ClickPayload;
+  [CommandKind.sessionCloseV1]: SessionClosePayload;
+}
+
+export type CommandPayloadFor<Kind extends CommandKind> = CommandPayloadByKind[Kind];
 
 export interface CommandEnvelopeBase {
   command_id: string;
