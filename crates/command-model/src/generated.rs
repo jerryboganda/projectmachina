@@ -11,117 +11,193 @@ pub const SOURCE_SCHEMA_SHA256: &str =
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum EngineKind {
+    #[serde(rename = "chromium")]
     Chromium,
+    #[serde(rename = "native")]
     Native,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum DataClassification {
+    #[serde(rename = "public")]
     Public,
+    #[serde(rename = "tenant")]
     Tenant,
+    #[serde(rename = "sensitive")]
     Sensitive,
+    #[serde(rename = "restricted")]
     Restricted,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum CommandKind {
+    #[serde(rename = "session.create.v1")]
     SessionCreateV1,
+    #[serde(rename = "navigation.goto.v1")]
     NavigationGotoV1,
+    #[serde(rename = "dom.semantic_query.v1")]
     DomSemanticQueryV1,
+    #[serde(rename = "interaction.click.v1")]
     InteractionClickV1,
+    #[serde(rename = "session.close.v1")]
     SessionCloseV1,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum OutcomeStatus {
+    #[serde(rename = "succeeded")]
     Succeeded,
+    #[serde(rename = "failed")]
     Failed,
+    #[serde(rename = "cancelled")]
     Cancelled,
+    #[serde(rename = "deadline_exceeded")]
     DeadlineExceeded,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum CapabilityStatus {
+    #[serde(rename = "native")]
     Native,
+    #[serde(rename = "native-limited")]
     NativeLimited,
+    #[serde(rename = "hybrid")]
     Hybrid,
+    #[serde(rename = "chromium")]
     Chromium,
+    #[serde(rename = "experimental")]
     Experimental,
+    #[serde(rename = "unsupported")]
     Unsupported,
+    #[serde(rename = "disabled-by-policy")]
     DisabledByPolicy,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum CanonicalErrorCode {
+    #[serde(rename = "INVALID_ARGUMENT")]
     InvalidArgument,
+    #[serde(rename = "UNAUTHENTICATED")]
     Unauthenticated,
+    #[serde(rename = "PERMISSION_DENIED")]
     PermissionDenied,
+    #[serde(rename = "POLICY_DENIED")]
     PolicyDenied,
+    #[serde(rename = "QUOTA_EXCEEDED")]
     QuotaExceeded,
+    #[serde(rename = "RATE_LIMITED")]
     RateLimited,
+    #[serde(rename = "SESSION_NOT_READY")]
     SessionNotReady,
+    #[serde(rename = "SESSION_CLOSED")]
     SessionClosed,
+    #[serde(rename = "SESSION_EXPIRED")]
     SessionExpired,
+    #[serde(rename = "CAPACITY_UNAVAILABLE")]
     CapacityUnavailable,
+    #[serde(rename = "WORKER_LOST")]
     WorkerLost,
+    #[serde(rename = "COMMAND_CANCELLED")]
     CommandCancelled,
+    #[serde(rename = "DEADLINE_EXCEEDED")]
     DeadlineExceeded,
+    #[serde(rename = "UNSUPPORTED_CAPABILITY")]
     UnsupportedCapability,
+    #[serde(rename = "CAPABILITY_DISABLED")]
     CapabilityDisabled,
+    #[serde(rename = "RENDERER_REQUIRED")]
     RendererRequired,
+    #[serde(rename = "FALLBACK_PROHIBITED")]
     FallbackProhibited,
+    #[serde(rename = "MIGRATION_FAILED")]
     MigrationFailed,
+    #[serde(rename = "STATE_TRANSFER_PARTIAL")]
     StateTransferPartial,
+    #[serde(rename = "INVALID_URL")]
     InvalidUrl,
+    #[serde(rename = "NETWORK_POLICY_BLOCKED")]
     NetworkPolicyBlocked,
+    #[serde(rename = "NAVIGATION_FAILED")]
     NavigationFailed,
+    #[serde(rename = "SELECTOR_INVALID")]
     SelectorInvalid,
+    #[serde(rename = "ELEMENT_NOT_FOUND")]
     ElementNotFound,
+    #[serde(rename = "ELEMENT_AMBIGUOUS")]
     ElementAmbiguous,
+    #[serde(rename = "ELEMENT_NOT_INTERACTABLE")]
     ElementNotInteractable,
+    #[serde(rename = "ACTION_POSTCONDITION_FAILED")]
     ActionPostconditionFailed,
+    #[serde(rename = "WORKFLOW_INVALID")]
     WorkflowInvalid,
+    #[serde(rename = "APPROVAL_REQUIRED")]
     ApprovalRequired,
+    #[serde(rename = "SECRET_UNAVAILABLE")]
     SecretUnavailable,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum EventType {
+    #[serde(rename = "session.lifecycle.v1")]
     SessionLifecycleV1,
+    #[serde(rename = "navigation.lifecycle.v1")]
     NavigationLifecycleV1,
+    #[serde(rename = "network.request.v1")]
     NetworkRequestV1,
+    #[serde(rename = "network.response.v1")]
     NetworkResponseV1,
+    #[serde(rename = "script.console.v1")]
     ScriptConsoleV1,
+    #[serde(rename = "script.error.v1")]
     ScriptErrorV1,
+    #[serde(rename = "dom.revision.v1")]
     DomRevisionV1,
+    #[serde(rename = "interaction.verified.v1")]
     InteractionVerifiedV1,
+    #[serde(rename = "capability.decision.v1")]
     CapabilityDecisionV1,
+    #[serde(rename = "workflow.approval.v1")]
     WorkflowApprovalV1,
+    #[serde(rename = "resource.health.v1")]
     ResourceHealthV1,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum EnginePolicy {
+    #[serde(rename = "native-only")]
     NativeOnly,
+    #[serde(rename = "prefer-native")]
     PreferNative,
+    #[serde(rename = "prefer-compatible")]
     PreferCompatible,
+    #[serde(rename = "chromium-only")]
     ChromiumOnly,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum FidelityProfile {
+    #[serde(rename = "extract")]
     Extract,
+    #[serde(rename = "agent")]
     Agent,
+    #[serde(rename = "test")]
     Test,
+    #[serde(rename = "visual")]
     Visual,
+    #[serde(rename = "custom")]
     Custom,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum WaitUntil {
+    #[serde(rename = "commit")]
     Commit,
+    #[serde(rename = "domcontentloaded")]
     Domcontentloaded,
+    #[serde(rename = "load")]
     Load,
+    #[serde(rename = "networkidle")]
     Networkidle,
 }
 

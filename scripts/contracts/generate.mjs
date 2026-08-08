@@ -156,7 +156,7 @@ function rustConstraintAccessors() {
 
 function rustEnum(name, values) {
   const variants = values.map((value) => {
-    return `    ${rustMemberName(value)},`;
+    return `    #[serde(rename = ${JSON.stringify(value)})]\n    ${rustMemberName(value)},`;
   });
   return `#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]\npub enum ${name} {\n${variants.join("\n")}\n}`;
 }

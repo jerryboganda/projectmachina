@@ -1,7 +1,7 @@
 use machina_command_model::{
-    ClickPayload, CommandEnvelope, CommandKind, CommandMetadata, CommandPayload, EnginePolicy,
-    FidelityProfile, NavigationGotoPayload, SemanticQueryPayload, SessionClosePayload,
-    SessionCreatePayload, WaitUntil,
+    ClickPayload, CommandEnvelope, CommandKind, CommandMetadata, CommandPayload, EngineKind,
+    EnginePolicy, FidelityProfile, NavigationGotoPayload, SemanticQueryPayload,
+    SessionClosePayload, SessionCreatePayload, WaitUntil,
 };
 
 fn envelope(kind: CommandKind, payload: CommandPayload) -> CommandEnvelope {
@@ -89,4 +89,16 @@ fn generated_rust_consumer_exposes_named_wire_constraints() {
     let _ = EnginePolicy::PreferNative;
     let _ = FidelityProfile::Agent;
     let _ = WaitUntil::Domcontentloaded;
+}
+
+#[test]
+fn generated_rust_enums_serialize_wire_names() {
+    assert_eq!(
+        serde_json::to_value(EngineKind::Native).expect("serialize engine"),
+        serde_json::json!("native")
+    );
+    assert_eq!(
+        serde_json::to_value(CommandKind::SessionCreateV1).expect("serialize command"),
+        serde_json::json!("session.create.v1")
+    );
 }
