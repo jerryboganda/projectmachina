@@ -47,7 +47,7 @@ if (packageJson.packageManager !== "pnpm@9.15.0") {
 }
 
 const versions = new Map();
-for (const command of ["git", "cargo", "cmake", "ninja", "clang", "buf", "node", "pnpm"]) {
+for (const command of ["git", "cargo", "rustc", "cmake", "ninja", "clang", "buf", "node", "pnpm"]) {
   const result = spawnProjectCommand(command, ["--version"], {
     cwd: root,
     encoding: "utf8",
@@ -98,14 +98,18 @@ function manifestVersion(section, key) {
     ?.match(new RegExp(`^${key}\\s*=\\s*"([^"]+)"`, "m"))?.[1];
 }
 
-if (process.env.MACHINA_STRICT_TOOLCHAIN === "1") {
+if (process.env.MACHINA_STRICT_TOOLCHAIN === "1" || process.argv.includes("--strict")) {
   const expected = {
+    rust: manifestVersion("rust", "channel"),
+    node: manifestVersion("node", "version"),
     cmake: manifestVersion("cmake", "version"),
     clang: manifestVersion("clang", "version"),
     ninja: manifestVersion("ninja", "version"),
     buf: manifestVersion("buf", "version")
   };
   const actual = {
+    rust: versions.get("rustc")?.match(/rustc ([0-9.]+)/)?.[1] ?? "",
+    node: versions.get("node")?.replace(/^v/, "") ?? "",
     cmake: versions.get("cmake")?.match(/cmake version ([0-9.]+)/)?.[1] ?? "",
     clang: versions.get("clang")?.match(/clang version ([0-9.]+)/)?.[1] ?? "",
     ninja: versions.get("ninja") ?? "",
