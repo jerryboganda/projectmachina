@@ -26,7 +26,7 @@ Select critical-path and unblocking tasks first. Two tasks may be active only wh
 
 | Task | Owner | Branch/worktree | State | Heartbeat |
 | --- | --- | --- | --- | --- |
-| M0-T01 | local implementation | local working tree | in-review | 2026-08-09T01:35+05:00 |
+| M0-T01 | copilot-foundation | `D:\Projects\machina-worktrees\M0-T01-bootstrap` | in-review | 2026-08-09T01:36+05:00 |
 
 ## In review
 

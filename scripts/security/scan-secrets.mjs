@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 
 const root = fileURLToPath(new URL("../..", import.meta.url));
 const highConfidencePatterns = [
@@ -49,9 +50,12 @@ for (const relativePath of trackedAndUntrackedFiles()) {
   }
   let content;
   try {
-    content = await readFile(`${root}\\${relativePath}`, "utf8");
-  } catch {
-    continue;
+    content = await readFile(join(root, relativePath), "utf8");
+  } catch (error) {
+    if (error?.code === "ENOENT") {
+      continue;
+    }
+    throw error;
   }
   for (const indicator of findSecretIndicators(content)) {
     failures.push(`${relativePath}: ${indicator}`);

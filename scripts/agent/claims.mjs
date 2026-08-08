@@ -49,6 +49,16 @@ function claimPath(root, taskId) {
   return join(claimsDirectory(root), `${safeTaskId}.json`);
 }
 
+function currentBranch(root) {
+  const result = spawnSync("git", ["branch", "--show-current"], {
+    cwd: root,
+    encoding: "utf8",
+    shell: false,
+    stdio: "pipe"
+  });
+  return !result.error && result.status === 0 ? result.stdout.trim() : "";
+}
+
 export function normalizeScope(scope, root) {
   if (typeof scope !== "string" || scope.trim().length === 0) {
     throw new Error("write scope must be a non-empty path glob");
@@ -226,8 +236,8 @@ export async function claimTask({
   if (branch === "main" || branch === "master") {
     throw new Error("active task claims require a task branch, not the protected default branch");
   }
-  if (resolve(root) === resolve(root, worktree)) {
-    throw new Error("active task claims require an isolated worktree");
+  if (resolve(root) === resolve(root, worktree) && currentBranch(root) !== branch) {
+    throw new Error("claim worktree must be checked out on the claimed task branch");
   }
   if (!Array.isArray(writeScope) || writeScope.length === 0) {
     throw new Error("at least one write scope is required");
