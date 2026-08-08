@@ -10,9 +10,24 @@ const appPackage = JSON.parse(
   await readFile(join(root, "apps/console/package.json"), "utf8")
 );
 const lockfile = await readFile(join(root, "pnpm-lock.yaml"), "utf8");
+const toolchains = await readFile(
+  join(root, "toolchains/versions.toml"),
+  "utf8"
+);
 
 const requiredFields = ["name", "version", "source", "license", "purpose", "integrity"];
 const failures = [];
+const requiredToolchainEntries = new Set([
+  "rust",
+  "node",
+  "pnpm",
+  "cmake",
+  "clang",
+  "ninja",
+  "buf",
+  "v8",
+  "chromium"
+]);
 const declaredPackages = new Set([
   ...Object.keys(appPackage.dependencies ?? {}),
   ...Object.keys(appPackage.devDependencies ?? {})
@@ -26,6 +41,21 @@ const manifestPackages = new Set(
 for (const packageName of declaredPackages) {
   if (!manifestPackages.has(packageName)) {
     failures.push(`manifest is missing declared package: ${packageName}`);
+  }
+
+  for (const toolchainName of requiredToolchainEntries) {
+    if (!manifest.direct_dependencies.some((dependency) => dependency.name === toolchainName)) {
+      failures.push(`manifest is missing toolchain entry: ${toolchainName}`);
+    }
+  }
+  for (const requiredMarker of [
+    "windows_x86_64_sha256",
+    "linux_x86_64_sha256",
+    "clean_room = true"
+  ]) {
+    if (!toolchains.includes(requiredMarker)) {
+      failures.push(`toolchain metadata is missing ${requiredMarker}`);
+    }
   }
 }
 
