@@ -1,0 +1,52 @@
+{
+  "command": {
+    "command_id": "cmd-fixture-1",
+    "session_id": "session-fixture-1",
+    "kind": "navigation.goto.v1",
+    "payload": {
+      "url": "https://one.localhost/navigation",
+      "wait_until": "domready"
+    },
+    "deadline_ms": 5000,
+    "required_capabilities": [
+      "navigation.goto.v1"
+    ],
+    "metadata": {
+      "correlation_id": "corr-fixture-1",
+      "client": "contract-fixture"
+    }
+  },
+  "outcome": {
+    "command_id": "cmd-fixture-1",
+    "attempt": 1,
+    "status": "succeeded",
+    "execution": {
+      "requested_engine_policy": "prefer-native",
+      "engine": "native",
+      "engine_version": "local",
+      "capability_snapshot": "fixture",
+      "fallback_used": false
+    }
+  },
+  "event": {
+    "event_id": "event-fixture-1",
+    "sequence": 1,
+    "event_type": "navigation.lifecycle.v1",
+    "session_id": "session-fixture-1",
+    "timestamp": "2026-08-09T00:00:00Z",
+    "correlation_id": "corr-fixture-1",
+    "engine": "native",
+    "payload": "navigation committed",
+    "classification": "public"
+  },
+  "capability": {
+    "capability_id": "navigation.goto.v1",
+    "status": "native",
+    "engine_build": "local",
+    "protocol_surfaces": [
+      "http"
+    ],
+    "limitations": [],
+    "owner": "native-engine"
+  }
+}

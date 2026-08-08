@@ -432,7 +432,8 @@
           "type": "string"
         },
         "details": {
-          "type": "string"
+          "type": "object",
+          "additionalProperties": true
         },
         "cause_code": {
           "$ref": "#/$defs/CanonicalErrorCode"

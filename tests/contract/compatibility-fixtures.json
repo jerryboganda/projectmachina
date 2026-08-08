@@ -1,0 +1,25 @@
+{
+  "schema_version": "0.1.0",
+  "policy": {
+    "unknown_fields": "reject",
+    "additive_fields": "new_version_or_extension_namespace",
+    "breaking_change": "new_command_or_event_version"
+  },
+  "cases": [
+    {
+      "fixture": "command-model.additive-field.fixture.json",
+      "expected_valid": false,
+      "reason": "same-version additive fields require a new version or explicit extension namespace"
+    },
+    {
+      "fixture": "command-model.unknown-field.fixture.json",
+      "expected_valid": false,
+      "reason": "unknown fields must not be silently accepted"
+    },
+    {
+      "fixture": "command-model.invalid-constraint.fixture.json",
+      "expected_valid": false,
+      "reason": "named enum constraints are part of the wire contract"
+    }
+  ]
+}

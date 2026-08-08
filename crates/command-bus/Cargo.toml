@@ -9,3 +9,4 @@ description = "Single internal typed command bus for native and Chromium engines
 [dependencies]
 machina-capability = { path = "../capability" }
 machina-command-model = { path = "../command-model" }
+serde_json = "1.0.135"
