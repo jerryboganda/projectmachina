@@ -273,7 +273,7 @@ pub fn to_canonical_error(
         capability: error.capability.clone(),
         command_id: command.command_id.clone(),
         correlation_id: context.correlation_id.clone(),
-        details: "{}".to_owned(),
+        details: serde_json::json!({}),
         cause_code: None,
         documentation_ref: format!("errors/{}", code_name(error.code)),
     }
