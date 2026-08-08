@@ -1,0 +1,61 @@
+{
+  "schema_version": "0.1.0",
+  "type": "task-evidence",
+  "task_id": "M0-T04",
+  "status": "released",
+  "agent_id": "copilot-contracts",
+  "identity": {
+    "task": "M0-T04",
+    "agent": "copilot-contracts",
+    "branch": "agent/M0-T04-contracts",
+    "worktree": "D:\\Projects\\machina-worktrees\\M0-T04-contracts",
+    "base_commit": "unknown",
+    "current_commit": "unknown"
+  },
+  "generated_at": "2026-08-08T22:51:45.472Z",
+  "objective": "",
+  "acceptance_criteria": [],
+  "claim": {
+    "schema_version": 1,
+    "task_id": "M0-T04",
+    "agent_id": "copilot-contracts",
+    "branch": "agent/M0-T04-contracts",
+    "worktree": "D:\\Projects\\machina-worktrees\\M0-T04-contracts",
+    "write_scope": [
+      "schemas/command-model/**",
+      "scripts/contracts/**",
+      "crates/command-model/**",
+      "packages/contracts-ts/**",
+      "tests/contract/**"
+    ],
+    "dependencies": [],
+    "claimed_at": "2026-08-08T22:04:04.898Z",
+    "heartbeat_at": "2026-08-08T22:04:04.898Z",
+    "lease_expires_at": "2026-08-08T23:34:04.898Z",
+    "grace_expires_at": "2026-08-08T23:54:04.898Z",
+    "status": "released",
+    "release_reason": "merged-to-main",
+    "released_at": "2026-08-08T22:51:45.472Z",
+    "lock_fence": "4963d6da-1695-4f3c-ae3f-017a8461ba88"
+  },
+  "commands": [
+    {
+      "type": "release",
+      "status": "released",
+      "at": "2026-08-08T22:51:45.472Z",
+      "reason": "merged-to-main"
+    }
+  ],
+  "artifacts": [],
+  "changed_files": [
+    "schemas/command-model/**",
+    "scripts/contracts/**",
+    "crates/command-model/**",
+    "packages/contracts-ts/**",
+    "tests/contract/**"
+  ],
+  "decisions": [],
+  "failures": [],
+  "risks": [],
+  "next_action": ""
+}

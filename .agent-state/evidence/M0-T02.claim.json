@@ -1,0 +1,55 @@
+{
+  "schema_version": "0.1.0",
+  "type": "task-evidence",
+  "task_id": "M0-T02",
+  "status": "released",
+  "agent_id": "copilot-claims",
+  "identity": {
+    "task": "M0-T02",
+    "agent": "copilot-claims",
+    "branch": "agent/M0-T02-claims",
+    "worktree": "D:\\Projects\\machina-worktrees\\M0-T02-claims",
+    "base_commit": "unknown",
+    "current_commit": "unknown"
+  },
+  "generated_at": "2026-08-08T22:51:44.942Z",
+  "objective": "",
+  "acceptance_criteria": [],
+  "claim": {
+    "schema_version": 1,
+    "task_id": "M0-T02",
+    "agent_id": "copilot-claims",
+    "branch": "agent/M0-T02-claims",
+    "worktree": "D:\\Projects\\machina-worktrees\\M0-T02-claims",
+    "write_scope": [
+      "scripts/agent/**",
+      ".agent-state/**"
+    ],
+    "dependencies": [],
+    "claimed_at": "2026-08-08T22:04:03.306Z",
+    "heartbeat_at": "2026-08-08T22:04:03.306Z",
+    "lease_expires_at": "2026-08-08T23:34:03.306Z",
+    "grace_expires_at": "2026-08-08T23:54:03.306Z",
+    "status": "released",
+    "release_reason": "merged-to-main",
+    "released_at": "2026-08-08T22:51:44.942Z",
+    "lock_fence": "26a1374e-00d4-418e-91a9-aa1da9de8558"
+  },
+  "commands": [
+    {
+      "type": "release",
+      "status": "released",
+      "at": "2026-08-08T22:51:44.942Z",
+      "reason": "merged-to-main"
+    }
+  ],
+  "artifacts": [],
+  "changed_files": [
+    "scripts/agent/**",
+    ".agent-state/**"
+  ],
+  "decisions": [],
+  "failures": [],
+  "risks": [],
+  "next_action": ""
+}
