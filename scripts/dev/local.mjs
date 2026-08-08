@@ -62,10 +62,23 @@ function run(args) {
   }
 }
 
+function capture(args) {
+  const result = spawnSync("docker", ["compose", "--project-name", projectName, "--file", composeFile, ...args], {
+    cwd: root,
+    encoding: "utf8",
+    shell: false,
+    stdio: "pipe"
+  });
+  if (result.error || result.status !== 0) {
+    throw result.error ?? new Error(result.stderr || "Docker Compose command failed");
+  }
+  return result.stdout;
+}
+
 function main([command, ...args]) {
   assertLocalEnvironment();
   if (command === "up") {
-    run(["up", "-d", ...args]);
+    run(["up", "-d", "--wait", ...args]);
     return;
   }
   if (command === "down") {
@@ -73,7 +86,20 @@ function main([command, ...args]) {
     return;
   }
   if (command === "health") {
-    run(["ps"]);
+    const output = capture(["ps", "--format", "json"]);
+    const services = output
+      .split(/\r?\n/)
+      .filter(Boolean)
+      .map((line) => JSON.parse(line));
+    if (services.length === 0 || services.some((service) => {
+      const state = String(service.State ?? "").toLowerCase();
+      const health = String(service.Health ?? "").toLowerCase();
+      return state !== "running" || (health && health !== "healthy");
+    })) {
+      console.error(output);
+      throw new Error("one or more local services are not healthy");
+    }
+    console.log(output);
     return;
   }
   if (command === "reset") {
