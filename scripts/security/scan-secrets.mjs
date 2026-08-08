@@ -18,6 +18,16 @@ export function findSecretIndicators(content) {
     .map(({ name }) => name);
 }
 
+export function isScannablePath(relativePath) {
+  const pathSegments = relativePath.replaceAll("\\", "/").split("/");
+  return !(
+    pathSegments.includes("node_modules") ||
+    pathSegments.includes(".svelte-kit") ||
+    (pathSegments.length > 1 && pathSegments[0] === "target") ||
+    (pathSegments.length > 1 && pathSegments[0] === "build")
+  );
+}
+
 function trackedAndUntrackedFiles() {
   const result = spawnSync(
     "git",
@@ -40,14 +50,7 @@ function trackedAndUntrackedFiles() {
 
 const failures = [];
 for (const relativePath of trackedAndUntrackedFiles()) {
-  const normalizedPath = relativePath.replaceAll("\\", "/");
-  const pathSegments = normalizedPath.split("/");
-  if (
-    pathSegments.includes("node_modules") ||
-    pathSegments.includes(".svelte-kit") ||
-    pathSegments[0] === "target" ||
-    pathSegments[0] === "build"
-  ) {
+  if (!isScannablePath(relativePath)) {
     continue;
   }
   let content;

@@ -45,6 +45,10 @@ function lockDirectory(root) {
   return join(claimStoreRoot(root), "claims.lock");
 }
 
+function coordinationLockDirectory(root) {
+  return join(claimStoreRoot(root), "coordination.lock");
+}
+
 function claimPath(root, taskId) {
   const safeTaskId = taskId.replace(/[^A-Za-z0-9._-]/g, "_");
   return join(claimsDirectory(root), `${safeTaskId}.json`);
@@ -155,13 +159,13 @@ export function scopesOverlap(left, right) {
   );
 }
 
-async function acquireLock(root) {
+async function acquireCoordinationLock(root) {
   await mkdir(claimStoreRoot(root), { recursive: true });
   const lockId = randomUUID();
   try {
-    await mkdir(lockDirectory(root));
+    await mkdir(coordinationLockDirectory(root));
     await writeFile(
-      join(lockDirectory(root), "owner.json"),
+      join(coordinationLockDirectory(root), "owner.json"),
       `${JSON.stringify({
         lock_id: lockId,
         pid: process.pid,
@@ -173,28 +177,87 @@ async function acquireLock(root) {
     if (error?.code === "EEXIST") {
       let age = 0;
       try {
-        age = Date.now() - (await stat(lockDirectory(root))).mtimeMs;
+        age = Date.now() - (await stat(coordinationLockDirectory(root))).mtimeMs;
       } catch {
         age = 0;
       }
       if (age >= STALE_LOCK_MINUTES * 60 * 1000) {
-        throw new Error("claim state has a stale lock; inspect and run recover-lock");
+        const stalePath = `${coordinationLockDirectory(root)}.stale-${randomUUID()}`;
+        await rename(coordinationLockDirectory(root), stalePath);
+        await rm(stalePath, { recursive: true, force: true });
+        return acquireCoordinationLock(root);
       }
-      throw new Error("claim state is locked by another operation");
+      throw new Error("claim coordination is locked by another operation");
     }
     throw error;
   }
   return lockId;
 }
 
-async function releaseLock(root, lockId) {
-  const owner = JSON.parse(await readFile(join(lockDirectory(root), "owner.json"), "utf8"));
+async function releaseCoordinationLock(root, lockId) {
+  const owner = JSON.parse(
+    await readFile(join(coordinationLockDirectory(root), "owner.json"), "utf8")
+  );
   if (owner.lock_id !== lockId) {
-    throw new Error("claim lock ownership changed before release");
+    throw new Error("claim coordination ownership changed before release");
   }
-  const releasePath = `${lockDirectory(root)}.release-${lockId}`;
-  await rename(lockDirectory(root), releasePath);
+  const releasePath = `${coordinationLockDirectory(root)}.release-${lockId}`;
+  await rename(coordinationLockDirectory(root), releasePath);
   await rm(releasePath, { recursive: true, force: true });
+}
+
+async function withCoordinationLock(root, operation) {
+  const lockId = await acquireCoordinationLock(root);
+  try {
+    return await operation();
+  } finally {
+    await releaseCoordinationLock(root, lockId);
+  }
+}
+
+async function acquireLock(root) {
+  return withCoordinationLock(root, async () => {
+    const lockId = randomUUID();
+    try {
+      await mkdir(lockDirectory(root));
+      await writeFile(
+        join(lockDirectory(root), "owner.json"),
+        `${JSON.stringify({
+          lock_id: lockId,
+          pid: process.pid,
+          acquired_at: new Date().toISOString()
+        })}\n`,
+        "utf8"
+      );
+    } catch (error) {
+      if (error?.code === "EEXIST") {
+        let age = 0;
+        try {
+          age = Date.now() - (await stat(lockDirectory(root))).mtimeMs;
+        } catch {
+          age = 0;
+        }
+        if (age >= STALE_LOCK_MINUTES * 60 * 1000) {
+          throw new Error("claim state has a stale lock; inspect and run recover-lock");
+        }
+        throw new Error("claim state is locked by another operation");
+      }
+      throw error;
+    }
+    return lockId;
+  });
+}
+
+async function releaseLock(root, lockId) {
+  return withCoordinationLock(root, async () => {
+    const owner = JSON.parse(await readFile(join(lockDirectory(root), "owner.json"), "utf8"));
+    if (owner.lock_id !== lockId) {
+      throw new Error("claim lock ownership changed before release");
+    }
+    const releasePath = `${lockDirectory(root)}.release-${lockId}`;
+    await rename(lockDirectory(root), releasePath);
+    await rm(releasePath, { recursive: true, force: true });
+  });
 }
 
 async function withLock(root, operation) {
@@ -205,7 +268,6 @@ async function withLock(root, operation) {
     await releaseLock(root, lockId);
   }
 }
-
 async function writeJsonAtomic(path, value, flag = "w") {
   const temporaryPath = `${path}.${randomUUID()}.tmp`;
   await writeFile(temporaryPath, `${JSON.stringify(value, null, 2)}\n`, {
@@ -497,41 +559,50 @@ export async function recoverStaleLock({
   if (!actor || !reason) {
     throw new Error("--actor and --reason are required");
   }
-  let lockStats;
-  let owner;
-  try {
-    lockStats = await stat(lockDirectory(root));
-    owner = JSON.parse(
-      await readFile(join(lockDirectory(root), "owner.json"), "utf8")
-    );
-  } catch (error) {
-    if (error?.code === "ENOENT") {
-      return { recovered: false, reason: "no lock exists" };
+  return withCoordinationLock(root, async () => {
+    let lockStats;
+    let owner;
+    try {
+      lockStats = await stat(lockDirectory(root));
+      try {
+        owner = JSON.parse(
+          await readFile(join(lockDirectory(root), "owner.json"), "utf8")
+        );
+      } catch (error) {
+        if (error?.code !== "ENOENT") {
+          throw error;
+        }
+        owner = { status: "unknown-owner-metadata" };
+      }
+    } catch (error) {
+      if (error?.code === "ENOENT") {
+        return { recovered: false, reason: "no lock exists" };
+      }
+      throw error;
     }
-    throw error;
-  }
-  const ageMs = now.getTime() - lockStats.mtimeMs;
-  if (ageMs < STALE_LOCK_MINUTES * 60 * 1000) {
-    throw new Error("claim lock is not stale enough for recovery");
-  }
-  await mkdir(claimsDirectory(root), { recursive: true });
-  const audit = {
-    schema_version: CLAIM_SCHEMA_VERSION,
-    actor,
-    reason,
-    recovered_at: now.toISOString(),
-    lock_age_ms: ageMs,
-    previous_owner: owner
-  };
-  const recoveryPath = `${lockDirectory(root)}.recovery-${randomUUID()}`;
-  await rename(lockDirectory(root), recoveryPath);
-  audit.recovered_lock_path = recoveryPath;
-  await writeJsonAtomic(
-    join(claimsDirectory(root), `lock-recovery-${randomUUID()}.json`),
-    audit
-  );
-  await rm(recoveryPath, { recursive: true, force: true });
-  return { recovered: true, audit };
+    const ageMs = now.getTime() - lockStats.mtimeMs;
+    if (ageMs < STALE_LOCK_MINUTES * 60 * 1000) {
+      throw new Error("claim lock is not stale enough for recovery");
+    }
+    await mkdir(claimsDirectory(root), { recursive: true });
+    const audit = {
+      schema_version: CLAIM_SCHEMA_VERSION,
+      actor,
+      reason,
+      recovered_at: now.toISOString(),
+      lock_age_ms: ageMs,
+      previous_owner: owner
+    };
+    const recoveryPath = `${lockDirectory(root)}.recovery-${randomUUID()}`;
+    await rename(lockDirectory(root), recoveryPath);
+    audit.recovered_lock_path = recoveryPath;
+    await writeJsonAtomic(
+      join(claimsDirectory(root), `lock-recovery-${randomUUID()}.json`),
+      audit
+    );
+    await rm(recoveryPath, { recursive: true, force: true });
+    return { recovered: true, audit };
+  });
 }
 
 function parseFlags(args) {
