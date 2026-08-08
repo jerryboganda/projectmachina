@@ -21,7 +21,7 @@ test("reports forbidden protocol-to-engine imports", async () => {
     await mkdir(join(root, "crates/protocol-cdp/src"), { recursive: true });
     await writeFile(
       join(root, "crates/protocol-cdp/src/lib.rs"),
-      "// forbidden native-core dependency marker\n",
+      "use machina-native-core::Engine;\n",
       "utf8"
     );
     const violations = await findBoundaryViolations(root, policy);

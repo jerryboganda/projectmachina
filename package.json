@@ -25,7 +25,7 @@
     "build": "pnpm --filter @machina/console build",
     "check": "pnpm --filter @machina/console check",
     "fmt-check": "pnpm --filter @machina/console fmt-check",
-    "test": "node --test scripts/agent/claims.test.mjs scripts/agent/claims.worktree.test.mjs scripts/agent/task-registry.test.mjs scripts/agent/rehearsal.test.mjs scripts/security/redact.test.mjs scripts/test/fixture-server.test.mjs benchmarks/harness/runner.test.mjs && pnpm --filter @machina/console test",
+    "test": "node --test scripts/agent/claims.test.mjs scripts/agent/claims.worktree.test.mjs scripts/agent/task-registry.test.mjs scripts/agent/rehearsal.test.mjs scripts/security/redact.test.mjs scripts/test/fixture-server.test.mjs benchmarks/harness/runner.test.mjs scripts/architecture/check-boundaries.test.mjs && pnpm --filter @machina/console test",
     "clean": "node scripts/build/clean.mjs",
     "dev:bootstrap": "node scripts/dev/bootstrap.mjs",
     "dev:up": "node scripts/dev/local.mjs up",
