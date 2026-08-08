@@ -17,13 +17,13 @@ purpose: "Provide the durable, human-readable snapshot that each autonomous cycl
 - Active milestone: `M0 — Foundation and governance`
 - Current release target: `0.1.0-alpha`
 - Last reconciled: `2026-08-09`
-- Default branch: `main` (bootstrap commit `f62eeb7`; review branch active)
+- Default branch: `main` (bootstrap commits `f62eeb7..799a927`; review branch active)
 
 ## Active tasks
 
 | Task | Owner | Branch/worktree | State | Heartbeat | Blocker |
 | --- | --- | --- | --- | --- | --- |
-| M0-T01 | copilot-foundation | `D:\Projects\machina-worktrees\M0-T01-bootstrap` | in-review | 2026-08-09T01:36+05:00 | Independent review and hosted CI pending |
+| M0-T01 | copilot-foundation | `D:\Projects\machina-worktrees\M0-T01-bootstrap` | in-review | 2026-08-09T01:40+05:00 | Independent review and hosted CI pending |
 
 ## Recently completed
 
@@ -48,6 +48,6 @@ purpose: "Provide the durable, human-readable snapshot that each autonomous cycl
 
 ## Reconciliation notes
 
-The bootstrap commit is `f62eeb7`; this branch contains the isolated claim-helper and
-cross-platform scanner repair pending review. M0-T02 through M0-T12 must be split into
-separate claims and reviewed after the bootstrap merge.
+The bootstrap commits are `f62eeb7..799a927`; the branch contains the isolated
+claim-helper, reproducibility, and cross-platform scanner repairs pending review.
+M0-T02 through M0-T12 must be split into separate claims after bootstrap merge.
