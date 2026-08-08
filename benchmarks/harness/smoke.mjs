@@ -8,6 +8,7 @@ const root = fileURLToPath(new URL("../..", import.meta.url));
 const manifest = JSON.parse(
   await readFile(join(root, "benchmarks/corpus/manifest.json"), "utf8")
 );
+assert.equal(typeof manifest.version, "string");
 
 const results = [];
 for (const workload of manifest.workloads) {
@@ -16,10 +17,13 @@ for (const workload of manifest.workloads) {
     buildId: manifest.build_id,
     environmentId: "local-fixture",
     maxRetries: workload.max_retries ?? 0,
-    runner: async () => ({ workload_id: workload.id, fixture_version: manifest.version }),
+    runner: async () => ({
+      workload_id: workload.id,
+      fixture_version: workload.fixture_version
+    }),
     verify: (value) =>
       value?.workload_id === workload.id &&
-      value?.fixture_version === manifest.version
+      value?.fixture_version === workload.fixture_version
   });
   results.push(result);
 }

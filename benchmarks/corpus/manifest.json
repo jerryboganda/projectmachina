@@ -1,11 +1,12 @@
 {
   "schema_version": "0.1.0",
   "corpus_id": "machina-foundation",
+  "version": "2026-08-09.1",
   "build_id": "local-uncommitted",
   "environment": {
     "network": "fixture-only",
     "cache": "declared-by-runner",
-    "hardware": "recorded-at-run",
+    "hardware": "recorded-by-runner",
     "concurrency": 1,
     "seed": "machina-foundation-2026-08-09"
   },

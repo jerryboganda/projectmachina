@@ -8,6 +8,7 @@ const root = fileURLToPath(new URL("../..", import.meta.url));
 const manifest = JSON.parse(
   await readFile(join(root, "benchmarks/corpus/manifest.json"), "utf8")
 );
+assert.equal(typeof manifest.version, "string");
 
 async function runOnce() {
   const results = [];
@@ -20,11 +21,11 @@ async function runOnce() {
         maxRetries: workload.max_retries ?? 0,
         runner: async () => ({
           workload_id: workload.id,
-          fixture_version: manifest.version
+          fixture_version: workload.fixture_version
         }),
         verify: (value) =>
           value?.workload_id === workload.id &&
-          value?.fixture_version === manifest.version
+          value?.fixture_version === workload.fixture_version
       })
     );
   }
@@ -44,4 +45,10 @@ const stableShape = (results) =>
     retries
   }));
 assert.deepEqual(stableShape(second), stableShape(first));
+const latencyRange = (results) => {
+  const values = results.map((result) => result.latency_ms);
+  return Math.max(...values) - Math.min(...values);
+};
+assert.equal(Number.isFinite(latencyRange(first)), true);
+assert.equal(Number.isFinite(latencyRange(second)), true);
 console.log("benchmark reproducibility smoke: passed");
