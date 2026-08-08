@@ -10,6 +10,12 @@ function assertLocalEnvironment() {
   if (environment !== "local") {
     throw new Error(`local command refused outside MACHINA_ENV=local (got ${environment})`);
   }
+  if (process.env.DOCKER_HOST) {
+    throw new Error("local command refuses an ambient DOCKER_HOST; unset it before continuing");
+  }
+  if (process.env.DOCKER_CONTEXT && process.env.DOCKER_CONTEXT !== "default") {
+    throw new Error("local command requires the default Docker context");
+  }
 }
 
 function run(args) {
