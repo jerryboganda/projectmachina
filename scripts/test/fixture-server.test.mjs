@@ -167,6 +167,11 @@ test("supports injected short-lived HTTPS fixture certificates", async () => {
             "openssl.exe"
           )
         : "openssl");
+    const opensslEnvironment = { ...process.env };
+    const bundledConfig = join(dirname(opensslBinary), "cnf", "openssl.cnf");
+    if (!opensslEnvironment.OPENSSL_CONF && existsSync(bundledConfig)) {
+      opensslEnvironment.OPENSSL_CONF = bundledConfig;
+    }
     const openssl = spawnSync(
       existsSync(opensslBinary) ? opensslBinary : "openssl",
       [
@@ -188,12 +193,7 @@ test("supports injected short-lived HTTPS fixture certificates", async () => {
         encoding: "utf8",
         shell: false,
         stdio: "pipe",
-        env: {
-          ...process.env,
-          OPENSSL_CONF:
-            process.env.OPENSSL_CONF ??
-            join(dirname(opensslBinary), "cnf", "openssl.cnf")
-        }
+        env: opensslEnvironment
       }
     );
     assert.equal(
