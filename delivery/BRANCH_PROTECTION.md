@@ -11,6 +11,8 @@ Configure `main` in the GitHub repository with:
 - signed commits or the repository's verified-identity equivalent for release
   branches;
 - no production, signing, or vault credentials in pull-request jobs.
+- the `fast-gate` workflow is also required on merge-queue (`merge_group`)
+  validation.
 
 The first repository owner must apply these settings after the initial local
 bootstrap commit. This file records policy; it cannot change GitHub settings
