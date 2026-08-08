@@ -1,0 +1,69 @@
+{
+  "schema_version": "0.1.0",
+  "type": "task-evidence",
+  "task_id": "M0-T11",
+  "status": "released",
+  "agent_id": "copilot-local-stack",
+  "identity": {
+    "task": "M0-T11",
+    "agent": "copilot-local-stack",
+    "branch": "agent/M0-T11-local-stack",
+    "worktree": "D:\\Projects\\machina-worktrees\\M0-T11-local-stack",
+    "base_commit": "unknown",
+    "current_commit": "unknown"
+  },
+  "generated_at": "2026-08-08T23:58:53.647Z",
+  "objective": "",
+  "acceptance_criteria": [],
+  "claim": {
+    "schema_version": 1,
+    "claim_id": "de247b58-6638-4f5a-940b-d347d8ba1cb0",
+    "task_id": "M0-T11",
+    "agent_id": "copilot-local-stack",
+    "branch": "agent/M0-T11-local-stack",
+    "worktree": "D:\\Projects\\machina-worktrees\\M0-T11-local-stack",
+    "write_scope": [
+      ".dockerignore",
+      ".env.example",
+      "deploy/compose/**",
+      "scripts/dev/**"
+    ],
+    "dependencies": [
+      "M0-T01",
+      "M0-T08",
+      "M0-T09"
+    ],
+    "contract_dependencies": [],
+    "base_commit": "unknown",
+    "current_commit": "unknown",
+    "lease_minutes": 90,
+    "grace_minutes": 20,
+    "claimed_at": "2026-08-08T23:43:24.661Z",
+    "heartbeat_at": "2026-08-08T23:43:24.661Z",
+    "lease_expires_at": "2026-08-09T01:13:24.661Z",
+    "grace_expires_at": "2026-08-09T01:33:24.661Z",
+    "status": "released",
+    "lock_fence": "66f3e6f0-53c8-4902-bbd2-239ae451f521",
+    "release_reason": "merged-to-main",
+    "released_at": "2026-08-08T23:58:53.647Z"
+  },
+  "commands": [
+    {
+      "type": "release",
+      "status": "released",
+      "at": "2026-08-08T23:58:53.647Z",
+      "reason": "merged-to-main"
+    }
+  ],
+  "artifacts": [],
+  "changed_files": [
+    ".dockerignore",
+    ".env.example",
+    "deploy/compose/**",
+    "scripts/dev/**"
+  ],
+  "decisions": [],
+  "failures": [],
+  "risks": [],
+  "next_action": ""
+}

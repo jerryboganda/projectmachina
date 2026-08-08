@@ -17,7 +17,7 @@ purpose: "Provide the durable, human-readable snapshot that each autonomous cycl
 - Active milestone: `M0 — Foundation and governance`
 - Current release target: `0.1.0-alpha`
 - Last reconciled: `2026-08-09`
-- Default branch: `main` (M0-T01 through M0-T09 dependency-ready work merged)
+- Default branch: `main` (M0-T01 through M0-T11 dependency-ready work merged)
 
 ## Active tasks
 
@@ -32,15 +32,14 @@ purpose: "Provide the durable, human-readable snapshot that each autonomous cycl
 - M0-T01 bootstrap, M0-T02 shared claim/worktree/evidence tooling, M0-T03 protected
   fast-gate policy, M0-T04 command contract validation, and M0-T05 architecture
   boundary fixtures/reporting, M0-T06 security baseline, M0-T07 supply-chain
-  provenance controls, M0-T08 deterministic fixtures, and M0-T09 telemetry/evidence
-  primitives are merged.
+  provenance controls, M0-T08 deterministic fixtures, M0-T09 telemetry/evidence
+  primitives, M0-T10 reproducible benchmark smoke, and M0-T11 local stack health
+  controls are merged.
 - Runtime foundation continuation adds capability snapshots, the single command bus, explicit fallback metadata, and bounded session/page resource accounting.
 
 ## Next ready tasks
 
-1. `M0-T10` — Create fair benchmark harness and baseline corpus manifest.
-2. `M0-T11` — Deliver reproducible local full-stack development environment.
-3. `M0-T12` — Rehearse the two-agent autonomous loop and approve M0 exit.
+1. `M0-T12` — Rehearse the two-agent autonomous loop and approve M0 exit.
 
 ## Human gates pending
 
@@ -52,5 +51,6 @@ purpose: "Provide the durable, human-readable snapshot that each autonomous cycl
 
 ## Reconciliation notes
 
-M0-T01 through M0-T09 have merged hosted-gate evidence. M0-T10, M0-T11, and M0-T12
-are the remaining M0 tasks. Docker remains an external M0-T11 blocker.
+M0-T01 through M0-T11 have merged hosted-gate evidence. M0-T12 is the remaining
+M0 task. Docker health remains an external limitation for the full local-stack
+portion of M0-T12.

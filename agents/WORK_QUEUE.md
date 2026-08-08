@@ -17,9 +17,7 @@ Select critical-path and unblocking tasks first. Two tasks may be active only wh
 
 | Rank | Task | Milestone | Role | Dependencies | Suggested lane |
 | ---: | --- | --- | --- | --- | --- |
-| 1 | M0-T10 | M0 | performance/quality | M0-T01, M0-T08, M0-T09 | A |
-| 2 | M0-T11 | M0 | platform | M0-T01, M0-T08, M0-T09 | B |
-| 3 | M0-T12 | M0 | orchestrator/reviewer | M0-T02 through M0-T11 | A |
+| 1 | M0-T12 | M0 | orchestrator/reviewer | M0-T02 through M0-T11 | A |
 
 ## Active
 
@@ -29,7 +27,7 @@ None.
 
 ## In review
 
-M0-T01 through M0-T09 have merged hosted-gate evidence.
+M0-T01 through M0-T11 have merged hosted-gate evidence.
 
 ## Blocked
 
