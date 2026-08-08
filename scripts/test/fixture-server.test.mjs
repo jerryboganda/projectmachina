@@ -1,7 +1,33 @@
 import assert from "node:assert/strict";
+import http from "node:http";
 import net from "node:net";
 import test from "node:test";
 import { createFixtureServer } from "./fixture-server.mjs";
+
+function requestOrigin(address, origin) {
+  return new Promise((resolve, reject) => {
+    const request = http.request(
+      {
+        hostname: address.host,
+        port: address.port,
+        path: "/origin",
+        headers: { host: `${origin}:${address.port}` }
+      },
+      (response) => {
+        let body = "";
+        response.setEncoding("utf8");
+        response.on("data", (chunk) => {
+          body += chunk;
+        });
+        response.on("end", () => {
+          resolve({ status: response.statusCode, body: JSON.parse(body) });
+        });
+      }
+    );
+    request.on("error", reject);
+    request.end();
+  });
+}
 
 test("serves deterministic navigation, redirect, mutation, and form fixtures", async () => {
   const fixture = createFixtureServer();
@@ -23,6 +49,22 @@ test("serves deterministic navigation, redirect, mutation, and form fixtures", a
 
     const page = await fetch(`${baseUrl}/navigation`);
     assert.match(await page.text(), /Navigation fixture/);
+    assert.equal(page.headers.get("x-machina-fixture-version"), "2026-08-09.1");
+
+    const firstOrigin = await requestOrigin(address, "one.localhost");
+    assert.equal(firstOrigin.status, 200);
+    assert.deepEqual(firstOrigin.body, {
+      origin: "one.localhost",
+      fixture_set: "machina-foundation",
+      external_network: false
+    });
+    const secondOrigin = await requestOrigin(address, "two.localhost");
+    assert.equal(secondOrigin.status, 200);
+    assert.deepEqual(secondOrigin.body, {
+      origin: "two.localhost",
+      fixture_set: "machina-foundation",
+      external_network: false
+    });
 
     const form = await fetch(`${baseUrl}/form`, {
       method: "POST",
@@ -30,6 +72,13 @@ test("serves deterministic navigation, redirect, mutation, and form fixtures", a
       body: "name=fixture"
     });
     assert.deepEqual(await form.json(), { accepted: true, body: "name=fixture" });
+
+    const missing = await fetch(`${baseUrl}/missing`);
+    assert.equal(missing.status, 404);
+    assert.deepEqual(await missing.json(), {
+      error: "fixture route not found",
+      trace_ref: "fixture/2026-08-09.1/missing"
+    });
   } finally {
     await fixture.stop();
   }

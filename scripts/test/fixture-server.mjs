@@ -21,7 +21,8 @@ function json(response, statusCode, value) {
   response.writeHead(statusCode, {
     "content-type": "application/json; charset=utf-8",
     "content-length": Buffer.byteLength(body),
-    "cache-control": "no-store"
+    "cache-control": "no-store",
+    "x-machina-fixture-version": manifest.version
   });
   response.end(body);
 }
@@ -30,7 +31,8 @@ function html(response, statusCode, body) {
   response.writeHead(statusCode, {
     "content-type": "text/html; charset=utf-8",
     "content-length": Buffer.byteLength(body),
-    "cache-control": "no-store"
+    "cache-control": "no-store",
+    "x-machina-fixture-version": manifest.version
   });
   response.end(body);
 }
@@ -60,6 +62,15 @@ function handleRequest(request, response) {
       fixture_set: manifest.fixture_set,
       version: manifest.version,
       origin,
+      external_network: manifest.network.external_network
+    });
+    return;
+  }
+
+  if (requestUrl.pathname === "/origin" && request.method === "GET") {
+    json(response, 200, {
+      origin,
+      fixture_set: manifest.fixture_set,
       external_network: manifest.network.external_network
     });
     return;
@@ -108,7 +119,10 @@ function handleRequest(request, response) {
     return;
   }
 
-  json(response, 404, { error: "fixture route not found" });
+  json(response, 404, {
+    error: "fixture route not found",
+    trace_ref: `fixture/${manifest.version}${requestUrl.pathname}`
+  });
 }
 
 function handleUpgrade(request, socket) {
