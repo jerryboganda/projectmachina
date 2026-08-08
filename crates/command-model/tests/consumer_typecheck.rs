@@ -59,14 +59,14 @@ fn generated_rust_consumer_uses_discriminated_payloads() {
     ];
 
     assert!(commands.iter().all(CommandEnvelope::payload_matches_kind));
-    assert_eq!(
-        commands[0].payload.kind(),
-        CommandKind::SessionCreateV1
-    );
+    assert_eq!(commands[0].payload.kind(), CommandKind::SessionCreateV1);
     let CommandPayload::SessionCreate(session) = &commands[0].payload else {
         panic!("session command must carry a session payload");
     };
-    assert_eq!(session.engine_policy_kind(), Some(EnginePolicy::PreferNative));
+    assert_eq!(
+        session.engine_policy_kind(),
+        Some(EnginePolicy::PreferNative)
+    );
     assert_eq!(
         session.fidelity_profile_kind(),
         Some(FidelityProfile::Agent)
