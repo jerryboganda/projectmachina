@@ -1,4 +1,5 @@
 import { constants } from "node:fs";
+import { realpathSync } from "node:fs";
 import {
   access,
   mkdir,
@@ -49,7 +50,18 @@ function claimPath(root, taskId) {
   return join(claimsDirectory(root), `${safeTaskId}.json`);
 }
 
-function validateWorktree(root, branch, worktree) {
+function canonicalPath(root, path) {
+  const absolute = resolve(root, path);
+  let real = absolute;
+  try {
+    real = realpathSync.native(absolute);
+  } catch {
+    real = absolute;
+  }
+  return process.platform === "win32" ? real.toLowerCase() : real;
+}
+
+function validateWorktree(root, branch, worktree, allowNonGit) {
   const repository = spawnSync("git", ["rev-parse", "--show-toplevel"], {
     cwd: root,
     encoding: "utf8",
@@ -57,7 +69,10 @@ function validateWorktree(root, branch, worktree) {
     stdio: "pipe"
   });
   if (repository.error || repository.status !== 0) {
-    return;
+    if (allowNonGit) {
+      return;
+    }
+    throw new Error("claim worktree validation requires a Git repository");
   }
   const result = spawnSync("git", ["worktree", "list", "--porcelain"], {
     cwd: root,
@@ -68,7 +83,7 @@ function validateWorktree(root, branch, worktree) {
   if (result.error || result.status !== 0) {
     throw new Error("unable to verify Git worktree ownership");
   }
-  const expectedPath = resolve(worktree).toLowerCase();
+  const expectedPath = canonicalPath(root, worktree);
   const blocks = result.stdout.trim().split(/\r?\n\r?\n/).filter(Boolean);
   const match = blocks.find((block) => {
     const lines = block.split(/\r?\n/);
@@ -77,7 +92,7 @@ function validateWorktree(root, branch, worktree) {
     return (
       path &&
       actualBranch === `refs/heads/${branch}` &&
-      resolve(path).toLowerCase() === expectedPath
+      canonicalPath(root, path) === expectedPath
     );
   });
   if (!match) {
@@ -177,7 +192,9 @@ async function releaseLock(root, lockId) {
   if (owner.lock_id !== lockId) {
     throw new Error("claim lock ownership changed before release");
   }
-  await rm(lockDirectory(root), { recursive: true, force: true });
+  const releasePath = `${lockDirectory(root)}.release-${lockId}`;
+  await rename(lockDirectory(root), releasePath);
+  await rm(releasePath, { recursive: true, force: true });
 }
 
 async function withLock(root, operation) {
@@ -265,6 +282,7 @@ export async function claimTask({
   dependencies = [],
   leaseMinutes = DEFAULT_LEASE_MINUTES,
   graceMinutes = DEFAULT_GRACE_MINUTES,
+  allowNonGit = false,
   now = new Date()
 }) {
   validateIdentity({ task, agent, branch, worktree });
@@ -272,10 +290,10 @@ export async function claimTask({
   if (branch === "main" || branch === "master") {
     throw new Error("active task claims require a task branch, not the protected default branch");
   }
-  if (resolve(root) === resolve(root, worktree)) {
+  if (canonicalPath(root, ".") === canonicalPath(root, worktree)) {
     throw new Error("active task claims require a separate worktree");
   }
-  validateWorktree(root, branch, worktree);
+  validateWorktree(root, branch, worktree, allowNonGit);
   if (!Array.isArray(writeScope) || writeScope.length === 0) {
     throw new Error("at least one write scope is required");
   }
@@ -450,8 +468,12 @@ export async function recoverStaleLock({
     throw new Error("--actor and --reason are required");
   }
   let lockStats;
+  let owner;
   try {
     lockStats = await stat(lockDirectory(root));
+    owner = JSON.parse(
+      await readFile(join(lockDirectory(root), "owner.json"), "utf8")
+    );
   } catch (error) {
     if (error?.code === "ENOENT") {
       return { recovered: false, reason: "no lock exists" };
@@ -468,7 +490,8 @@ export async function recoverStaleLock({
     actor,
     reason,
     recovered_at: now.toISOString(),
-    lock_age_ms: ageMs
+    lock_age_ms: ageMs,
+    previous_owner: owner
   };
   const recoveryPath = `${lockDirectory(root)}.recovery-${randomUUID()}`;
   await rename(lockDirectory(root), recoveryPath);

@@ -44,6 +44,7 @@ test("rejects overlapping claims and preserves release evidence", async () => {
       branch: "agent/M0-T02-claims",
       worktree: "../machina-worktrees/M0-T02-test-agent-a",
       writeScope: ["scripts/agent/**"],
+      allowNonGit: true,
       now
     });
     assert.equal(first.status, "active");
@@ -55,6 +56,7 @@ test("rejects overlapping claims and preserves release evidence", async () => {
         branch: "agent/M0-T03-ci",
         worktree: "../machina-worktrees/M0-T03-test-agent-b",
         writeScope: ["scripts/agent/claims.mjs"],
+        allowNonGit: true,
         now
       }),
       /overlaps active claim M0-T02/
@@ -95,6 +97,7 @@ test("requires explicit recovery for expired claims", async () => {
       writeScope: ["scripts/agent/**"],
       leaseMinutes: 1,
       graceMinutes: 1,
+      allowNonGit: true,
       now: new Date("2026-08-09T00:00:00.000Z")
     });
     const recovered = await recoverExpiredTask({

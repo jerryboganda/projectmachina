@@ -20,6 +20,7 @@ export async function runAutonomousLoopRehearsal() {
       branch: "agent/REHEARSAL-A-fixtures",
       worktree: "../machina-worktrees/REHEARSAL-A",
       writeScope: ["tests/fixtures/**"],
+      allowNonGit: true,
       now
     });
     const second = await claimTask({
@@ -29,6 +30,7 @@ export async function runAutonomousLoopRehearsal() {
       branch: "agent/REHEARSAL-B-benchmarks",
       worktree: "../machina-worktrees/REHEARSAL-B",
       writeScope: ["benchmarks/**"],
+      allowNonGit: true,
       now
     });
 
@@ -41,6 +43,7 @@ export async function runAutonomousLoopRehearsal() {
         branch: "agent/REHEARSAL-C-overlap",
         worktree: "../machina-worktrees/REHEARSAL-C",
         writeScope: ["tests/fixtures/manifest.json"],
+        allowNonGit: true,
         now
       });
     } catch (error) {

@@ -27,6 +27,7 @@ const tasks = {
   ],
   test: [
     [process.execPath, ["--test", "scripts/agent/claims.test.mjs"]],
+    [process.execPath, ["--test", "scripts/agent/claims.worktree.test.mjs"]],
     [process.execPath, ["--test", "scripts/agent/task-registry.test.mjs"]],
     [process.execPath, ["--test", "scripts/agent/rehearsal.test.mjs"]],
     [process.execPath, ["--test", "scripts/security/redact.test.mjs"]],
