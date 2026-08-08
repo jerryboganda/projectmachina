@@ -17,7 +17,7 @@ purpose: "Provide the durable, human-readable snapshot that each autonomous cycl
 - Active milestone: `M0 — Foundation and governance`
 - Current release target: `0.1.0-alpha`
 - Last reconciled: `2026-08-09`
-- Default branch: `main` (bootstrap commits `f62eeb7..5895b2d`; review branch active)
+- Default branch: `main` (bootstrap commits `f62eeb7..a839efe`; review branch active)
 
 ## Active tasks
 
@@ -48,6 +48,6 @@ purpose: "Provide the durable, human-readable snapshot that each autonomous cycl
 
 ## Reconciliation notes
 
-The bootstrap commits are `f62eeb7..5895b2d`; the branch contains the isolated
+The bootstrap commits are `f62eeb7..a839efe`; the branch contains the isolated
 claim-helper, reproducibility, and cross-platform scanner repairs pending review.
 M0-T02 through M0-T12 must be split into separate claims after bootstrap merge.
