@@ -25,6 +25,7 @@ test("requires explicit stale-lock recovery and records a fencing audit", async 
       root,
       actor: "orchestrator",
       reason: "process and worktree inspection completed",
+      inspection: "verified stale PID and absent active worktree",
       now: new Date(old.getTime() + STALE_LOCK_MS + 1)
     });
     assert.equal(recovered.recovered, true);

@@ -498,6 +498,13 @@ function validateLeaseValues(leaseMinutes, graceMinutes) {
   }
 }
 
+function requireInspection(inspection) {
+  if (typeof inspection !== "string" || inspection.trim().length === 0) {
+    throw new Error("recovery inspection evidence is required");
+  }
+  return inspection.trim();
+}
+
 async function archivePreviousClaim(root, path, task) {
   try {
     const previous = JSON.parse(await readFile(path, "utf8"));
@@ -654,7 +661,10 @@ function validateClaimOwner(root, claim, agent, branch, worktree, allowNonGit) {
 }
 
 function validateOwnerToken(claim, ownerToken) {
-  if (ownerToken !== undefined && ownerToken !== claim.owner_token) {
+  if (typeof ownerToken !== "string" || ownerToken.length === 0) {
+    throw new Error("owner token is required for claim mutation");
+  }
+  if (ownerToken !== claim.owner_token) {
     throw new Error("claim owner token does not match");
   }
 }
@@ -799,6 +809,7 @@ export async function recoverExpiredTask({
   if (!task || !actor || !reason) {
     throw new Error("--task, --actor, and --reason are required");
   }
+  const inspectionEvidence = requireInspection(inspection);
   const recovered = await withClaimLock(
     root,
     async (lock) => {
@@ -817,7 +828,7 @@ export async function recoverExpiredTask({
         status: "recovered",
         recovered_by: actor,
         recovery_reason: reason,
-        recovery_inspection: inspection ?? "operator inspection recorded by actor",
+        recovery_inspection: inspectionEvidence,
         recovered_at: now.toISOString(),
         lock_fence: lock.fence
       };
@@ -847,6 +858,7 @@ export async function recoverStaleLock({
   if (!actor || !reason) {
     throw new Error("--actor and --reason are required");
   }
+  const inspectionEvidence = requireInspection(inspection);
   return withCoordinationLock(
     root,
     async (coordination) => {
@@ -859,7 +871,7 @@ export async function recoverStaleLock({
             type: "stale-coordination-lock-recovery",
             actor,
             reason,
-            inspection: inspection ?? "operator inspection recorded by actor",
+            inspection: inspectionEvidence,
             recovered_at: now.toISOString(),
             recovered_lock_path: coordination.stale_lock_path,
             fencing_token: randomUUID(),
@@ -896,7 +908,7 @@ export async function recoverStaleLock({
         type: "stale-lock-recovery",
         actor,
         reason,
-        inspection: inspection ?? "operator inspection recorded by actor",
+        inspection: inspectionEvidence,
         recovered_at: now.toISOString(),
         lock_age_ms: ageMs,
         previous_owner: previousOwner,

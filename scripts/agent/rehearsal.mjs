@@ -60,6 +60,7 @@ export async function runAutonomousLoopRehearsal() {
       agent: first.agent_id,
       branch: first.branch,
       worktree: first.worktree,
+      ownerToken: first.owner_token,
       allowNonGit: true,
       now: new Date("2026-08-09T01:10:00.000Z")
     });
@@ -69,6 +70,7 @@ export async function runAutonomousLoopRehearsal() {
       agent: second.agent_id,
       branch: second.branch,
       worktree: second.worktree,
+      ownerToken: second.owner_token,
       allowNonGit: true,
       now: new Date("2026-08-09T01:10:00.000Z")
     });
@@ -97,6 +99,7 @@ export async function runAutonomousLoopRehearsal() {
       agent: first.agent_id,
       branch: first.branch,
       worktree: first.worktree,
+      ownerToken: first.owner_token,
       allowNonGit: true,
       reason: "independent review simulated",
       now: new Date("2026-08-09T01:20:00.000Z")
@@ -107,6 +110,7 @@ export async function runAutonomousLoopRehearsal() {
       agent: second.agent_id,
       branch: second.branch,
       worktree: second.worktree,
+      ownerToken: second.owner_token,
       allowNonGit: true,
       reason: "independent review simulated",
       now: new Date("2026-08-09T01:20:00.000Z")

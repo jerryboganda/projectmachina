@@ -56,11 +56,16 @@ test("writes resumable handoff and durable evidence projections", async () => {
         branch: "agent/M0-T02-handoff",
         worktree: "../machina-worktrees/M0-T02-handoff",
         write_scope: ["scripts/agent/**"],
+        owner_token: "secret-owner-token",
         status: "released"
       },
       event: { type: "release", result: "recorded" }
     });
     assert.match(claimProjection.json_path, /\.claim\.json$/);
+    assert.equal(
+      (await readFile(claimProjection.json_path, "utf8")).includes("secret-owner-token"),
+      false
+    );
   } finally {
     await rm(root, { recursive: true, force: true });
   }

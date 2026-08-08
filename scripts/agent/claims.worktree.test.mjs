@@ -47,6 +47,7 @@ test("binds a claim to a registered Git worktree and branch", async () => {
       agent: "worktree-test",
       branch: "agent/claims-test",
       worktree,
+      ownerToken: claim.owner_token,
       now: new Date("2026-08-09T01:01:00.000Z")
     });
     assert.equal(released.status, "released");

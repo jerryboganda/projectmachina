@@ -22,9 +22,9 @@ Examples:
 
 ```text
 node scripts/agent/claims.mjs claim --task M0-T02 --agent platform-01 --branch agent/M0-T02-claims --worktree ../machina-worktrees/M0-T02-platform-01 --scope scripts/agent/**
-node scripts/agent/claims.mjs heartbeat --task M0-T02 --agent platform-01 --branch agent/M0-T02-claims --worktree ../machina-worktrees/M0-T02-platform-01
+node scripts/agent/claims.mjs heartbeat --task M0-T02 --agent platform-01 --branch agent/M0-T02-claims --worktree ../machina-worktrees/M0-T02-platform-01 --owner-token OWNER_TOKEN
 node scripts/agent/claims.mjs inspect
-node scripts/agent/claims.mjs release --task M0-T02 --agent platform-01 --branch agent/M0-T02-claims --worktree ../machina-worktrees/M0-T02-platform-01 --reason merged
+node scripts/agent/claims.mjs release --task M0-T02 --agent platform-01 --branch agent/M0-T02-claims --worktree ../machina-worktrees/M0-T02-platform-01 --owner-token OWNER_TOKEN --reason merged
 node scripts/agent/worktree.mjs create --task M0-T02 --branch agent/M0-T02-claims --worktree ../machina-worktrees/M0-T02-platform-01
 node scripts/agent/worktree.mjs inspect --worktree ../machina-worktrees/M0-T02-platform-01
 node scripts/agent/worktree.mjs remove --worktree ../machina-worktrees/M0-T02-platform-01

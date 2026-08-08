@@ -30,6 +30,14 @@ function arrayValue(value) {
   return value;
 }
 
+function safeClaim(claim) {
+  if (!claim || typeof claim !== "object") {
+    return claim ?? null;
+  }
+  const { owner_token: _ownerToken, ...withoutOwnerToken } = claim;
+  return withoutOwnerToken;
+}
+
 async function writeJsonAtomic(path, value) {
   await mkdir(dirname(path), { recursive: true });
   const temporaryPath = `${path}.${randomUUID()}.tmp`;
@@ -147,7 +155,7 @@ export async function writeHandoff(options) {
     generated_at: generatedAt,
     objective: options.objective ?? "",
     acceptance_criteria: arrayValue(options.acceptanceCriteria ?? options.acceptance_criteria),
-    claim: options.claim ?? null,
+    claim: safeClaim(options.claim),
     completed: arrayValue(options.completed),
     in_progress: arrayValue(options.inProgress ?? options.in_progress),
     decisions: arrayValue(options.decisions),
@@ -231,7 +239,7 @@ export async function writeEvidenceProjection(options) {
     generated_at: options.generatedAt ?? new Date().toISOString(),
     objective: options.objective ?? "",
     acceptance_criteria: arrayValue(options.acceptanceCriteria ?? options.acceptance_criteria),
-    claim: options.claim ?? null,
+    claim: safeClaim(options.claim),
     commands: arrayValue(options.commands),
     artifacts: arrayValue(options.artifacts),
     changed_files: arrayValue(options.changedFiles ?? options.changed_files),

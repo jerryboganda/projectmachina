@@ -88,6 +88,7 @@ test("rejects overlapping claims and preserves release evidence", async () => {
       agent: "test-agent-a",
       branch: first.branch,
       worktree: first.worktree,
+      ownerToken: first.owner_token,
       allowNonGit: true,
       now: new Date("2026-08-09T00:10:00.000Z")
     });
@@ -99,6 +100,7 @@ test("rejects overlapping claims and preserves release evidence", async () => {
         agent: "wrong-agent",
         branch: first.branch,
         worktree: first.worktree,
+        ownerToken: first.owner_token,
         allowNonGit: true,
         now: new Date("2026-08-09T00:10:00.000Z")
       }),
@@ -110,6 +112,7 @@ test("rejects overlapping claims and preserves release evidence", async () => {
       agent: "test-agent-a",
       branch: first.branch,
       worktree: first.worktree,
+      ownerToken: first.owner_token,
       allowNonGit: true,
       reason: "test complete",
       now: new Date("2026-08-09T00:11:00.000Z")
@@ -144,6 +147,7 @@ test("requires explicit recovery for expired claims", async () => {
       task: "M0-T02",
       actor: "orchestrator",
       reason: "lease expired with no process evidence",
+      inspection: "verified lease, grace period, and absent worker process",
       now: new Date("2026-08-09T00:03:00.000Z")
     });
     assert.equal(recovered.status, "recovered");
