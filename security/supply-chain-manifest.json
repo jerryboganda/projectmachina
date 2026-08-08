@@ -11,6 +11,22 @@
       "integrity": "toolchain-channel-pinned"
     },
     {
+      "name": "serde",
+      "version": "1.0.229",
+      "source": "https://crates.io/crates/serde",
+      "license": "MIT OR Apache-2.0",
+      "purpose": "generated Rust contract serialization",
+      "integrity": "Cargo.lock-resolved"
+    },
+    {
+      "name": "serde_json",
+      "version": "1.0.151",
+      "source": "https://crates.io/crates/serde_json",
+      "license": "MIT OR Apache-2.0",
+      "purpose": "structured canonical error and contract details",
+      "integrity": "Cargo.lock-resolved"
+    },
+    {
       "name": "node",
       "version": "20.18.0",
       "source": "https://nodejs.org/",
@@ -41,6 +57,22 @@
       "license": "BSD-3-Clause",
       "purpose": "C++ bridge build orchestration",
       "integrity": "minimum-version-policy"
+    },
+    {
+      "name": "clang",
+      "version": "21.1.6",
+      "source": "https://llvm.org/",
+      "license": "Apache-2.0 WITH LLVM-exception",
+      "purpose": "C/C++ compilation and native boundary diagnostics",
+      "integrity": "toolchain-profile-pinned"
+    },
+    {
+      "name": "ninja",
+      "version": "1.13.2",
+      "source": "https://ninja-build.org/",
+      "license": "Apache-2.0",
+      "purpose": "deterministic CMake build executor",
+      "integrity": "toolchain-profile-pinned"
     },
     {
       "name": "svelte",
@@ -97,6 +129,46 @@
       "license": "MIT",
       "purpose": "frontend development and production bundling",
       "integrity": "pnpm-lock-resolved"
+    },
+    {
+      "name": "v8",
+      "version": "13.1.201.12",
+      "source": "https://chromium.googlesource.com/v8/v8.git",
+      "license": "BSD-3-Clause",
+      "purpose": "external JavaScript runtime artifact for the audited bridge",
+      "integrity": "revision-and-signature-required-before-runtime-use"
+    },
+    {
+      "name": "chromium",
+      "version": "131.0.6778.85",
+      "source": "https://chromium.googlesource.com/chromium/src.git",
+      "license": "BSD-3-Clause",
+      "purpose": "external compatibility runtime",
+      "integrity": "revision-and-signature-required-before-runtime-use"
+    },
+    {
+      "name": "postgres",
+      "version": "16.4",
+      "source": "https://hub.docker.com/_/postgres",
+      "license": "PostgreSQL",
+      "purpose": "local durable control-plane development service",
+      "integrity": "local-only-tag;digest-required-before-production"
+    },
+    {
+      "name": "redis",
+      "version": "7.4.1",
+      "source": "https://hub.docker.com/_/redis",
+      "license": "BSD-3-Clause",
+      "purpose": "local coordination development service",
+      "integrity": "local-only-tag;digest-required-before-production"
+    },
+    {
+      "name": "minio",
+      "version": "RELEASE.2024-12-18T13-15-44Z",
+      "source": "https://hub.docker.com/r/minio/minio",
+      "license": "AGPL-3.0",
+      "purpose": "local S3-compatible artifact development service",
+      "integrity": "local-only-tag;digest-required-before-production"
     }
   ],
   "review_policy": {
