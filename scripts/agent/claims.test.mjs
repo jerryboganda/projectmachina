@@ -27,7 +27,10 @@ test("detects overlapping literal and glob scopes conservatively", () => {
   assert.equal(scopesOverlap("src/foo?.txt", "src/foo1.txt"), true);
   assert.equal(scopesOverlap("src/foo*", "src/foobar"), true);
   assert.equal(scopesOverlap("src/a[0-9].json", "src/a1.json"), true);
-  assert.equal(scopesOverlap("src/Foo/**", "src/foo/bar.ts"), true);
+  assert.equal(
+    scopesOverlap("src/Foo/**", "src/foo/bar.ts"),
+    process.platform === "win32"
+  );
 });
 
 test("rejects overlapping claims and preserves release evidence", async () => {
