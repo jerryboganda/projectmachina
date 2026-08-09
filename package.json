@@ -22,6 +22,7 @@
     "secrets:scan": "node scripts/security/scan-secrets.mjs",
     "evidence:smoke": "node --test scripts/evidence/manifest.test.mjs",
     "benchmark:smoke": "node benchmarks/harness/smoke.mjs",
+    "m1:smoke": "node --test scripts/test/m1-compatibility-smoke.test.mjs",
     "build": "pnpm --filter @machina/console build",
     "check": "pnpm --filter @machina/console check",
     "fmt-check": "pnpm --filter @machina/console fmt-check",

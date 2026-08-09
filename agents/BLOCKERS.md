@@ -11,6 +11,22 @@ purpose: "Track only proven blockers with evidence, impact, owner, and recommend
 
 ## Open blockers
 
+## BLK-003 — M1 real Chromium/process compatibility runtime unavailable
+
+- Related task(s): M1-T12, M1 exit, M2 native corpus entry
+- First observed: 2026-08-09
+- Owner: platform / owner approval
+- Class: external
+- Severity: high
+- Exact reproduction/evidence: `Get-Command docker` returns no Docker executable; the recorded Docker Desktop installation attempt failed at administrator/UAC. The Chromium adapter remains an injected boundary and no HTTP/gRPC listener or real Chromium process is available in this local session.
+- Work attempted: M1 source/client smoke now runs the deterministic fixture journey through HTTP, gRPC, TypeScript, and Python command surfaces, verifies ordered reconnect events, typed cancellation/unsupported/worker-loss failures, and control/worker restart reconciliation.
+- Why autonomous repair is exhausted: Real browser/container provisioning and privileged runtime installation require host administrator approval outside the repository session.
+- Impacted descendants: M1-T12 real-runtime acceptance and any production/container readiness claim.
+- Unaffected work that may continue: Native source implementation and all contract/unit tests that do not claim a real Chromium process.
+- Recommended resolution: Install Docker/Chromium runtime with administrator approval, run the M1 real listener/worker journey and crash/disconnect matrix, then replace this blocker with verified evidence.
+- Human decision required, if any: Owner approval for privileged runtime installation.
+- Review date: Before beta/RC/GA and before M1 exit is declared.
+
 ## BLK-002 — Docker/Compose unavailable for M0-T11 health evidence
 
 - Related task(s): M0-T11
