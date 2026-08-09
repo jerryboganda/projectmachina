@@ -688,6 +688,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "machina-semantic"
+version = "0.1.0"
+dependencies = [
+ "machina-dom",
+ "machina-html",
+ "machina-html-tree-builder",
+ "machina-selectors",
+]
+
+[[package]]
 name = "machina-session"
 version = "0.1.0"
 dependencies = [
