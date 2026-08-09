@@ -331,7 +331,34 @@ jobs:
           $env:Path = "$env:V8_BUILD_ROOT\depot_tools;" + $env:Path
           Set-Location "$env:V8_BUILD_ROOT\v8-checkout\v8"
           Write-Host "GN args: $env:GN_ARGS"
-          gn gen out.gn/x64.release --args="$env:GN_ARGS"
+
+          # --- Write args.gn directly instead of passing --args= on the command line ---
+          # PowerShell's native-command argument marshaling does not reliably
+          # preserve double quotes embedded inside an already-interpolated
+          # string when invoking an external executable: passing
+          # `--args="$env:GN_ARGS"` here previously arrived at gn as
+          # `target_cpu=x64` (the quotes around x64 silently stripped),
+          # which GN rejected with "ERROR ... :1:27: Undefined identifier"
+          # because an unquoted x64 is parsed as an identifier reference,
+          # not a string literal. This is specific to PowerShell's argv
+          # construction for external processes; the Linux leg's equivalent
+          # bash `--args="$GN_ARGS"` does not have this problem (confirmed:
+          # that leg's GN gen step succeeds), so only the Windows leg needs
+          # this workaround. Sidestep PowerShell's native-argument quoting
+          # entirely by writing args.gn -- GN's own documented mechanism for
+          # supplying build args, read automatically by `gn gen` when no
+          # --args is given -- one assignment per line, matching the
+          # canonical args.gn format.
+          New-Item -ItemType Directory -Path out.gn/x64.release -Force | Out-Null
+          $argLines = $env:GN_ARGS -split '\s+' | Where-Object { $_ }
+          # ASCII, not utf8: all args are plain ASCII and this avoids
+          # PowerShell's utf8 Out-File adding a BOM that could confuse GN's
+          # parser.
+          $argLines | Out-File -FilePath out.gn/x64.release/args.gn -Encoding ascii
+          Write-Host "--- out.gn/x64.release/args.gn ---"
+          Get-Content out.gn/x64.release/args.gn | ForEach-Object { Write-Host "  $_" }
+
+          gn gen out.gn/x64.release
           if ($LASTEXITCODE -ne 0) { Write-Error "gn gen failed"; exit 1 }
           echo "$env:GN_ARGS" | Out-File -FilePath gn_args_used.txt -Encoding utf8
         timeout-minutes: 15
