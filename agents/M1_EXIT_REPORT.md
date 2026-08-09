@@ -46,8 +46,21 @@ The same run also passed:
 
 The smoke intentionally does not fake a successful Chromium process. The
 adapter reports runtime/capability state explicitly, and the real process,
-listener, client/server, and crash evidence remains blocked by `BLK-003` and
-the owner Docker waiver in `agents/WAIVERS.md`.
+listener, client/server, and crash evidence remains blocked by `BLK-003`.
+
+Update 2026-08-09: the local-host Docker gap is no longer the binding
+constraint. The same dev compose stack (`deploy/compose/compose.yaml`) was
+run with real Docker on owner-controlled VPS `185.252.233.186`
+(`machina.polytronx.com`), isolated to `127.0.0.1`-only ports with no public
+exposure. Postgres, Redis, MinIO, the fixture server, and Prometheus all
+started healthy and answered real probes, and the same
+`m1-compatibility-smoke.test.mjs` passed there too. See
+`.agent-state/evidence/M1-T12-vps-runtime.md`. This proves real container
+infrastructure is reachable; it does **not** prove a real Chromium
+process/listener journey, because `crates/chromium-adapter` has no Chromium
+launch or CDP-connection code yet — that remains the actual blocking gap,
+independent of environment, and is now tracked as the primary open item in
+`BLK-003`.
 
 ## Native-ready interfaces
 

@@ -11,20 +11,28 @@ purpose: "Track only proven blockers with evidence, impact, owner, and recommend
 
 ## Open blockers
 
-## BLK-003 — M1 real Chromium/process compatibility runtime unavailable
+## BLK-003 — M1 real Chromium process launch is unimplemented (infra half resolved)
 
-- Related task(s): M1-T12, M1 exit, M2 native corpus entry
+- Related task(s): M1-T12, M1 exit, M2 native corpus entry, M3-T15 (chromium-adapter launch code)
 - First observed: 2026-08-09
+- Updated: 2026-08-09 — local host has no Docker, but real Docker infra is now
+  verified on owner-controlled shared VPS `185.252.233.186` (project
+  `machina-m1-verify`, isolated 127.0.0.1-only ports, no public exposure).
+  `postgres:16.4`, `redis:7.4.1`, `minio` and the fixture/observability
+  containers came up healthy and answered real `pg_isready`/`redis-cli
+  ping`/HTTP probes; `node --test scripts/test/m1-compatibility-smoke.test.mjs`
+  passed on that host too. See `.agent-state/evidence/M1-T12-vps-runtime.md`.
 - Owner: platform / owner approval
-- Class: external
+- Class: technical (downgraded from external — the remaining gap is code, not
+  environment)
 - Severity: high
-- Exact reproduction/evidence: `Get-Command docker` returns no Docker executable; the recorded Docker Desktop installation attempt failed at administrator/UAC. The Chromium adapter remains an injected boundary and no HTTP/gRPC listener or real Chromium process is available in this local session.
-- Work attempted: M1 source/client smoke now runs the deterministic fixture journey through HTTP, gRPC, TypeScript, and Python command surfaces, verifies ordered reconnect events, typed cancellation/unsupported/worker-loss failures, and control/worker restart reconciliation.
-- Why autonomous repair is exhausted: Real browser/container provisioning and privileged runtime installation require host administrator approval outside the repository session.
-- Impacted descendants: M1-T12 real-runtime acceptance and any production/container readiness claim.
-- Unaffected work that may continue: Native source implementation and all contract/unit tests that do not claim a real Chromium process.
-- Recommended resolution: Install Docker/Chromium runtime with administrator approval, run the M1 real listener/worker journey and crash/disconnect matrix, then replace this blocker with verified evidence.
-- Human decision required, if any: Owner approval for privileged runtime installation.
+- Exact reproduction/evidence: `rg -n "spawn|process::Command|CDP|remote-debugging" crates/chromium-adapter/src/lib.rs` returns no matches. `crates/chromium-adapter` and `services/worker-chromium/README.md` define the adapter/pool boundary and explicitly require an **injected** transport; no code path in the repository spawns a Chromium process, connects over CDP, or binds a real HTTP/gRPC listener. This holds true regardless of Docker/VPS availability.
+- Work attempted: M1 source/client smoke runs the deterministic fixture journey through HTTP, gRPC, TypeScript, and Python command surfaces, verifies ordered reconnect events, typed cancellation/unsupported/worker-loss failures, and control/worker restart reconciliation — now demonstrated on both the local host (injected infra) and a real-Docker VPS host (real Postgres/Redis/MinIO, still injected command core).
+- Why autonomous repair is exhausted: Provisioning Docker locally still requires host administrator approval (unresolved on this machine); that is now a non-blocking convenience issue since the VPS supplies real infra. The actual remaining work — implementing Chromium process launch and CDP wiring in `crates/chromium-adapter` — is an implementation task, not an environment blocker, and should be tracked as normal M3 work rather than kept open here.
+- Impacted descendants: M1-T12 real-runtime acceptance and any production/container readiness claim; M2/M3 native corpus gates that assume a working Chromium launch path.
+- Unaffected work that may continue: Native source implementation and all contract/unit tests that do not claim a real Chromium process. Docker-backed integration tests can now target the VPS if a durable arrangement is agreed.
+- Recommended resolution: (1) Decide whether the VPS should be a durable CI/dev Docker target or was a one-off verification — if durable, document it in `delivery/DEVELOPMENT_ENVIRONMENT.md`. (2) Implement real Chromium launch/CDP connection in `crates/chromium-adapter` under a tracked M3 task. (3) Rerun the M1 real listener/worker journey against that implementation before declaring M1 exit.
+- Human decision required, if any: Confirm the VPS is an acceptable durable Docker target for this purpose (shared production infra hosting other tenants), or provision a dedicated/local Docker host instead.
 - Review date: Before beta/RC/GA and before M1 exit is declared.
 
 ## BLK-002 — Docker/Compose unavailable for M0-T11 health evidence
