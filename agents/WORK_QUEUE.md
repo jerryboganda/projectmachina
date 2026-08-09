@@ -28,7 +28,7 @@ scheduling policy above):
 | — | ~~M2-T01~~ | 1 | M2 | native-engine | merged (#28) | — |
 | 2 | M2-T02 | 2 | M2 | native-engine + security | M2-T01 (merged) | A |
 | 3 | M2-T03 | 2 | M2 | native-engine | M2-T01 (merged) | B |
-| 4 | M2-T05 | 2 | M2 | native-engine | M2-T01 (merged) | A |
+| — | ~~M2-T05~~ | 2 | M2 | native-engine | merged (#31) | — |
 | 5 | M2-T06 | 2 | M2 | native-engine + security | M2-T01 (merged) | B |
 | 6 | M2-T04 | 3 | M2 | native-engine | M2-T03, M2-T05 | A |
 | 7 | M2-T07 | 3 | M2 | native-engine | M2-T06, M2-T05 | B |
@@ -44,15 +44,17 @@ scheduling policy above):
 
 | Task | Owner | Branch/worktree | State | Heartbeat |
 | --- | --- | --- | --- | --- |
-| M2-T05 | wave2-builder-a | agent/M2-T05-* | claimed | — |
 | M2-T03 | wave2-builder-b | agent/M2-T03-* | claimed | — |
+| M2-T02 | wave3-builder-a | agent/M2-T02-* | claimed | — |
+
+M2-T05 merged (#31), unlocking M2-T10 and M2-T11 (both depend only on T05) —
+next pair to start the moment a slot frees, per the 2-concurrent cap.
 
 M2-T06 held back: no V8 build toolchain (`gn`/`gclient`/depot_tools) is
-available in this environment; a from-source V8 build is a multi-GB,
-hours-long fetch this session cannot responsibly attempt unattended. A
-research pass is scoped to determine real provisioning requirements before
-any builder claims M2-T06. M2-T02 queues behind T05/T03 per the
-2-concurrent-implementer cap.
+available locally; owner directed GitHub Actions ONLY for the V8 build
+(`.github/workflows/v8-toolchain-build.yml`, workflow_dispatch, run in
+progress) rather than local/VPS. M2-T06 proper (the C++ bridge/Rust facade
+code) is blocked on that workflow producing real artifacts.
 
 ## In review
 
