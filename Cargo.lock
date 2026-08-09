@@ -122,6 +122,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "machina-scheduler"
+version = "0.1.0"
+
+[[package]]
 name = "machina-session"
 version = "0.1.0"
 dependencies = [
