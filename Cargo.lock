@@ -602,6 +602,14 @@ name = "machina-html"
 version = "0.1.0"
 
 [[package]]
+name = "machina-html-tree-builder"
+version = "0.1.0"
+dependencies = [
+ "machina-dom",
+ "machina-html",
+]
+
+[[package]]
 name = "machina-native-core"
 version = "0.1.0"
 dependencies = [
