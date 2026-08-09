@@ -369,6 +369,52 @@ jobs:
           "vs2017_install=$env:VS_INSTALLATION_PATH" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
           "vs2026_install=$env:VS_INSTALLATION_PATH" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
+          # --- Alias the pinned SDK_VERSION string to whatever Windows SDK is actually installed ---
+          # After the VS-version-skew fix above, gn gen progressed further and
+          # failed with a *second*, same-class version-skew issue:
+          #   FileNotFoundError: [Errno 2] No such file or directory:
+          #   'C:\Program Files (x86)\Windows Kits\10\Include\10.0.22621.0\um\dcomp.h'
+          # from vs_toolchain.py's SDKIncludesIDCompositionDevice4(), which
+          # looks for a header under a *hardcoded* SDK_VERSION constant
+          # ("10.0.22621.0" in this pinned V8 checkout's vendored copy) rather
+          # than whatever SDK version is actually installed. This runner's
+          # actual Windows SDK is evidently a different (newer) version, so
+          # that exact-named subfolder does not exist, and the unguarded
+          # open() call crashes instead of degrading gracefully. Same root
+          # cause as the VS-version issue -- the DEPS-pinned build tooling's
+          # hardcoded version string predates what this runner image now
+          # ships -- so apply the same style of fix: alias the expected
+          # version-named directories to whatever the newest actually
+          # installed SDK version's directories are, via NTFS junctions, so
+          # any hardcoded-version-string lookup elsewhere in the vendored
+          # build scripts resolves to real, present headers/libs instead of
+          # failing outright. This does not modify V8's checked-out source;
+          # it only adds sibling directories under the SDK install root.
+          $sdkRoot = "${env:ProgramFiles(x86)}\Windows Kits\10"
+          $pinnedSdkVersion = "10.0.22621.0"
+          Write-Host "--- Installed Windows SDK versions under $sdkRoot\Include (diagnostic) ---"
+          $installed = Get-ChildItem (Join-Path $sdkRoot "Include") -Directory -ErrorAction SilentlyContinue |
+            Where-Object { $_.Name -match '^\d+\.\d+\.\d+\.\d+$' }
+          $installed | ForEach-Object { Write-Host "  $($_.Name)" }
+          if (-not (Test-Path (Join-Path $sdkRoot "Include\$pinnedSdkVersion"))) {
+            $newest = $installed | Sort-Object { [version]$_.Name } -Descending | Select-Object -First 1
+            if ($newest) {
+              Write-Host "Pinned V8's vendored build tooling expects Windows SDK $pinnedSdkVersion; only $($newest.Name) is actually installed. Creating junctions so version-specific lookups resolve to it."
+              foreach ($sub in @('Include', 'Lib', 'bin')) {
+                $target = Join-Path $sdkRoot "$sub\$($newest.Name)"
+                $link = Join-Path $sdkRoot "$sub\$pinnedSdkVersion"
+                if ((Test-Path $target) -and -not (Test-Path $link)) {
+                  Write-Host "  Junction: $link -> $target"
+                  cmd /c mklink /J "$link" "$target" | Out-Null
+                }
+              }
+            } else {
+              Write-Warning "No installed Windows SDK version found under $sdkRoot\Include; cannot alias $pinnedSdkVersion. gn gen may fail again."
+            }
+          } else {
+            Write-Host "$pinnedSdkVersion is directly installed; no alias needed."
+          }
+
           # --- Write args.gn directly instead of passing --args= on the command line ---
           # PowerShell's native-command argument marshaling does not reliably
           # preserve double quotes embedded inside an already-interpolated
