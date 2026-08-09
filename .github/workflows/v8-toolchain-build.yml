@@ -113,6 +113,7 @@ jobs:
           echo "os_desc=$($os.Caption) $($os.Version)" >> $env:GITHUB_OUTPUT
 
       - name: Verify MSVC Build Tools are present
+        id: msvc
         run: |
           $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
           if (-not (Test-Path $vswhere)) {
@@ -125,6 +126,7 @@ jobs:
             exit 1
           }
           Write-Host "Found Visual Studio / Build Tools at: $vsInfo"
+          echo "installation_path=$vsInfo" >> $env:GITHUB_OUTPUT
 
       - name: Check and reclaim disk space
         id: disk
@@ -327,10 +329,45 @@ jobs:
             v8_monolithic=true v8_use_external_startup_data=false
             is_component_build=false v8_enable_i18n_support=false
             symbol_level=0
+          VS_INSTALLATION_PATH: ${{ steps.msvc.outputs.installation_path }}
         run: |
           $env:Path = "$env:V8_BUILD_ROOT\depot_tools;" + $env:Path
           Set-Location "$env:V8_BUILD_ROOT\v8-checkout\v8"
           Write-Host "GN args: $env:GN_ARGS"
+
+          # --- Point the vendored build/vs_toolchain.py at the real VS install ---
+          # gn gen failed here with:
+          #   Exception: No supported Visual Studio can be found. Supported
+          #   versions are: 17.0 (2022), 16.0 (2019), 15.0 (2017).
+          # from V8's *checked-out* (DEPS-pinned, era-of-13.1.201.12)
+          # build/vs_toolchain.py, whose GetVisualStudioVersion() only knows
+          # hardcoded install paths for VS 2022/2019/2017 -- it has no entry
+          # for whatever newer VS version this runner image now ships
+          # (confirmed via the "Verify MSVC Build Tools are present" step's
+          # vswhere output: the real install is not under any of the 2022/
+          # 2019/2017 paths that old script checks). This is a version-skew
+          # mismatch between the pinned V8 checkout's vendored build tooling
+          # and the current windows-latest runner image, not a bug in this
+          # workflow's own script. vs_toolchain.py documents exactly this
+          # escape hatch: `_GenerateCandidatePaths` checks a `vs<year>_install`
+          # environment variable before falling back to its hardcoded paths,
+          # explicitly "for external developers" whose install doesn't match
+          # the hardcoded expectation. Point every version key vs_toolchain.py
+          # might check at the real vswhere-detected install path so
+          # detection succeeds regardless of which vendored revision's exact
+          # version list applies.
+          $env:vs2022_install = $env:VS_INSTALLATION_PATH
+          $env:vs2019_install = $env:VS_INSTALLATION_PATH
+          $env:vs2017_install = $env:VS_INSTALLATION_PATH
+          $env:vs2026_install = $env:VS_INSTALLATION_PATH
+          Write-Host "Overriding vs<year>_install env vars to the real VS install path: $env:VS_INSTALLATION_PATH"
+          # Persist for the Ninja build step too -- the actual compile
+          # re-invokes this same toolchain-detection code path per target,
+          # not just once at gn gen time.
+          "vs2022_install=$env:VS_INSTALLATION_PATH" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "vs2019_install=$env:VS_INSTALLATION_PATH" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "vs2017_install=$env:VS_INSTALLATION_PATH" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "vs2026_install=$env:VS_INSTALLATION_PATH" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
           # --- Write args.gn directly instead of passing --args= on the command line ---
           # PowerShell's native-command argument marshaling does not reliably
