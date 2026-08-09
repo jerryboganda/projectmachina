@@ -30,12 +30,12 @@ scheduling policy above):
 | — | ~~M2-T03~~ | 2 | M2 | native-engine | merged (#34) | — |
 | — | ~~M2-T05~~ | 2 | M2 | native-engine | merged (#31, independently re-verified — see note below) | — |
 | 5 | M2-T06 | 2 | M2 | native-engine + security | M2-T01 (merged) | B |
-| 6 | M2-T04 | 3 | M2 | native-engine | M2-T03 (merged), M2-T05 (merged) | A |
+| — | ~~M2-T04~~ | 3 | M2 | native-engine | merged (#38) | — |
 | 7 | M2-T07 | 3 | M2 | native-engine | M2-T06, M2-T05 | B |
-| 8 | M2-T11 | 3 | M2 | native-engine | M2-T05 | A |
+| 8 | M2-T11 | 3 | M2 | native-engine | M2-T05 (merged) | A |
 | 9 | M2-T08 | 4 | M2 | native-engine | M2-T06, M2-T07, M2-T02 | A |
-| 10 | M2-T09 | 5 | M2 | native-engine | M2-T02, M2-T04, M2-T07, M2-T08 | A |
-| 11 | M2-T10 | 5 | M2 | native-engine | M2-T05 | B |
+| 10 | M2-T09 | 5 | M2 | native-engine | M2-T02 (merged), M2-T04 (merged), M2-T07, M2-T08 | A |
+| 11 | M2-T10 | 5 | M2 | native-engine | M2-T05 (merged) | B |
 | 12 | M2-T12 | 5 | M2 | native-engine | M2-T05, M2-T08 | A |
 | 13 | M2-T13 | 6 | M2 | native-engine + agent-runtime | M2-T05, M2-T10 | A |
 | 14 | M2-T14 | 7 | M2 | orchestrator + quality | M2-T01 through M2-T13, M1-T09 | A (no parallel) |
@@ -44,8 +44,8 @@ scheduling policy above):
 
 | Task | Owner | Branch/worktree | State | Heartbeat |
 | --- | --- | --- | --- | --- |
-| M2-T04 | wave3-builder-b | agent/M2-T04-tree-builder | claimed | — |
 | M2-T11 | wave3-builder-c | agent/M2-T11-event-dispatch | claimed | — |
+| M2-T10 | wave3-builder-d | agent/M2-T10-selectors | claimed | — |
 
 **Process correction (2026-08-09):** the orchestrator briefly recorded
 M2-T05 as merged before it actually was (PR #31 was still open, only its CI
