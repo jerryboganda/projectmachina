@@ -1,0 +1,20 @@
+[package]
+name = "machina-html"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Streaming, bounded-input HTML tokenizer for Project Machina's native engine (WHATWG HTML §13.2.5 state machine)."
+
+[lib]
+path = "src/lib.rs"
+
+# Zero runtime dependencies by design: crates/html must not depend on
+# command-model/command-bus/capability/any protocol crate, and carries no
+# third-party runtime dependency at all (std only). The named-character-
+# reference table is a hand-written static array (see src/entities.rs and
+# data/PROVENANCE.md) rather than build-time codegen, so there is no
+# build-dependency either.
+[dependencies]
+
+[dev-dependencies]

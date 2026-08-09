@@ -140,6 +140,10 @@ name = "machina-control-plane"
 version = "0.1.0"
 
 [[package]]
+name = "machina-html"
+version = "0.1.0"
+
+[[package]]
 name = "machina-native-core"
 version = "0.1.0"
 dependencies = [
