@@ -11,4 +11,5 @@ machina-command-bus = { path = "../command-bus" }
 machina-command-model = { path = "../command-model" }
 machina-chromium-adapter = { path = "../chromium-adapter" }
 machina-native-core = { path = "../native-core" }
+machina-telemetry = { path = "../telemetry" }
 serde_json = "1.0.151"

@@ -45,6 +45,7 @@ checksum = "9ed9a281f7bc9b7576e61468ba615a66a5c8cfdff42420a70aa82701a3b1e292"
 dependencies = [
  "block-buffer",
  "crypto-common",
+ "subtle",
 ]
 
 [[package]]
@@ -58,6 +59,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "hmac"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6c49c37c09c17a53d937dfbb742eb3a961d65a994e6bcdcf37e7399d0cc8ab5e"
+dependencies = [
+ "digest",
+]
+
+[[package]]
 name = "itoa"
 version = "1.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -68,6 +78,19 @@ name = "libc"
 version = "0.2.189"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3eaf3ede3fee6db1a4c2ee091bf8a8b4dccdc6d17f656fb07896ee72867612f2"
+
+[[package]]
+name = "machina-artifact-store"
+version = "0.1.0"
+dependencies = [
+ "hmac",
+ "machina-auth",
+ "machina-command-model",
+ "machina-telemetry",
+ "serde",
+ "serde_json",
+ "sha2",
+]
 
 [[package]]
 name = "machina-auth"
@@ -99,6 +122,7 @@ version = "0.1.0"
 dependencies = [
  "machina-capability",
  "machina-command-model",
+ "machina-telemetry",
  "serde",
  "serde_json",
 ]
@@ -144,6 +168,7 @@ dependencies = [
  "machina-command-bus",
  "machina-command-model",
  "machina-native-core",
+ "machina-telemetry",
  "serde_json",
 ]
 
@@ -170,6 +195,8 @@ name = "machina-telemetry"
 version = "0.1.0"
 dependencies = [
  "machina-command-model",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -253,6 +280,12 @@ dependencies = [
  "cpufeatures",
  "digest",
 ]
+
+[[package]]
+name = "subtle"
+version = "2.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
 
 [[package]]
 name = "syn"

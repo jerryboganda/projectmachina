@@ -12,7 +12,11 @@ use machina_command_model::{
     CanonicalError, CanonicalErrorCode, CapabilityStatus, CommandEnvelope, CommandOutcome,
     EngineExecution, EngineKind, OutcomeStatus,
 };
+use machina_telemetry::{DataClassification, SessionTrace};
 use serde::{Deserialize, Serialize};
+use std::sync::{Arc, Mutex};
+
+pub type SharedTrace = Arc<Mutex<SessionTrace>>;
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 pub enum FallbackPolicy {
@@ -142,6 +146,8 @@ pub struct CommandContext {
     pub correlation_id: String,
     pub deadline: Instant,
     pub cancellation: CancellationToken,
+    pub trace_ref: Option<String>,
+    pub trace: Option<SharedTrace>,
 }
 
 impl CommandContext {
@@ -150,7 +156,56 @@ impl CommandContext {
             correlation_id: correlation_id.into(),
             deadline: Instant::now() + timeout,
             cancellation: CancellationToken::new(),
+            trace_ref: None,
+            trace: None,
         }
+    }
+
+    pub fn with_trace(
+        correlation_id: impl Into<String>,
+        timeout: Duration,
+        trace_ref: impl Into<String>,
+        trace: SharedTrace,
+    ) -> Self {
+        let mut context = Self::with_timeout(correlation_id, timeout);
+        context.trace_ref = Some(trace_ref.into());
+        context.trace = Some(trace);
+        context
+    }
+
+    pub fn record_trace(
+        &self,
+        event_type: &str,
+        redacted_message: &str,
+    ) -> Result<(), DispatchError> {
+        let Some(trace) = &self.trace else {
+            return Ok(());
+        };
+        let mut trace = trace.lock().map_err(|_| {
+            DispatchError::failed(
+                CanonicalErrorCode::CapacityUnavailable,
+                "trace recorder is unavailable",
+                true,
+            )
+        })?;
+        let prefix = self.trace_ref.as_deref().unwrap_or("trace");
+        let event_id = format!("{prefix}:{}:{}", event_type, trace.len() + 1);
+        trace
+            .append(
+                event_id,
+                event_type,
+                timestamp_now(),
+                DataClassification::Restricted,
+                redacted_message,
+            )
+            .map(|_| ())
+            .map_err(|_| {
+                DispatchError::failed(
+                    CanonicalErrorCode::CapacityUnavailable,
+                    "trace recorder rejected event",
+                    true,
+                )
+            })
     }
 
     pub fn is_cancelled_or_expired(&self) -> Option<CanonicalErrorCode> {
@@ -319,55 +374,90 @@ where
     ) -> Result<DispatchResult, Box<DispatchFailure>> {
         let decision = self.decide(&command.required_capabilities);
         if let Some(code) = context.is_cancelled_or_expired() {
-            return Err(Box::new(DispatchFailure {
-                error: DispatchError::failed(
-                    code,
-                    code_name(code),
-                    code == CanonicalErrorCode::DeadlineExceeded,
-                ),
-                decision,
-            }));
+            let error = DispatchError::failed(
+                code,
+                code_name(code),
+                code == CanonicalErrorCode::DeadlineExceeded,
+            );
+            if let Err(trace_error) = context.record_trace("command.cancelled.v1", code_name(code))
+            {
+                return Err(Box::new(DispatchFailure {
+                    error: trace_error,
+                    decision,
+                }));
+            }
+            return Err(Box::new(DispatchFailure { error, decision }));
         }
 
+        if let Err(error) = context.record_trace(
+            "capability.decision.v1",
+            &format!(
+                "engine={:?};reason={}",
+                decision.selected_engine,
+                decision.reason.as_str()
+            ),
+        ) {
+            return Err(Box::new(DispatchFailure { error, decision }));
+        }
         let adapter = match decision.selected_engine {
             Some(EngineKind::Native) => &self.native as &dyn EngineAdapter,
             Some(EngineKind::Chromium) => &self.chromium as &dyn EngineAdapter,
             None => {
-                return Err(Box::new(DispatchFailure {
-                    error: DispatchError::failed(
-                        CanonicalErrorCode::UnsupportedCapability,
-                        "no configured engine can satisfy required capabilities",
-                        false,
-                    ),
-                    decision,
-                }));
+                let error = DispatchError::failed(
+                    CanonicalErrorCode::UnsupportedCapability,
+                    "no configured engine can satisfy required capabilities",
+                    false,
+                );
+                if let Err(trace_error) =
+                    context.record_trace("routing.rejected.v1", "no_compatible_engine")
+                {
+                    return Err(Box::new(DispatchFailure {
+                        error: trace_error,
+                        decision,
+                    }));
+                }
+                return Err(Box::new(DispatchFailure { error, decision }));
             }
         };
         let engine = adapter.kind();
         match adapter.execute(command, context) {
             Ok(result) => Ok(DispatchResult {
-                outcome: CommandOutcome {
-                    command_id: command.command_id.clone(),
-                    attempt: 1,
-                    status: OutcomeStatus::Succeeded,
-                    result: Some(result),
-                    error: None,
-                    execution: EngineExecution {
-                        requested_engine_policy: self.policy.as_str().to_owned(),
-                        engine,
-                        engine_version: adapter.capabilities().engine_build.clone(),
-                        capability_snapshot: snapshot_name(adapter.capabilities()),
-                        fallback_used: decision.fallback_used,
-                        fallback_reason: decision
-                            .fallback_used
-                            .then(|| decision.reason.as_str().to_owned()),
-                        migration_id: None,
-                    },
-                    trace_ref: None,
+                outcome: {
+                    if let Err(error) = context.record_trace("worker.outcome.v1", "verified") {
+                        return Err(Box::new(DispatchFailure { error, decision }));
+                    }
+                    CommandOutcome {
+                        command_id: command.command_id.clone(),
+                        attempt: 1,
+                        status: OutcomeStatus::Succeeded,
+                        result: Some(result),
+                        error: None,
+                        execution: EngineExecution {
+                            requested_engine_policy: self.policy.as_str().to_owned(),
+                            engine,
+                            engine_version: adapter.capabilities().engine_build.clone(),
+                            capability_snapshot: snapshot_name(adapter.capabilities()),
+                            fallback_used: decision.fallback_used,
+                            fallback_reason: decision
+                                .fallback_used
+                                .then(|| decision.reason.as_str().to_owned()),
+                            migration_id: None,
+                        },
+                        trace_ref: context.trace_ref.clone(),
+                    }
                 },
                 decision,
             }),
-            Err(error) => Err(Box::new(DispatchFailure { error, decision })),
+            Err(error) => {
+                if let Err(trace_error) = context.record_trace("command.error.v1", "adapter_failed")
+                {
+                    return Err(Box::new(DispatchFailure {
+                        error: trace_error,
+                        decision,
+                    }));
+                }
+                Err(Box::new(DispatchFailure { error, decision }))
+            }
         }
     }
 }
@@ -393,6 +483,13 @@ fn snapshot_name(snapshot: &CapabilitySnapshot) -> String {
         snapshot.engine_build,
         capabilities
     )
+}
+
+fn timestamp_now() -> String {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|duration| duration.as_secs().to_string())
+        .unwrap_or_else(|_| "0".to_owned())
 }
 
 fn capability_status_name(status: CapabilityStatus) -> &'static str {
@@ -449,6 +546,8 @@ mod tests {
         CapabilityStatus, CommandEnvelope, CommandKind, CommandMetadata, CommandPayload,
         EngineKind, SessionCreatePayload,
     };
+    use machina_telemetry::{CorrelationContext, DataClassification, SessionTrace};
+    use std::sync::{Arc, Mutex};
     use std::time::Duration;
 
     struct TestEngine {
@@ -695,5 +794,59 @@ mod tests {
             .code,
             machina_command_model::CanonicalErrorCode::UnsupportedCapability
         );
+    }
+
+    #[test]
+    fn records_routing_and_worker_outcome_on_shared_trace() {
+        let bus = CommandBus::new(
+            engine(
+                EngineKind::Native,
+                "session.create.v1",
+                CapabilityStatus::Native,
+                "native",
+            ),
+            engine(
+                EngineKind::Chromium,
+                "session.create.v1",
+                CapabilityStatus::Chromium,
+                "chromium",
+            ),
+            FallbackPolicy::PreferNative,
+        );
+        let trace = Arc::new(Mutex::new(
+            SessionTrace::new(
+                CorrelationContext {
+                    correlation_id: "correlation-1".to_owned(),
+                    causation_id: None,
+                    task_id: None,
+                    command_id: Some("command-1".to_owned()),
+                    session_id: Some("session-1".to_owned()),
+                },
+                8,
+            )
+            .expect("trace"),
+        ));
+        let context = super::CommandContext::with_trace(
+            "correlation-1",
+            Duration::from_secs(1),
+            "trace-1",
+            trace.clone(),
+        );
+        let result = bus
+            .execute_with_decision(&command("session.create.v1"), &context)
+            .expect("dispatch");
+        assert_eq!(result.outcome.trace_ref.as_deref(), Some("trace-1"));
+        let trace = trace.lock().expect("trace lock");
+        let event_types = trace
+            .events()
+            .map(|event| event.event_type.as_str())
+            .collect::<Vec<_>>();
+        assert_eq!(
+            event_types,
+            vec!["capability.decision.v1", "worker.outcome.v1"]
+        );
+        assert!(trace
+            .events()
+            .all(|event| event.classification == DataClassification::Restricted));
     }
 }

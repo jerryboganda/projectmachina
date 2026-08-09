@@ -4,14 +4,16 @@
 //! page content or secret values. Producers must redact before constructing
 //! restricted diagnostic text.
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeSet, VecDeque};
 use std::path::Path;
 
 pub use machina_command_model::DataClassification;
+use serde::{Deserialize, Serialize};
 
 pub const EVIDENCE_SCHEMA_VERSION: &str = "0.1.0";
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
 pub struct CorrelationContext {
     pub correlation_id: String,
     pub causation_id: Option<String>,
@@ -29,7 +31,8 @@ impl CorrelationContext {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
 pub struct TraceEvent {
     pub event_id: String,
     pub sequence: u64,
@@ -55,7 +58,8 @@ impl TraceEvent {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
 pub struct MetricSample {
     pub name: String,
     pub value: f64,
@@ -79,7 +83,8 @@ impl MetricSample {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
 pub struct EvidenceArtifact {
     pub artifact_id: String,
     pub relative_path: String,
@@ -116,7 +121,8 @@ impl EvidenceArtifact {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(deny_unknown_fields)]
 pub struct EvidenceManifest {
     pub schema_version: String,
     pub task_id: String,
@@ -152,6 +158,72 @@ impl EvidenceManifest {
             }
         }
         Ok(())
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct SessionTrace {
+    capacity: usize,
+    next_sequence: u64,
+    context: CorrelationContext,
+    events: VecDeque<TraceEvent>,
+}
+
+impl SessionTrace {
+    pub fn new(context: CorrelationContext, capacity: usize) -> Result<Self, ValidationError> {
+        context.validate()?;
+        if capacity == 0 {
+            return Err(ValidationError::InvalidValue(
+                "trace capacity must be positive",
+            ));
+        }
+        Ok(Self {
+            capacity,
+            next_sequence: 0,
+            context,
+            events: VecDeque::new(),
+        })
+    }
+
+    pub fn append(
+        &mut self,
+        event_id: impl Into<String>,
+        event_type: impl Into<String>,
+        timestamp: impl Into<String>,
+        classification: DataClassification,
+        redacted_message: impl Into<String>,
+    ) -> Result<TraceEvent, ValidationError> {
+        self.next_sequence = self
+            .next_sequence
+            .checked_add(1)
+            .ok_or(ValidationError::InvalidValue("trace sequence exhausted"))?;
+        let event = TraceEvent {
+            event_id: event_id.into(),
+            sequence: self.next_sequence,
+            event_type: event_type.into(),
+            timestamp: timestamp.into(),
+            context: self.context.clone(),
+            classification,
+            redacted_message: redacted_message.into(),
+        };
+        event.validate()?;
+        self.events.push_back(event.clone());
+        while self.events.len() > self.capacity {
+            self.events.pop_front();
+        }
+        Ok(event)
+    }
+
+    pub fn events(&self) -> impl Iterator<Item = &TraceEvent> {
+        self.events.iter()
+    }
+
+    pub fn len(&self) -> usize {
+        self.events.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.events.is_empty()
     }
 }
 
@@ -211,5 +283,50 @@ mod tests {
         assert!(manifest.validate().is_err());
         assert!(artifact("../secret").validate().is_err());
         assert!(artifact("C:\\secret").validate().is_err());
+    }
+
+    #[test]
+    fn keeps_bounded_ordered_session_trace_context() {
+        let mut trace = super::SessionTrace::new(
+            CorrelationContext {
+                session_id: Some("session-1".to_owned()),
+                ..context()
+            },
+            2,
+        )
+        .expect("trace");
+        trace
+            .append(
+                "request-1",
+                "api.request.v1",
+                "2026-08-09T00:00:00Z",
+                DataClassification::Tenant,
+                "request accepted",
+            )
+            .expect("request");
+        trace
+            .append(
+                "worker-1",
+                "worker.outcome.v1",
+                "2026-08-09T00:00:01Z",
+                DataClassification::Tenant,
+                "verified",
+            )
+            .expect("outcome");
+        trace
+            .append(
+                "artifact-1",
+                "artifact.created.v1",
+                "2026-08-09T00:00:02Z",
+                DataClassification::Restricted,
+                "[REDACTED]",
+            )
+            .expect("artifact");
+        let events = trace.events().collect::<Vec<_>>();
+        assert_eq!(trace.len(), 2);
+        assert_eq!(events[0].sequence, 2);
+        assert_eq!(events[1].sequence, 3);
+        assert_eq!(events[1].context.session_id.as_deref(), Some("session-1"));
+        assert!(serde_json::to_string(events[0]).is_ok());
     }
 }
