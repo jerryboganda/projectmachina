@@ -131,6 +131,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "machina-protocol-events"
+version = "0.1.0"
+
+[[package]]
+name = "machina-protocol-http"
+version = "0.1.0"
+dependencies = [
+ "machina-chromium-adapter",
+ "machina-command-bus",
+ "machina-command-model",
+ "machina-native-core",
+ "serde_json",
+]
+
+[[package]]
 name = "machina-scheduler"
 version = "0.1.0"
 

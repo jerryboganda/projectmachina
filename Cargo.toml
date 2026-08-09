@@ -8,6 +8,8 @@ members = [
     "crates/scheduler",
     "crates/worker-pool",
     "crates/chromium-adapter",
+    "crates/protocol-events",
+    "crates/protocol-http",
     "crates/capability",
     "crates/command-bus",
     "crates/session",

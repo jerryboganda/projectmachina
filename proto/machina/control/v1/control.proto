@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package machina.control.v1;
+
+message ExecuteRequest {
+  string command_id = 1;
+  string session_id = 2;
+  string kind = 3;
+  string payload_json = 4;
+  string correlation_id = 5;
+  uint64 deadline_ms = 6;
+  repeated string required_capabilities = 7;
+}
+
+message ExecuteResponse {
+  string command_id = 1;
+  string status = 2;
+  string result_json = 3;
+  string error_json = 4;
+  string engine = 5;
+  string engine_version = 6;
+  string capability_snapshot = 7;
+}
+
+message SubscribeEventsRequest {
+  string session_id = 1;
+  uint64 after_sequence = 2;
+}
+
+message SubscribeEventsResponse {
+  uint64 sequence = 1;
+  string event_type = 2;
+  string payload_json = 3;
+  string classification = 4;
+}
+
+service CommandService {
+  rpc Execute(ExecuteRequest) returns (ExecuteResponse);
+  rpc SubscribeEvents(SubscribeEventsRequest) returns (stream SubscribeEventsResponse);
+}
