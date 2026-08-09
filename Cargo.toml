@@ -7,6 +7,7 @@ members = [
     "crates/session-control",
     "crates/scheduler",
     "crates/worker-pool",
+    "crates/chromium-adapter",
     "crates/capability",
     "crates/command-bus",
     "crates/session",

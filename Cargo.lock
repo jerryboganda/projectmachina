@@ -84,6 +84,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "machina-chromium-adapter"
+version = "0.1.0"
+dependencies = [
+ "machina-capability",
+ "machina-command-bus",
+ "machina-command-model",
+]
+
+[[package]]
 name = "machina-command-bus"
 version = "0.1.0"
 dependencies = [

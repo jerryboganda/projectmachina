@@ -1,0 +1,12 @@
+[package]
+name = "machina-chromium-adapter"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Canonical Chromium engine adapter boundary with explicit runtime failures."
+
+[dependencies]
+machina-capability = { path = "../capability" }
+machina-command-bus = { path = "../command-bus" }
+machina-command-model = { path = "../command-model" }
