@@ -5,6 +5,8 @@
 
 use machina_command_bus::{CommandBus, CommandContext, DispatchError, EngineAdapter};
 use machina_command_model::{CanonicalError, CommandEnvelope, CommandOutcome};
+use machina_telemetry::{CorrelationContext, SessionTrace};
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -44,7 +46,44 @@ where
                 error: None,
             };
         }
-        let context = CommandContext::with_timeout(request.correlation_id.clone(), request.timeout);
+        let trace_ref = format!("trace-{}", request.correlation_id);
+        let trace_context = CorrelationContext {
+            correlation_id: request.correlation_id.clone(),
+            causation_id: request.command.metadata.causation_id.clone(),
+            task_id: None,
+            command_id: Some(request.command.command_id.clone()),
+            session_id: Some(request.command.session_id.clone()),
+        };
+        let trace = match SessionTrace::new(trace_context, 256) {
+            Ok(trace) => Arc::new(Mutex::new(trace)),
+            Err(error) => {
+                return HttpResponse {
+                    status: 503,
+                    outcome: None,
+                    error: Some(canonical_error(
+                        &DispatchError::failed(
+                            machina_command_model::CanonicalErrorCode::CapacityUnavailable,
+                            format!("trace recorder initialization failed: {error:?}"),
+                            true,
+                        ),
+                        &request,
+                    )),
+                }
+            }
+        };
+        let context = CommandContext::with_trace(
+            request.correlation_id.clone(),
+            request.timeout,
+            trace_ref,
+            trace,
+        );
+        if let Err(error) = context.record_trace("api.request.v1", "accepted") {
+            return HttpResponse {
+                status: 503,
+                outcome: None,
+                error: Some(canonical_error(&error, &request)),
+            };
+        }
         match self.bus.execute(&request.command, &context) {
             Ok(outcome) => HttpResponse {
                 status: 200,
@@ -172,10 +211,9 @@ mod tests {
             timeout: Duration::from_secs(1),
         });
         assert_eq!(response.status, 200);
-        assert_eq!(
-            response.outcome.and_then(|outcome| outcome.result),
-            Some("ok".to_owned())
-        );
+        let outcome = response.outcome.expect("outcome");
+        assert_eq!(outcome.result, Some("ok".to_owned()));
+        assert_eq!(outcome.trace_ref, Some("trace-correlation-1".to_owned()));
         let not_found = adapter.handle(HttpRequest {
             method: "GET".to_owned(),
             path: "/v1/commands".to_owned(),

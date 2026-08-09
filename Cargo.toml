@@ -15,6 +15,7 @@ members = [
     "crates/session",
     "crates/native-core",
     "crates/telemetry",
+    "crates/artifact-store",
 ]
 resolver = "2"
 

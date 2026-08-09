@@ -1,14 +1,16 @@
 [package]
-name = "machina-command-bus"
+name = "machina-artifact-store"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
-description = "Single internal typed command bus for native and Chromium engines."
+description = "Tenant-scoped classified artifact and reproduction bundle contracts."
 
 [dependencies]
-machina-capability = { path = "../capability" }
+hmac = "0.12.1"
+machina-auth = { path = "../auth" }
 machina-command-model = { path = "../command-model" }
 machina-telemetry = { path = "../telemetry" }
 serde = { version = "1.0.228", features = ["derive"] }
-serde_json = "1.0.135"
+serde_json = "1.0.151"
+sha2 = "0.10.9"
