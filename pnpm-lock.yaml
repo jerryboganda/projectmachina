@@ -32,7 +32,21 @@ importers:
         specifier: 6.1.0
         version: 6.1.0
 
-  packages/contracts-ts: {}
+  packages/contracts-ts:
+    devDependencies:
+      typescript:
+        specifier: 5.7.3
+        version: 5.7.3
+
+  packages/sdk-typescript:
+    dependencies:
+      '@machina/contracts-ts':
+        specifier: workspace:*
+        version: link:../contracts-ts
+    devDependencies:
+      typescript:
+        specifier: 5.7.3
+        version: 5.7.3
 
 packages:
 
