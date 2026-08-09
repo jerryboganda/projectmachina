@@ -15,21 +15,11 @@ pub struct QueueItem {
     pub enqueued_sequence: u64,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct FairQueue {
     tenants: BTreeMap<String, VecDeque<QueueItem>>,
     rotation: VecDeque<String>,
     next_sequence: u64,
-}
-
-impl Default for FairQueue {
-    fn default() -> Self {
-        Self {
-            tenants: BTreeMap::new(),
-            rotation: VecDeque::new(),
-            next_sequence: 0,
-        }
-    }
 }
 
 impl FairQueue {
@@ -97,6 +87,10 @@ impl FairQueue {
 
     pub fn len(&self) -> usize {
         self.tenants.values().map(VecDeque::len).sum()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
     }
 }
 
