@@ -11,3 +11,13 @@ machina-capability = { path = "../capability" }
 machina-command-bus = { path = "../command-bus" }
 machina-command-model = { path = "../command-model" }
 machina-session = { path = "../session" }
+# `interaction.click.v1` wiring (see this crate's module docs): resolves a
+# selector against the session's live document (machina-dom/machina-
+# selectors) and performs the synthetic click (machina-events). All three
+# are native-side leaf crates already listed in the workspace boundary
+# policy's `native-engine-outward-only` root set alongside `native-core`, so
+# this is a same-side dependency, not a new crate-boundary edge.
+machina-dom = { path = "../dom" }
+machina-selectors = { path = "../selectors" }
+machina-events = { path = "../events" }
+serde_json = "1.0.135"

@@ -21,7 +21,15 @@ export class CompatibilityControlPlane {
     if (this.workerState !== "ready") {
       return this.failure(command, "WORKER_LOST", "worker is unavailable", trace);
     }
-    if (!["session.create.v1", "navigation.goto.v1", "dom.semantic_query.v1", "session.close.v1"].includes(command.kind)) {
+    if (
+      ![
+        "session.create.v1",
+        "navigation.goto.v1",
+        "dom.semantic_query.v1",
+        "interaction.click.v1",
+        "session.close.v1"
+      ].includes(command.kind)
+    ) {
       return this.failure(
         command,
         "UNSUPPORTED_CAPABILITY",
@@ -59,6 +67,31 @@ export class CompatibilityControlPlane {
     if (command.kind === "dom.semantic_query.v1") {
       this.publish(command.session_id, "dom.revision.v1", { query: command.payload.query });
       return this.success(command, "Navigation fixture", trace);
+    }
+    if (command.kind === "interaction.click.v1") {
+      // Simulated selector resolution, not a live DOM query (see this
+      // file's `surface_mode` label): mirrors the real, live behavior wired
+      // in `crates/native-core` (interaction.click.v1 -> ELEMENT_NOT_FOUND
+      // for a selector that resolves to nothing, success otherwise) against
+      // the known static markup this control plane's fixture pages
+      // (`scripts/test/fixture-server.mjs`'s `/navigation` route) actually
+      // serve. This is a deliberate, reviewed change from the M1 baseline
+      // (which asserted UNSUPPORTED_CAPABILITY for every interaction.click.v1
+      // call) now that native-core actually resolves selectors and performs
+      // clicks instead of falling through to the unsupported catch-all.
+      const knownSelectors = new Set(["#name", "button[type=\"submit\"]", "main h1", "a"]);
+      if (!knownSelectors.has(command.payload.selector)) {
+        return this.failure(
+          command,
+          "ELEMENT_NOT_FOUND",
+          `no element matched selector: ${command.payload.selector}`,
+          trace
+        );
+      }
+      this.publish(command.session_id, "interaction.verified.v1", {
+        selector: command.payload.selector
+      });
+      return this.success(command, "click verified", trace);
     }
     session.state = "closed";
     this.publish(command.session_id, "session.lifecycle.v1", { state: "closed" });
@@ -288,7 +321,16 @@ export async function runM1CompatibilitySmoke() {
       ),
       "failure"
     );
-    const unsupported = await failures.execute(
+    // `interaction.click.v1` against a selector that matches nothing is a
+    // deliberate, reviewed behavior change from the M1 baseline: M1 asserted
+    // UNSUPPORTED_CAPABILITY here (native-core had no click implementation
+    // and fell through to the unsupported catch-all). Now that native-core
+    // actually resolves selectors (crates/selectors) and performs synthetic
+    // clicks (crates/events) end to end, the honest failure for an unmatched
+    // selector is ELEMENT_NOT_FOUND, not "capability unsupported" — the
+    // capability *is* supported; this specific selector just did not
+    // resolve. See `.agent-state/evidence/wire-interaction-click.md`.
+    const elementNotFound = await failures.execute(
       command(
         "failure-session",
         "interaction.click.v1",
@@ -299,7 +341,23 @@ export async function runM1CompatibilitySmoke() {
       "failure"
     );
     assert.equal(cancelled.error.code, "COMMAND_CANCELLED");
-    assert.equal(unsupported.error.code, "UNSUPPORTED_CAPABILITY");
+    assert.equal(elementNotFound.error.code, "ELEMENT_NOT_FOUND");
+
+    // Positive path: a selector that matches a real element on the fixture
+    // page succeeds, proving the succeed path is genuinely exercised here
+    // too, not just the failure path.
+    const clicked = await failures.execute(
+      command(
+        "failure-session",
+        "interaction.click.v1",
+        "interaction.click.v1",
+        { selector: "main h1" },
+        "failure"
+      ),
+      "failure"
+    );
+    assert.equal(clicked.status, "succeeded");
+    assert.equal(clicked.result, "click verified");
 
     failures.crashWorker();
     const lost = await failures.execute(
@@ -324,7 +382,7 @@ export async function runM1CompatibilitySmoke() {
       fixture: fixture.manifest.version,
       journeys,
       fixture_form_sanity: "passed",
-      explicit_failures: ["COMMAND_CANCELLED", "UNSUPPORTED_CAPABILITY", "WORKER_LOST"],
+      explicit_failures: ["COMMAND_CANCELLED", "ELEMENT_NOT_FOUND", "WORKER_LOST"],
       restart_reconciliation: "passed",
       runtime_claim: "injected Chromium contract only; real process/container runtime unavailable under owner waiver"
     };
