@@ -1,0 +1,19 @@
+[package]
+name = "machina-selectors"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "CSS selector query engine and initial XPath evaluator on top of machina-dom: hand-written recursive-descent parsers, a right-to-left backtracking matcher, and Revision-stamped live query results."
+
+[lib]
+path = "src/lib.rs"
+
+# Leaf query crate: depends only on machina-dom (path dep) + std. No
+# protocol/command-model/command-bus/capability crate, matching the sibling
+# crates/html-tree-builder dependency-direction convention (see
+# .agent-state/design/M2-T10-selectors-xpath-design.md §0).
+[dependencies]
+machina-dom = { path = "../dom" }
+
+[dev-dependencies]
