@@ -13,17 +13,17 @@ purpose: "Provide the durable, human-readable snapshot that each autonomous cycl
 
 ## Project
 
-- Status: `M0_EXIT_CANDIDATE_BLOCKED`
-- Active milestone: `M0 — Foundation and governance`
+- Status: `M1_IMPLEMENTATION_IN_PROGRESS`
+- Active milestone: `M1 — Compatibility-first platform`
 - Current release target: `0.1.0-alpha`
 - Last reconciled: `2026-08-09`
-- Default branch: `main` (M0-T01 through M0-T12 source work merged)
+- Default branch: `main` (M0 exit waiver recorded; M1-T01 is active)
 
 ## Active tasks
 
 | Task | Owner | Branch/worktree | State | Heartbeat | Blocker |
 | --- | --- | --- | --- | --- | --- |
-| None | — | — | — | — | — |
+| M1-T01 | local implementation | pending worktree | claimed | 2026-08-09T09:24+05:00 | none |
 
 ## Recently completed
 
@@ -35,11 +35,13 @@ purpose: "Provide the durable, human-readable snapshot that each autonomous cycl
   provenance controls, M0-T08 deterministic fixtures, M0-T09 telemetry/evidence
   primitives, M0-T10 reproducible benchmark smoke, M0-T11 local stack health
   controls, and M0-T12 real two-worktree rehearsal are merged.
+- M0 Docker/Compose runtime evidence is explicitly waived by owner option B;
+  limitation remains recorded in `agents/WAIVERS.md`.
 - Runtime foundation continuation adds capability snapshots, the single command bus, explicit fallback metadata, and bounded session/page resource accounting.
 
 ## Next ready tasks
 
-1. Install Docker/Compose and complete local-stack health/reset evidence for M0 exit.
+1. `M1-T01` — Implement control-plane database schema and durable event outbox.
 
 ## Human gates pending
 
@@ -47,9 +49,10 @@ purpose: "Provide the durable, human-readable snapshot that each autonomous cycl
 
 ## Known blockers
 
-- M0 fast-gate source checks pass locally with Node 20.18.0, Rust 1.86.0, CMake 4.4.2, Ninja 1.13.2, Buf 1.47.2, and pnpm 9.15.0. Docker Desktop provisioning failed at the required administrator/UAC step.
+- M0 source/hosted gates pass; Docker/Compose health is waived for M1 and remains
+  a pre-beta release limitation.
 
 ## Reconciliation notes
 
-M0-T01 through M0-T12 have merged hosted-gate evidence and source evidence. M0 exit
-remains blocked only by Docker/Compose health and reset rehearsal on this host.
+M0-T01 through M0-T12 have merged hosted-gate/source evidence. Owner option B
+waives Docker runtime evidence for M1; no production/container readiness claim follows.

@@ -17,7 +17,7 @@ Select critical-path and unblocking tasks first. Two tasks may be active only wh
 
 | Rank | Task | Milestone | Role | Dependencies | Suggested lane |
 | ---: | --- | --- | --- | --- | --- |
-| 1 | M0 exit | M0 | release/orchestrator | Docker health and reset evidence | A |
+| 1 | M1-T01 | M1 | platform | M0 exit waiver | A |
 
 ## Active
 
@@ -27,11 +27,12 @@ None.
 
 ## In review
 
-M0-T01 through M0-T12 have merged hosted-gate evidence; M0 exit awaits Docker evidence.
+M0-T01 through M0-T12 have merged hosted-gate evidence; Docker limitation is waived
+for M1 under owner option B.
 
 ## Blocked
 
-Docker/Compose health and reset rehearsal are pending; all available source fast-gate checks have run.
+Docker/Compose health/reset remains a release limitation under the recorded waiver.
 
 ## Deferred until dependencies
 
