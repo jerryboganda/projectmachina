@@ -144,6 +144,10 @@ name = "machina-dom"
 version = "0.1.0"
 
 [[package]]
+name = "machina-html"
+version = "0.1.0"
+
+[[package]]
 name = "machina-native-core"
 version = "0.1.0"
 dependencies = [

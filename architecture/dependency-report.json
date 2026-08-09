@@ -1,7 +1,7 @@
 {
   "schema_version": "0.1.0",
   "generated_by": "scripts/architecture/dependency-report.mjs",
-  "policy_version": "0.1.0",
+  "policy_version": "0.2.0",
   "rules": [
     {
       "id": "protocol-adapter-inward-only",
@@ -16,6 +16,34 @@
         "runtime-v8",
         "crates/dom",
         "cpp/v8-bridge"
+      ]
+    },
+    {
+      "id": "native-engine-outward-only",
+      "roots": [
+        "crates/native-core",
+        "crates/dom",
+        "crates/html",
+        "crates/event-loop",
+        "crates/network",
+        "crates/navigation",
+        "crates/runtime-v8",
+        "crates/storage",
+        "crates/semantic",
+        "crates/extraction",
+        "crates/security-policy",
+        "crates/state-bridge"
+      ],
+      "forbidden_patterns": [
+        "machina-protocol-http",
+        "machina-protocol-cdp",
+        "machina-protocol-bidi",
+        "machina-protocol-mcp",
+        "machina-control-plane",
+        "machina-scheduler",
+        "machina-worker-pool",
+        "machina-auth",
+        "machina-policy"
       ]
     },
     {
