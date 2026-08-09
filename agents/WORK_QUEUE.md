@@ -29,7 +29,7 @@ scheduling policy above):
 | — | ~~M2-T02~~ | 2 | M2 | native-engine + security | merged (#36) | — |
 | — | ~~M2-T03~~ | 2 | M2 | native-engine | merged (#34) | — |
 | — | ~~M2-T05~~ | 2 | M2 | native-engine | merged (#31, independently re-verified — see note below) | — |
-| 5 | M2-T06 | 2 | M2 | native-engine + security | M2-T01 (merged) | B |
+| 5 | M2-T06 | 2 | M2 | native-engine + security | M2-T01 (merged); V8 toolchain artifacts accepted, see `toolchains/V8_PROVENANCE.md` | B |
 | — | ~~M2-T04~~ | 3 | M2 | native-engine | merged (#38) | — |
 | 7 | M2-T07 | 3 | M2 | native-engine | M2-T06, M2-T05 | B |
 | — | ~~M2-T11~~ | 3 | M2 | native-engine | merged (#40) | — |
@@ -44,17 +44,27 @@ scheduling policy above):
 
 | Task | Owner | Branch/worktree | State | Heartbeat |
 | --- | --- | --- | --- | --- |
-None. Wave 3 (T02/T03/T04/T05/T10/T11) is fully merged. Ten of fourteen M2
-tasks complete (T01/T02/T03/T04/T05/T10/T11 merged; boundary-checker tooling
-fix merged). `cargo test --workspace` and the boundary check are both
-independently re-verified green on `main`.
+| M2-T13 | wave4-builder-a | agent/M2-T13-semantic-extraction | claimed | — |
+| — (integration, not a numbered task) | wave4-builder-b | agent/wire-interaction-click | claimed | — |
 
-M2-T13 (needs M2-T05 + M2-T10, both merged) is now genuinely ready. So is
-native-core's `interaction.click.v1` wiring (needs M2-T11 + M2-T10, both
-merged) — not itself a numbered M2-Tnn task, but unblocked as an integration
-step. M2-T07 (needs M2-T06 + M2-T05) and M2-T08/T09/T12/T14 remain blocked
-on M2-T06, which remains blocked on the GitHub Actions V8 toolchain build
-producing real artifacts.
+Ten of fourteen M2 tasks complete (T01/T02/T03/T04/T05/T10/T11 merged;
+boundary-checker tooling fix merged). `cargo test --workspace` and the
+boundary check are both independently re-verified green on `main`.
+
+**V8 toolchain provisioning succeeded (2026-08-09).** After two rounds of
+real, fixable CI-environment bugs (depot_tools bootstrap file ordering,
+Windows disk-drive/threshold mismatch, PowerShell GN-arg quote-stripping,
+VS/SDK version-skew between the pinned V8 checkout's vendored scripts and
+the runner image), `.github/workflows/v8-toolchain-build.yml` produced real,
+independently-verified V8 `13.1.201.12` (commit `ad8b9f1f60...`) artifacts on
+both legs — non-sanitized (Windows) and ASan/UBSan-sanitized (Linux),
+checksums recomputed against the downloaded binaries and matched. Accepted
+into `toolchains/V8_PROVENANCE.md` (both artifact sets' checksums
+independently re-verified before acceptance, not just transcribed). M2-T06
+proper (the C++ bridge / Rust facade implementation, per
+`.agent-state/design/M2-T06-v8-bridge-design.md`) is now genuinely ready to
+start — GitHub Actions artifacts expire 2026-08-23, see that file's "Known
+issues" note.
 
 **Process correction (2026-08-09):** the orchestrator briefly recorded
 M2-T05 as merged before it actually was (PR #31 was still open, only its CI
@@ -67,16 +77,6 @@ against the now-parallel M2-T02/T03 merges, verified with a full
 notified directly to re-sync. M2-T05 is now independently re-verified
 present and passing on `main`. Recorded here rather than silently corrected,
 per this repo's evidence-over-narration culture.
-
-M2-T10 still queued — next to start the moment a slot frees.
-
-M2-T06 held back: no V8 build toolchain (`gn`/`gclient`/depot_tools) is
-available locally; owner directed GitHub Actions ONLY for the V8 build
-(`.github/workflows/v8-toolchain-build.yml`, workflow_dispatch). First real
-run hit two fixable CI-environment bugs (depot_tools bootstrap ordering,
-Windows runner disk headroom); a fix is in progress/validating. M2-T06
-proper (the C++ bridge/Rust facade code) remains blocked on that workflow
-producing real, checksummed artifacts.
 
 ## In review
 
