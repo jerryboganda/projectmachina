@@ -17,7 +17,7 @@ purpose: "Provide the durable, human-readable snapshot that each autonomous cycl
 - Active milestone: `M1 exit blocked (BLK-003, Chromium-track); M2 — Native engine fundamentals, source track underway under M2-ENTRY-WAIVER-M1-EXIT`
 - Current release target: `0.1.0-alpha`
 - Last reconciled: `2026-08-09`
-- Default branch: `main` (M0 exit waiver recorded; M1-T01 through M1-T12 source work merged; M2-T01 merged)
+- Default branch: `main` (M0 exit waiver recorded; M1-T01 through M1-T12 source work merged; M2-T01/T05 merged; boundary-checker tooling fix merged)
 
 ## Active tasks
 
@@ -66,16 +66,37 @@ None.
   both passed. Context/page operations are exposed as direct Rust APIs only —
   no `CommandKind` was added (deferred to whichever task first needs bus-level
   context/page commands, per the M1/M2 contract checklist's recommendation).
+- **M2-T05** (compact DOM nodes, handles, mutation, lifecycle) is merged
+  (#31): `crates/dom`, arena/generational-handle model, two-phase mutation,
+  structural teardown, zero `unsafe`, zero deps beyond std, 35/35 tests,
+  clippy-clean across the workspace. Implemented live against an independent
+  security review commissioned in parallel: `Generation` widened `u32`→`u64`
+  after a real wraparound-aliasing finding; `Document::destroy_node` added
+  after a real headline finding that no node-reclamation path existed for
+  ordinary detach-and-abandon (would have caused unbounded memory growth);
+  two self-aliased-argument link-corruption bugs fixed. Also incorporates
+  M2-T04's coordination request (`create_element_ns`, `create_document_type`).
+  Full disposition in `.agent-state/evidence/M2-T05.md`.
+- Architecture boundary checker fixed (#30): now scans `Cargo.toml`
+  dependency tables, catches the underscore-form Rust import that previously
+  slipped through, and adds the native→protocol direction rule that was
+  entirely unpoliced before.
+- V8 toolchain provisioning moved to GitHub Actions per explicit owner
+  direction — `.github/workflows/v8-toolchain-build.yml` (workflow_dispatch),
+  not this local machine or the VPS. `M2-T06` proper (the C++ bridge/Rust
+  facade code) is blocked on that workflow producing real, checksummed
+  artifacts.
 
 ## Next ready tasks
 
-1. `M2-T02` — native URL/DNS/TLS/HTTP streaming loader (design ready).
-2. `M2-T03` — streaming HTML tokenizer (design ready).
-3. `M2-T05` — compact DOM nodes/handles/mutation/lifecycle (design ready).
-4. `M2-T06` — narrow C++ V8 bridge and safe Rust facade (design + security review ready).
+1. `M2-T02` — native URL/DNS/TLS/HTTP streaming loader (in progress).
+2. `M2-T03` — streaming HTML tokenizer (in progress).
+3. `M2-T10` — CSS selector queries and initial XPath (design ready, unlocked by T05).
+4. `M2-T11` — event dispatch, focus, basic input model (design ready, unlocked by T05).
+5. `M2-T04` — HTML tree builder (design ready, waiting on T03).
 
 Per the milestone scheduling policy, at most two of these run as concurrent
-implementation agents at a time; the rest queue behind them.
+implementation agents at a time.
 
 ## Human gates pending
 
