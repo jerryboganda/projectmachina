@@ -81,6 +81,7 @@ name = "machina-capability"
 version = "0.1.0"
 dependencies = [
  "machina-command-model",
+ "serde",
 ]
 
 [[package]]
@@ -98,6 +99,7 @@ version = "0.1.0"
 dependencies = [
  "machina-capability",
  "machina-command-model",
+ "serde",
  "serde_json",
 ]
 
