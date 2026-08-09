@@ -2,6 +2,8 @@
 members = [
     "crates/command-model",
     "crates/control-plane",
+    "crates/auth",
+    "crates/policy",
     "crates/capability",
     "crates/command-bus",
     "crates/session",
