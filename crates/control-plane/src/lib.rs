@@ -99,7 +99,14 @@ pub enum StoreError {
     DuplicateIdempotencyKey,
     SessionNotFound,
     TenantAccessDenied,
-    VersionConflict { expected: u64, actual: u64 },
+    VersionConflict {
+        expected: u64,
+        actual: u64,
+    },
+    InvalidTransition {
+        from: SessionState,
+        to: SessionState,
+    },
 }
 
 impl Display for StoreError {
@@ -117,6 +124,9 @@ impl Display for StoreError {
                     formatter,
                     "version conflict: expected {expected}, actual {actual}"
                 )
+            }
+            Self::InvalidTransition { from, to } => {
+                write!(formatter, "invalid session transition: {from:?} -> {to:?}")
             }
         }
     }
@@ -149,13 +159,16 @@ pub trait ControlPlaneRepository {
         created_at: String,
     ) -> Result<SessionRecord, StoreError>;
 
-    fn outbox_for(&self, scope: &TenantScope) -> Vec<OutboxEvent>;
+    fn outbox_for(
+        &self,
+        authorization: &AuthorizationContext,
+    ) -> Result<Vec<OutboxEvent>, StoreError>;
 }
 
 #[derive(Clone, Debug, Default)]
 pub struct InMemoryControlPlane {
     sessions: BTreeMap<String, SessionRecord>,
-    idempotency: BTreeMap<(String, String), String>,
+    idempotency: BTreeMap<(String, String, String), String>,
     outbox: Vec<OutboxEvent>,
     next_event_id: u64,
 }
@@ -220,10 +233,11 @@ impl ControlPlaneRepository for InMemoryControlPlane {
 
         let scope = authorization.scope;
         let mut candidate = self.clone();
-        if let Some(existing_id) = candidate
-            .idempotency
-            .get(&(scope.project_id.clone(), idempotency_key.clone()))
-        {
+        if let Some(existing_id) = candidate.idempotency.get(&(
+            scope.organization_id.clone(),
+            scope.project_id.clone(),
+            idempotency_key.clone(),
+        )) {
             if existing_id == &session_id {
                 return candidate
                     .sessions
@@ -245,9 +259,10 @@ impl ControlPlaneRepository for InMemoryControlPlane {
             version: 1,
             idempotency_key: idempotency_key.clone(),
         };
-        candidate
-            .idempotency
-            .insert((scope.project_id, idempotency_key), session_id.clone());
+        candidate.idempotency.insert(
+            (scope.organization_id, scope.project_id, idempotency_key),
+            session_id.clone(),
+        );
         candidate.sessions.insert(session_id, record.clone());
         candidate.append_event(
             &record,
@@ -286,6 +301,29 @@ impl ControlPlaneRepository for InMemoryControlPlane {
                 actual: current.version,
             });
         }
+        let valid_transition = matches!(
+            (current.state, next_state),
+            (SessionState::Requested, SessionState::Queued)
+                | (SessionState::Requested, SessionState::Failed)
+                | (SessionState::Requested, SessionState::Closing)
+                | (SessionState::Requested, SessionState::Ready)
+                | (SessionState::Queued, SessionState::Starting)
+                | (SessionState::Queued, SessionState::Failed)
+                | (SessionState::Queued, SessionState::Closing)
+                | (SessionState::Starting, SessionState::Ready)
+                | (SessionState::Starting, SessionState::Failed)
+                | (SessionState::Starting, SessionState::Closing)
+                | (SessionState::Ready, SessionState::Closing)
+                | (SessionState::Ready, SessionState::Failed)
+                | (SessionState::Ready, SessionState::Expired)
+                | (SessionState::Closing, SessionState::Closed)
+        );
+        if !valid_transition {
+            return Err(StoreError::InvalidTransition {
+                from: current.state,
+                to: next_state,
+            });
+        }
         let mut next = current;
         next.state = next_state;
         next.version += 1;
@@ -302,12 +340,16 @@ impl ControlPlaneRepository for InMemoryControlPlane {
         Ok(next)
     }
 
-    fn outbox_for(&self, scope: &TenantScope) -> Vec<OutboxEvent> {
-        self.outbox
+    fn outbox_for(
+        &self,
+        authorization: &AuthorizationContext,
+    ) -> Result<Vec<OutboxEvent>, StoreError> {
+        Ok(self
+            .outbox
             .iter()
-            .filter(|event| &event.scope == scope)
+            .filter(|event| event.scope == authorization.scope)
             .cloned()
-            .collect()
+            .collect())
     }
 }
 
@@ -341,7 +383,7 @@ mod tests {
             )
             .expect("create");
         assert_eq!(session.version, 1);
-        assert_eq!(store.outbox_for(&authorization.scope).len(), 1);
+        assert_eq!(store.outbox_for(&authorization).expect("outbox").len(), 1);
         let ready = store
             .transition_session(
                 &authorization,
@@ -352,7 +394,7 @@ mod tests {
             )
             .expect("transition");
         assert_eq!(ready.version, 2);
-        assert_eq!(store.outbox_for(&authorization.scope).len(), 2);
+        assert_eq!(store.outbox_for(&authorization).expect("outbox").len(), 2);
     }
 
     #[test]
@@ -382,7 +424,21 @@ mod tests {
             ),
             Err(StoreError::VersionConflict { .. })
         ));
-        assert_eq!(store.outbox_for(&owner.scope).len(), 1);
+        assert!(matches!(
+            store.transition_session(
+                &owner,
+                "session-1",
+                1,
+                SessionState::Closed,
+                "now".to_owned()
+            ),
+            Err(StoreError::InvalidTransition { .. })
+        ));
+        assert!(store
+            .outbox_for(&authorization("project-2"))
+            .expect("scoped outbox")
+            .is_empty());
+        assert_eq!(store.outbox_for(&owner).expect("outbox").len(), 1);
     }
 
     #[test]
@@ -408,16 +464,21 @@ mod tests {
             )
             .expect("idempotent replay");
         assert_eq!(first, replay);
-        assert_eq!(
-            store.create_session(
-                owner,
+        assert!(store
+            .create_session(
+                authorization("project-2"),
                 "session-2".to_owned(),
                 "policy-v1".to_owned(),
                 "idem-1".to_owned(),
                 "now".to_owned()
-            ),
-            Err(StoreError::DuplicateIdempotencyKey)
+            )
+            .is_ok());
+        assert_eq!(
+            store
+                .outbox_for(&authorization("project-1"))
+                .expect("outbox")
+                .len(),
+            1
         );
-        assert_eq!(store.outbox_for(&authorization("project-1").scope).len(), 1);
     }
 }

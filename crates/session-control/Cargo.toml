@@ -1,0 +1,10 @@
+[package]
+name = "machina-session-control"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Idempotent session lifecycle service over the control-plane repository contract."
+
+[dependencies]
+machina-control-plane = { path = "../control-plane" }
