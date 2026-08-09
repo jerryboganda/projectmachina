@@ -1,5 +1,5 @@
 {
-  "version": "0.1.0",
+  "version": "0.2.0",
   "rules": [
     {
       "id": "protocol-adapter-inward-only",
@@ -14,6 +14,46 @@
         "runtime-v8",
         "crates/dom",
         "cpp/v8-bridge"
+      ],
+      "allowed_exceptions": [
+        {
+          "path": "crates/protocol-http/Cargo.toml",
+          "patterns": ["native-core"],
+          "reason": "Documented existing precedent (see .agent-state/design/M2-M1-contract-compatibility-checklist.md, 'Crate-boundary directionality'): machina-protocol-http depends on machina-native-core under [dependencies] solely to construct concrete engines in its own #[cfg(test)] test module; production code in this crate depends only on the generic machina_command_bus::EngineAdapter trait. Tracked for tightening to [dev-dependencies] before M2 adds heavier native crates."
+        },
+        {
+          "path": "crates/protocol-http/src/lib.rs",
+          "patterns": ["native-core"],
+          "reason": "The only concrete machina_native_core::NativeEngine reference in this file is inside #[cfg(test)] mod tests, used to exercise the generic EngineAdapter-based command bus against a real native engine. Production request-handling code only depends on the EngineAdapter trait."
+        }
+      ]
+    },
+    {
+      "id": "native-engine-outward-only",
+      "roots": [
+        "crates/native-core",
+        "crates/dom",
+        "crates/html",
+        "crates/event-loop",
+        "crates/network",
+        "crates/navigation",
+        "crates/runtime-v8",
+        "crates/storage",
+        "crates/semantic",
+        "crates/extraction",
+        "crates/security-policy",
+        "crates/state-bridge"
+      ],
+      "forbidden_patterns": [
+        "machina-protocol-http",
+        "machina-protocol-cdp",
+        "machina-protocol-bidi",
+        "machina-protocol-mcp",
+        "machina-control-plane",
+        "machina-scheduler",
+        "machina-worker-pool",
+        "machina-auth",
+        "machina-policy"
       ]
     },
     {
