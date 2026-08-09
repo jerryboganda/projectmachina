@@ -17,7 +17,7 @@ purpose: "Provide the durable, human-readable snapshot that each autonomous cycl
 - Active milestone: `M1 — Compatibility-first platform`
 - Current release target: `0.1.0-alpha`
 - Last reconciled: `2026-08-09`
-- Default branch: `main` (M0 exit waiver recorded; M1-T01 and M1-T02 merged)
+- Default branch: `main` (M0 exit waiver recorded; M1-T01 through M1-T03 merged)
 
 ## Active tasks
 
@@ -35,14 +35,15 @@ purpose: "Provide the durable, human-readable snapshot that each autonomous cycl
   provenance controls, M0-T08 deterministic fixtures, M0-T09 telemetry/evidence
   primitives, M0-T10 reproducible benchmark smoke, M0-T11 local stack health
   controls, and M0-T12 real two-worktree rehearsal are merged.
-- M1-T01 control-plane schema/outbox and M1-T02 scoped auth/policy primitives are merged.
+- M1-T01 control-plane schema/outbox, M1-T02 scoped auth/policy primitives, and
+  M1-T03 idempotent session lifecycle are merged.
 - M0 Docker/Compose runtime evidence is explicitly waived by owner option B;
   limitation remains recorded in `agents/WAIVERS.md`.
 - Runtime foundation continuation adds capability snapshots, the single command bus, explicit fallback metadata, and bounded session/page resource accounting.
 
 ## Next ready tasks
 
-1. `M1-T03` — Implement session lifecycle service and idempotent control API.
+1. `M1-T04` — Implement scheduler, worker registry, leases and fair queue.
 
 ## Human gates pending
 
@@ -55,6 +56,6 @@ purpose: "Provide the durable, human-readable snapshot that each autonomous cycl
 
 ## Reconciliation notes
 
-M0-T01 through M0-T12 and M1-T01/M1-T02 have merged hosted-gate/source evidence. Owner
+M0-T01 through M0-T12 and M1-T01/M1-T03 have merged hosted-gate/source evidence. Owner
 option B waives Docker runtime evidence for M1; no production/container readiness
 claim follows.
