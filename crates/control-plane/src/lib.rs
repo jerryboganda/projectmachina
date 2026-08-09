@@ -347,7 +347,7 @@ impl ControlPlaneRepository for InMemoryControlPlane {
         Ok(self
             .outbox
             .iter()
-            .filter(|event| &event.scope == &authorization.scope)
+            .filter(|event| event.scope == authorization.scope)
             .cloned()
             .collect())
     }
