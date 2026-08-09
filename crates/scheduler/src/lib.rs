@@ -109,11 +109,13 @@ pub struct WorkerRecord {
     pub capability_snapshot: String,
     pub state: WorkerState,
     pub lease_expires_at: Option<u64>,
+    pub lease_token: Option<String>,
 }
 
 #[derive(Clone, Debug, Default)]
 pub struct WorkerRegistry {
     workers: BTreeMap<String, WorkerRecord>,
+    next_lease_token: u64,
 }
 
 impl WorkerRegistry {
@@ -136,6 +138,7 @@ impl WorkerRegistry {
             capability_snapshot: capability_snapshot.into(),
             state: WorkerState::Available,
             lease_expires_at: None,
+            lease_token: None,
         };
         self.workers.insert(worker_id, worker.clone());
         Ok(worker)
@@ -154,14 +157,17 @@ impl WorkerRegistry {
         if worker.state != WorkerState::Available {
             return Err(SchedulerError::WorkerUnavailable);
         }
+        self.next_lease_token += 1;
         worker.state = WorkerState::Busy;
         worker.lease_expires_at = Some(now.saturating_add(lease_seconds));
+        worker.lease_token = Some(format!("lease-{}", self.next_lease_token));
         Ok(worker.clone())
     }
 
     pub fn renew(
         &mut self,
         worker_id: &str,
+        lease_token: &str,
         now: u64,
         lease_seconds: u64,
     ) -> Result<WorkerRecord, SchedulerError> {
@@ -170,6 +176,7 @@ impl WorkerRegistry {
             .get_mut(worker_id)
             .ok_or(SchedulerError::WorkerNotFound)?;
         if worker.state != WorkerState::Busy
+            || worker.lease_token.as_deref() != Some(lease_token)
             || worker.lease_expires_at.is_none_or(|expiry| expiry <= now)
         {
             return Err(SchedulerError::LeaseExpired);
@@ -191,16 +198,21 @@ impl WorkerRegistry {
         expired
     }
 
-    pub fn release(&mut self, worker_id: &str) -> Result<WorkerRecord, SchedulerError> {
+    pub fn release(
+        &mut self,
+        worker_id: &str,
+        lease_token: &str,
+    ) -> Result<WorkerRecord, SchedulerError> {
         let worker = self
             .workers
             .get_mut(worker_id)
             .ok_or(SchedulerError::WorkerNotFound)?;
-        if worker.state != WorkerState::Busy {
+        if worker.state != WorkerState::Busy || worker.lease_token.as_deref() != Some(lease_token) {
             return Err(SchedulerError::WorkerUnavailable);
         }
         worker.state = WorkerState::Available;
         worker.lease_expires_at = None;
+        worker.lease_token = None;
         Ok(worker.clone())
     }
 }
@@ -263,13 +275,21 @@ mod tests {
         let acquired = workers.acquire("worker-1", 100, 10).expect("acquire");
         assert_eq!(acquired.state, WorkerState::Busy);
         assert_eq!(
-            workers.renew("worker-1", 110, 10),
+            workers.renew("worker-1", "stale-token", 110, 10),
             Err(SchedulerError::LeaseExpired)
         );
-        assert_eq!(workers.expire(110), vec!["worker-1".to_owned()]);
         assert_eq!(
-            workers.release("worker-1"),
+            workers.release("worker-1", "stale-token"),
             Err(SchedulerError::WorkerUnavailable)
         );
+        let first_token = acquired.lease_token.clone().expect("lease token");
+        workers.release("worker-1", &first_token).expect("release");
+        let second = workers.acquire("worker-1", 120, 10).expect("reacquire");
+        assert_ne!(second.lease_token, acquired.lease_token);
+        assert_eq!(
+            workers.release("worker-1", &first_token),
+            Err(SchedulerError::WorkerUnavailable)
+        );
+        assert_eq!(workers.expire(130), vec!["worker-1".to_owned()]);
     }
 }
