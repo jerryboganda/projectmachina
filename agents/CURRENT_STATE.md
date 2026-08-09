@@ -23,7 +23,7 @@ purpose: "Provide the durable, human-readable snapshot that each autonomous cycl
 
 | Task | Owner | Branch/worktree | State | Heartbeat | Blocker |
 | --- | --- | --- | --- | --- | --- |
-| None | — | — | — | — | — |
+| M1-T04 | copilot-scheduler | `D:\Projects\machina-worktrees\M1-T04-scheduler` | in-review | 2026-08-09T05:01+05:00 | hosted CI/review pending |
 
 ## Recently completed
 

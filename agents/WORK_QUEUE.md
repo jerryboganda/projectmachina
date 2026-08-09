@@ -23,7 +23,7 @@ Select critical-path and unblocking tasks first. Two tasks may be active only wh
 
 | Task | Owner | Branch/worktree | State | Heartbeat |
 | --- | --- | --- | --- | --- |
-None.
+| M1-T04 | copilot-scheduler | `D:\Projects\machina-worktrees\M1-T04-scheduler` | in-review | 2026-08-09T05:01+05:00 |
 
 ## In review
 

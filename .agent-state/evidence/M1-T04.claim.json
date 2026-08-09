@@ -1,0 +1,63 @@
+{
+  "schema_version": "0.1.0",
+  "type": "task-evidence",
+  "task_id": "M1-T04",
+  "status": "active",
+  "agent_id": "copilot-scheduler",
+  "identity": {
+    "task": "M1-T04",
+    "agent": "copilot-scheduler",
+    "branch": "agent/M1-T04-scheduler",
+    "worktree": "D:\\Projects\\machina-worktrees\\M1-T04-scheduler",
+    "base_commit": "unknown",
+    "current_commit": "unknown"
+  },
+  "generated_at": "2026-08-09T05:00:12.426Z",
+  "objective": "",
+  "acceptance_criteria": [],
+  "claim": {
+    "schema_version": 1,
+    "claim_id": "1fe5133c-4464-4776-9d3c-c511720aa28b",
+    "task_id": "M1-T04",
+    "agent_id": "copilot-scheduler",
+    "branch": "agent/M1-T04-scheduler",
+    "worktree": "D:\\Projects\\machina-worktrees\\M1-T04-scheduler",
+    "write_scope": [
+      "crates/scheduler/**",
+      "services/session-control/**",
+      "tests/integration/**"
+    ],
+    "dependencies": [
+      "M1-T01",
+      "M1-T03"
+    ],
+    "contract_dependencies": [],
+    "base_commit": "unknown",
+    "current_commit": "unknown",
+    "lease_minutes": 90,
+    "grace_minutes": 20,
+    "claimed_at": "2026-08-09T05:00:12.426Z",
+    "heartbeat_at": "2026-08-09T05:00:12.426Z",
+    "lease_expires_at": "2026-08-09T06:30:12.426Z",
+    "grace_expires_at": "2026-08-09T06:50:12.426Z",
+    "status": "active",
+    "lock_fence": "a3242edc-6946-4ac9-b9d2-8ed0129e5454"
+  },
+  "commands": [
+    {
+      "type": "claim",
+      "status": "active",
+      "at": "2026-08-09T05:00:12.426Z"
+    }
+  ],
+  "artifacts": [],
+  "changed_files": [
+    "crates/scheduler/**",
+    "services/session-control/**",
+    "tests/integration/**"
+  ],
+  "decisions": [],
+  "failures": [],
+  "risks": [],
+  "next_action": "Continue work and heartbeat before the lease expires."
+}
