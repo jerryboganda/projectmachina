@@ -5,6 +5,7 @@ members = [
     "crates/auth",
     "crates/policy",
     "crates/session-control",
+    "crates/scheduler",
     "crates/capability",
     "crates/command-bus",
     "crates/session",
