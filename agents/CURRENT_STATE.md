@@ -17,7 +17,7 @@ purpose: "Provide the durable, human-readable snapshot that each autonomous cycl
 - Active milestone: `M1 — Compatibility-first platform`
 - Current release target: `0.1.0-alpha`
 - Last reconciled: `2026-08-09`
-- Default branch: `main` (M0 exit waiver recorded; M1-T01 through M1-T09 merged)
+- Default branch: `main` (M0 exit waiver recorded; M1-T01 through M1-T10 merged)
 
 ## Active tasks
 
@@ -43,13 +43,15 @@ None.
   delivery, explicit resync recovery, and idempotent outbox projection.
   M1-T09 now adds versioned capability snapshots, policy-aware eligibility, and
   structured routing decisions with both-engine evidence.
+  M1-T10 now adds bounded request-to-worker traces, scoped classified artifacts,
+  signed expiry grants, and redacted hashed reproduction bundles.
 - M0 Docker/Compose runtime evidence is explicitly waived by owner option B;
   limitation remains recorded in `agents/WAIVERS.md`.
 - Runtime foundation continuation adds capability snapshots, the single command bus, explicit fallback metadata, and bounded session/page resource accounting.
 
 ## Next ready tasks
 
-1. `M1-T10` — Implement traces, classified artifacts and reproduction bundle version zero.
+1. `M1-T11` — Publish TypeScript and Python alpha SDKs.
 
 ## Human gates pending
 
@@ -62,6 +64,6 @@ None.
 
 ## Reconciliation notes
 
-M0-T01 through M0-T12 and M1-T01/M1-T09 have merged hosted-gate/source evidence. Owner
+M0-T01 through M0-T12 and M1-T01/M1-T10 have merged hosted-gate/source evidence. Owner
 option B waives Docker runtime evidence for M1; no production/container readiness
 claim follows.
