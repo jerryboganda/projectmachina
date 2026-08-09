@@ -17,7 +17,7 @@ Select critical-path and unblocking tasks first. Two tasks may be active only wh
 
 | Rank | Task | Milestone | Role | Dependencies | Suggested lane |
 | ---: | --- | --- | --- | --- | --- |
-| 1 | M1-T12 | M1 | orchestrator + quality | M1-T01 through M1-T11 | A |
+| 1 | None | — | — | — | — |
 
 ## Active
 
@@ -27,12 +27,14 @@ None.
 
 ## In review
 
-M0-T01 through M0-T12 and M1-T01/M1-T11 have merged hosted-gate evidence; Docker limitation
-is waived for M1 under owner option B.
+M0-T01 through M0-T12 and M1-T01/M1-T12 have merged hosted-gate/source evidence.
+The injected M1 smoke passes; M1 exit remains blocked by BLK-003 pending real
+runtime/listener evidence.
 
 ## Blocked
 
-Docker/Compose health/reset remains a release limitation under the recorded waiver.
+BLK-003 — real Chromium/process/listener compatibility runtime is unavailable;
+see `agents/BLOCKERS.md` and `agents/M1_EXIT_REPORT.md`.
 
 ## Deferred until dependencies
 

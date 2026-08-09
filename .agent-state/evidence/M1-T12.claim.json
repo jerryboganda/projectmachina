@@ -1,0 +1,86 @@
+{
+  "schema_version": "0.1.0",
+  "type": "task-evidence",
+  "task_id": "M1-T12",
+  "status": "released",
+  "agent_id": "copilot-m1-t12",
+  "identity": {
+    "task": "M1-T12",
+    "agent": "copilot-m1-t12",
+    "branch": "agent/M1-T12-exit-smoke",
+    "worktree": "D:\\Projects\\machina-worktrees\\M1-T12-exit-smoke",
+    "base_commit": "d4b3f9bf7b5d1cf0740aaae50cafe0a196e2b8cd",
+    "current_commit": "d4b3f9bf7b5d1cf0740aaae50cafe0a196e2b8cd"
+  },
+  "generated_at": "2026-08-09T06:57:56.259Z",
+  "objective": "",
+  "acceptance_criteria": [],
+  "claim": {
+    "schema_version": 1,
+    "claim_id": "18e350b0-d708-4a43-a1ee-39213c0c58a3",
+    "task_id": "M1-T12",
+    "agent_id": "copilot-m1-t12",
+    "branch": "agent/M1-T12-exit-smoke",
+    "worktree": "D:\\Projects\\machina-worktrees\\M1-T12-exit-smoke",
+    "write_scope": [
+      ".agent-state/evidence/M1-T12.md",
+      "agents/BLOCKERS.md",
+      "agents/M1_EXIT_REPORT.md",
+      "package.json",
+      "scripts/test/m1-compatibility-smoke.mjs",
+      "scripts/test/m1-compatibility-smoke.test.mjs",
+      "tests/m1/**"
+    ],
+    "dependencies": [
+      "M1-T01",
+      "M1-T02",
+      "M1-T03",
+      "M1-T04",
+      "M1-T05",
+      "M1-T06",
+      "M1-T07",
+      "M1-T08",
+      "M1-T09",
+      "M1-T10",
+      "M1-T11"
+    ],
+    "contract_dependencies": [
+      "m1-compatibility-slice",
+      "m1-exit-evidence"
+    ],
+    "base_commit": "d4b3f9bf7b5d1cf0740aaae50cafe0a196e2b8cd",
+    "current_commit": "d4b3f9bf7b5d1cf0740aaae50cafe0a196e2b8cd",
+    "lease_minutes": 90,
+    "grace_minutes": 20,
+    "claimed_at": "2026-08-09T06:50:49.609Z",
+    "heartbeat_at": "2026-08-09T06:50:49.609Z",
+    "lease_expires_at": "2026-08-09T08:20:49.609Z",
+    "grace_expires_at": "2026-08-09T08:40:49.609Z",
+    "status": "released",
+    "lock_fence": "9d00d24b-ab0f-4c29-9d34-42ac450e3da1",
+    "release_reason": "merged-source-smoke-exit-blocked-by-runtime",
+    "released_at": "2026-08-09T06:57:56.259Z"
+  },
+  "commands": [
+    {
+      "type": "release",
+      "status": "released",
+      "at": "2026-08-09T06:57:56.259Z",
+      "reason": "merged-source-smoke-exit-blocked-by-runtime"
+    }
+  ],
+  "artifacts": [],
+  "changed_files": [
+    ".agent-state/evidence/M1-T12.md",
+    "agents/BLOCKERS.md",
+    "agents/M1_EXIT_REPORT.md",
+    "package.json",
+    "scripts/test/m1-compatibility-smoke.mjs",
+    "scripts/test/m1-compatibility-smoke.test.mjs",
+    "tests/m1/**"
+  ],
+  "decisions": [],
+  "failures": [],
+  "risks": [],
+  "next_action": ""
+}

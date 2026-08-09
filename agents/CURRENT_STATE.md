@@ -13,11 +13,11 @@ purpose: "Provide the durable, human-readable snapshot that each autonomous cycl
 
 ## Project
 
-- Status: `M1_IMPLEMENTATION_IN_PROGRESS`
+- Status: `M1_EXIT_BLOCKED_RUNTIME`
 - Active milestone: `M1 — Compatibility-first platform`
 - Current release target: `0.1.0-alpha`
 - Last reconciled: `2026-08-09`
-- Default branch: `main` (M0 exit waiver recorded; M1-T01 through M1-T11 merged)
+- Default branch: `main` (M0 exit waiver recorded; M1-T01 through M1-T12 source work merged)
 
 ## Active tasks
 
@@ -46,14 +46,17 @@ None.
   M1-T10 now adds bounded request-to-worker traces, scoped classified artifacts,
   signed expiry grants, and redacted hashed reproduction bundles.
   M1-T11 now adds publishable TypeScript/Python alpha SDKs with typed outcomes,
-  deadlines, cancellation, reconnect, and cleanup.
+  deadlines, cancellation, reconnect, and cleanup. M1-T12 adds the honest
+  injected compatibility smoke and exit blocker; it does not claim live runtime
+  integration.
 - M0 Docker/Compose runtime evidence is explicitly waived by owner option B;
   limitation remains recorded in `agents/WAIVERS.md`.
 - Runtime foundation continuation adds capability snapshots, the single command bus, explicit fallback metadata, and bounded session/page resource accounting.
 
 ## Next ready tasks
 
-1. `M1-T12` — Deliver compatibility-first end-to-end platform slice.
+1. None — M1 exit is blocked by `BLK-003` until the real browser/listener runtime
+   is provisioned and the M1 runtime gate is rerun.
 
 ## Human gates pending
 
@@ -66,6 +69,7 @@ None.
 
 ## Reconciliation notes
 
-M0-T01 through M0-T12 and M1-T01/M1-T11 have merged hosted-gate/source evidence. Owner
-option B waives Docker runtime evidence for M1; no production/container readiness
-claim follows.
+M0-T01 through M0-T12 and M1-T01/M1-T12 have merged hosted-gate/source evidence.
+The injected M1 compatibility smoke passes, but `BLK-003` blocks real
+Chromium/listener/SDK integration and therefore M1 exit. The owner Docker waiver
+does not authorize a production/container readiness claim.
