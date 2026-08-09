@@ -1,0 +1,10 @@
+[package]
+name = "machina-events"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Event dispatch, focus model, and synthetic input primitives over machina-dom node handles."
+
+[dependencies]
+machina-dom = { path = "../dom" }

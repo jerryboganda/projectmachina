@@ -17,6 +17,7 @@ members = [
     "crates/telemetry",
     "crates/artifact-store",
     "crates/dom",
+    "crates/events",
     "crates/html",
     "crates/network",
     "crates/html-tree-builder",
