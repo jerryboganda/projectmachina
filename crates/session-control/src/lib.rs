@@ -65,6 +65,10 @@ where
         expected_version: u64,
         now: String,
     ) -> Result<SessionRecord, StoreError> {
+        let current = self.get(authorization, session_id)?;
+        if matches!(current.state, SessionState::Failed | SessionState::Closed) {
+            return Ok(current);
+        }
         self.repository.transition_session(
             authorization,
             session_id,
@@ -81,6 +85,10 @@ where
         expected_version: u64,
         now: String,
     ) -> Result<SessionRecord, StoreError> {
+        let current = self.get(authorization, session_id)?;
+        if current.state == SessionState::Closed {
+            return Ok(current);
+        }
         let closing = self.repository.transition_session(
             authorization,
             session_id,
