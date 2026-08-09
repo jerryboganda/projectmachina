@@ -129,6 +129,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "machina-session-control"
+version = "0.1.0"
+dependencies = [
+ "machina-control-plane",
+]
+
+[[package]]
 name = "machina-telemetry"
 version = "0.1.0"
 dependencies = [
