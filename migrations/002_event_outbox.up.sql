@@ -10,7 +10,9 @@ CREATE TABLE event_outbox (
     classification TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL,
     published_at TIMESTAMPTZ,
-    UNIQUE (aggregate_type, aggregate_id, aggregate_version)
+    UNIQUE (aggregate_type, aggregate_id, aggregate_version),
+    FOREIGN KEY (organization_id, project_id)
+        REFERENCES projects (organization_id, project_id)
 );
 
 CREATE INDEX event_outbox_unpublished_idx

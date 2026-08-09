@@ -30,6 +30,32 @@ impl TenantScope {
     }
 }
 
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct AuthorizationContext {
+    pub actor_id: String,
+    pub scope: TenantScope,
+    pub policy_hash: String,
+}
+
+impl AuthorizationContext {
+    pub fn new(
+        actor_id: impl Into<String>,
+        scope: TenantScope,
+        policy_hash: impl Into<String>,
+    ) -> Result<Self, StoreError> {
+        let actor_id = actor_id.into();
+        let policy_hash = policy_hash.into();
+        if actor_id.trim().is_empty() || policy_hash.trim().is_empty() {
+            return Err(StoreError::InvalidArgument("authorization context"));
+        }
+        Ok(Self {
+            actor_id,
+            scope,
+            policy_hash,
+        })
+    }
+}
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SessionState {
     Requested,
@@ -101,7 +127,7 @@ impl std::error::Error for StoreError {}
 pub trait ControlPlaneRepository {
     fn create_session(
         &mut self,
-        scope: TenantScope,
+        authorization: AuthorizationContext,
         session_id: String,
         policy_version: String,
         idempotency_key: String,
@@ -110,13 +136,13 @@ pub trait ControlPlaneRepository {
 
     fn get_session(
         &self,
-        scope: &TenantScope,
+        authorization: &AuthorizationContext,
         session_id: &str,
     ) -> Result<SessionRecord, StoreError>;
 
     fn transition_session(
         &mut self,
-        scope: &TenantScope,
+        authorization: &AuthorizationContext,
         session_id: &str,
         expected_version: u64,
         next_state: SessionState,
@@ -176,7 +202,7 @@ impl InMemoryControlPlane {
 impl ControlPlaneRepository for InMemoryControlPlane {
     fn create_session(
         &mut self,
-        scope: TenantScope,
+        authorization: AuthorizationContext,
         session_id: String,
         policy_version: String,
         idempotency_key: String,
@@ -192,6 +218,7 @@ impl ControlPlaneRepository for InMemoryControlPlane {
             return Err(StoreError::InvalidArgument("idempotency_key"));
         }
 
+        let scope = authorization.scope;
         let mut candidate = self.clone();
         if let Some(existing_id) = candidate
             .idempotency
@@ -234,22 +261,25 @@ impl ControlPlaneRepository for InMemoryControlPlane {
 
     fn get_session(
         &self,
-        scope: &TenantScope,
+        authorization: &AuthorizationContext,
         session_id: &str,
     ) -> Result<SessionRecord, StoreError> {
-        self.session_for_scope(scope, session_id).cloned()
+        self.session_for_scope(&authorization.scope, session_id)
+            .cloned()
     }
 
     fn transition_session(
         &mut self,
-        scope: &TenantScope,
+        authorization: &AuthorizationContext,
         session_id: &str,
         expected_version: u64,
         next_state: SessionState,
         created_at: String,
     ) -> Result<SessionRecord, StoreError> {
         let mut candidate = self.clone();
-        let current = candidate.session_for_scope(scope, session_id)?.clone();
+        let current = candidate
+            .session_for_scope(&authorization.scope, session_id)?
+            .clone();
         if current.version != expected_version {
             return Err(StoreError::VersionConflict {
                 expected: expected_version,
@@ -284,20 +314,26 @@ impl ControlPlaneRepository for InMemoryControlPlane {
 #[cfg(test)]
 mod tests {
     use super::{
-        ControlPlaneRepository, InMemoryControlPlane, SessionState, StoreError, TenantScope,
+        AuthorizationContext, ControlPlaneRepository, InMemoryControlPlane, SessionState,
+        StoreError, TenantScope,
     };
 
     fn scope(project: &str) -> TenantScope {
         TenantScope::new("org-1", project).expect("valid scope")
     }
 
+    fn authorization(project: &str) -> AuthorizationContext {
+        AuthorizationContext::new("actor-1", scope(project), "policy-hash-1")
+            .expect("valid authorization context")
+    }
+
     #[test]
     fn aggregate_and_outbox_commit_atomically() {
         let mut store = InMemoryControlPlane::default();
-        let scope = scope("project-1");
+        let authorization = authorization("project-1");
         let session = store
             .create_session(
-                scope.clone(),
+                authorization.clone(),
                 "session-1".to_owned(),
                 "policy-v1".to_owned(),
                 "idem-1".to_owned(),
@@ -305,10 +341,10 @@ mod tests {
             )
             .expect("create");
         assert_eq!(session.version, 1);
-        assert_eq!(store.outbox_for(&scope).len(), 1);
+        assert_eq!(store.outbox_for(&authorization.scope).len(), 1);
         let ready = store
             .transition_session(
-                &scope,
+                &authorization,
                 "session-1",
                 1,
                 SessionState::Ready,
@@ -316,13 +352,13 @@ mod tests {
             )
             .expect("transition");
         assert_eq!(ready.version, 2);
-        assert_eq!(store.outbox_for(&scope).len(), 2);
+        assert_eq!(store.outbox_for(&authorization.scope).len(), 2);
     }
 
     #[test]
     fn rejects_cross_tenant_reads_and_stale_versions_without_mutation() {
         let mut store = InMemoryControlPlane::default();
-        let owner = scope("project-1");
+        let owner = authorization("project-1");
         store
             .create_session(
                 owner.clone(),
@@ -333,7 +369,7 @@ mod tests {
             )
             .expect("create");
         assert_eq!(
-            store.get_session(&scope("project-2"), "session-1"),
+            store.get_session(&authorization("project-2"), "session-1"),
             Err(StoreError::TenantAccessDenied)
         );
         assert!(matches!(
@@ -346,13 +382,13 @@ mod tests {
             ),
             Err(StoreError::VersionConflict { .. })
         ));
-        assert_eq!(store.outbox_for(&owner).len(), 1);
+        assert_eq!(store.outbox_for(&owner.scope).len(), 1);
     }
 
     #[test]
     fn idempotent_create_replays_same_outcome_and_rejects_key_reuse() {
         let mut store = InMemoryControlPlane::default();
-        let owner = scope("project-1");
+        let owner = authorization("project-1");
         let first = store
             .create_session(
                 owner.clone(),
@@ -382,6 +418,6 @@ mod tests {
             ),
             Err(StoreError::DuplicateIdempotencyKey)
         );
-        assert_eq!(store.outbox_for(&scope("project-1")).len(), 1);
+        assert_eq!(store.outbox_for(&authorization("project-1").scope).len(), 1);
     }
 }
