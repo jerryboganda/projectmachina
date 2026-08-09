@@ -1,0 +1,24 @@
+[package]
+name = "machina-semantic"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Basic semantic role/accessible-name derivation, bounded markdown, and metadata/schema extraction on top of machina-dom and machina-selectors."
+
+[lib]
+path = "src/lib.rs"
+
+# Leaf extraction crate: depends only on machina-dom (arena/handles/revision)
+# and machina-selectors (query engine for locating headings/links/forms/
+# interactive elements). No protocol/command-model/command-bus/capability
+# crate dependency, matching the sibling crates/html-tree-builder and
+# crates/selectors dependency-direction convention (see
+# .agent-state/design/M2-M1-contract-compatibility-checklist.md).
+[dependencies]
+machina-dom = { path = "../dom" }
+machina-selectors = { path = "../selectors" }
+
+[dev-dependencies]
+machina-html = { path = "../html" }
+machina-html-tree-builder = { path = "../html-tree-builder" }
