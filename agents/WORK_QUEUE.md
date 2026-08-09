@@ -35,7 +35,7 @@ scheduling policy above):
 | — | ~~M2-T11~~ | 3 | M2 | native-engine | merged (#40) | — |
 | 9 | M2-T08 | 4 | M2 | native-engine | M2-T06, M2-T07, M2-T02 | A |
 | 10 | M2-T09 | 5 | M2 | native-engine | M2-T02 (merged), M2-T04 (merged), M2-T07, M2-T08 | A |
-| 11 | M2-T10 | 5 | M2 | native-engine | M2-T05 (merged) | B |
+| — | ~~M2-T10~~ | 5 | M2 | native-engine | merged (#42) | — |
 | 12 | M2-T12 | 5 | M2 | native-engine | M2-T05, M2-T08 | A |
 | 13 | M2-T13 | 6 | M2 | native-engine + agent-runtime | M2-T05, M2-T10 | A |
 | 14 | M2-T14 | 7 | M2 | orchestrator + quality | M2-T01 through M2-T13, M1-T09 | A (no parallel) |
@@ -44,16 +44,17 @@ scheduling policy above):
 
 | Task | Owner | Branch/worktree | State | Heartbeat |
 | --- | --- | --- | --- | --- |
-| M2-T10 | wave3-builder-d | agent/M2-T10-selectors | claimed | — |
+None. Wave 3 (T02/T03/T04/T05/T10/T11) is fully merged. Ten of fourteen M2
+tasks complete (T01/T02/T03/T04/T05/T10/T11 merged; boundary-checker tooling
+fix merged). `cargo test --workspace` and the boundary check are both
+independently re-verified green on `main`.
 
-M2-T11 (#40) merged. Its builder independently caught the same M2-T05
-merge-status discrepancy noted above and correctly worked around it
-(branched from the PR tip instead of `main`); the orchestrator retargeted
-its PR to `main` and resolved the resulting Cargo.toml/Cargo.lock conflict
-after PR #31 landed, verified with a full `cargo test --workspace` pass.
-M2-T13 (needs M2-T05 + M2-T10) and native-core's `interaction.click.v1`
-wiring (needs M2-T11 + M2-T10) are both now one task away from ready once
-M2-T10 lands.
+M2-T13 (needs M2-T05 + M2-T10, both merged) is now genuinely ready. So is
+native-core's `interaction.click.v1` wiring (needs M2-T11 + M2-T10, both
+merged) — not itself a numbered M2-Tnn task, but unblocked as an integration
+step. M2-T07 (needs M2-T06 + M2-T05) and M2-T08/T09/T12/T14 remain blocked
+on M2-T06, which remains blocked on the GitHub Actions V8 toolchain build
+producing real artifacts.
 
 **Process correction (2026-08-09):** the orchestrator briefly recorded
 M2-T05 as merged before it actually was (PR #31 was still open, only its CI
