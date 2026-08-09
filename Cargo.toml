@@ -16,6 +16,8 @@ members = [
     "crates/native-core",
     "crates/telemetry",
     "crates/artifact-store",
+    "crates/dom",
+    "crates/html",
     "crates/network",
 ]
 resolver = "2"
