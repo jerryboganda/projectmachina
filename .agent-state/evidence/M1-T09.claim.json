@@ -1,0 +1,70 @@
+{
+  "schema_version": "0.1.0",
+  "type": "task-evidence",
+  "task_id": "M1-T09",
+  "status": "released",
+  "agent_id": "copilot-m1-t09",
+  "identity": {
+    "task": "M1-T09",
+    "agent": "copilot-m1-t09",
+    "branch": "agent/M1-T09-capability-router",
+    "worktree": "D:\\Projects\\machina-worktrees\\M1-T09-capability-router",
+    "base_commit": "27ba1a29bdf466e7eea324d4f9e6b3d8a4d6b967",
+    "current_commit": "27ba1a29bdf466e7eea324d4f9e6b3d8a4d6b967"
+  },
+  "generated_at": "2026-08-09T06:00:25.123Z",
+  "objective": "",
+  "acceptance_criteria": [],
+  "claim": {
+    "schema_version": 1,
+    "claim_id": "594dfa8a-fe21-4fa5-a559-e00cd1a3afbd",
+    "task_id": "M1-T09",
+    "agent_id": "copilot-m1-t09",
+    "branch": "agent/M1-T09-capability-router",
+    "worktree": "D:\\Projects\\machina-worktrees\\M1-T09-capability-router",
+    "write_scope": [
+      ".agent-state/evidence/M1-T09.md",
+      "crates/capability/**",
+      "crates/command-bus/**"
+    ],
+    "dependencies": [
+      "M0-T04",
+      "M1-T04",
+      "M1-T06"
+    ],
+    "contract_dependencies": [
+      "capability-snapshot",
+      "router-v0"
+    ],
+    "base_commit": "27ba1a29bdf466e7eea324d4f9e6b3d8a4d6b967",
+    "current_commit": "27ba1a29bdf466e7eea324d4f9e6b3d8a4d6b967",
+    "lease_minutes": 90,
+    "grace_minutes": 20,
+    "claimed_at": "2026-08-09T05:48:02.777Z",
+    "heartbeat_at": "2026-08-09T05:48:02.777Z",
+    "lease_expires_at": "2026-08-09T07:18:02.777Z",
+    "grace_expires_at": "2026-08-09T07:38:02.777Z",
+    "status": "released",
+    "lock_fence": "84db144a-c966-450c-9af7-42d01d8b7cc7",
+    "release_reason": "merged-to-main",
+    "released_at": "2026-08-09T06:00:25.123Z"
+  },
+  "commands": [
+    {
+      "type": "release",
+      "status": "released",
+      "at": "2026-08-09T06:00:25.123Z",
+      "reason": "merged-to-main"
+    }
+  ],
+  "artifacts": [],
+  "changed_files": [
+    ".agent-state/evidence/M1-T09.md",
+    "crates/capability/**",
+    "crates/command-bus/**"
+  ],
+  "decisions": [],
+  "failures": [],
+  "risks": [],
+  "next_action": ""
+}
