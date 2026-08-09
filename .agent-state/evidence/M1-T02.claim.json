@@ -1,0 +1,72 @@
+{
+  "schema_version": "0.1.0",
+  "type": "task-evidence",
+  "task_id": "M1-T02",
+  "status": "released",
+  "agent_id": "copilot-auth",
+  "identity": {
+    "task": "M1-T02",
+    "agent": "copilot-auth",
+    "branch": "agent/M1-T02-auth",
+    "worktree": "D:\\Projects\\machina-worktrees\\M1-T02-auth",
+    "base_commit": "unknown",
+    "current_commit": "unknown"
+  },
+  "generated_at": "2026-08-09T04:42:25.922Z",
+  "objective": "",
+  "acceptance_criteria": [],
+  "claim": {
+    "schema_version": 1,
+    "claim_id": "a73287b3-901a-4dc8-8710-35a95e63f91f",
+    "task_id": "M1-T02",
+    "agent_id": "copilot-auth",
+    "branch": "agent/M1-T02-auth",
+    "worktree": "D:\\Projects\\machina-worktrees\\M1-T02-auth",
+    "write_scope": [
+      "crates/auth/**",
+      "crates/policy/**",
+      "migrations/**",
+      "services/api-gateway/**",
+      "services/session-control/**",
+      "tests/security/**"
+    ],
+    "dependencies": [
+      "M0-T06",
+      "M1-T01"
+    ],
+    "contract_dependencies": [],
+    "base_commit": "unknown",
+    "current_commit": "unknown",
+    "lease_minutes": 90,
+    "grace_minutes": 20,
+    "claimed_at": "2026-08-09T04:37:11.265Z",
+    "heartbeat_at": "2026-08-09T04:37:11.265Z",
+    "lease_expires_at": "2026-08-09T06:07:11.265Z",
+    "grace_expires_at": "2026-08-09T06:27:11.265Z",
+    "status": "released",
+    "lock_fence": "d75954d6-f206-47ab-acc7-7cb9b8fdaded",
+    "release_reason": "merged-to-main",
+    "released_at": "2026-08-09T04:42:25.922Z"
+  },
+  "commands": [
+    {
+      "type": "release",
+      "status": "released",
+      "at": "2026-08-09T04:42:25.922Z",
+      "reason": "merged-to-main"
+    }
+  ],
+  "artifacts": [],
+  "changed_files": [
+    "crates/auth/**",
+    "crates/policy/**",
+    "migrations/**",
+    "services/api-gateway/**",
+    "services/session-control/**",
+    "tests/security/**"
+  ],
+  "decisions": [],
+  "failures": [],
+  "risks": [],
+  "next_action": ""
+}
