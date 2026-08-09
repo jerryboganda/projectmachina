@@ -4,7 +4,7 @@
 //! This dependency-free implementation provides the same repository contract
 //! and transaction/idempotency behavior for fast unit and contract tests.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::{Display, Formatter};
 
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
@@ -84,6 +84,9 @@ pub struct OutboxEvent {
     pub aggregate_type: String,
     pub aggregate_id: String,
     pub aggregate_version: u64,
+    /// Monotonic sequence within the aggregate. Session lifecycle events use
+    /// the session version so reconnect cursors remain stable.
+    pub sequence: u64,
     pub scope: TenantScope,
     pub event_type: String,
     pub payload_json: String,
@@ -163,6 +166,21 @@ pub trait ControlPlaneRepository {
         &self,
         authorization: &AuthorizationContext,
     ) -> Result<Vec<OutboxEvent>, StoreError>;
+
+    fn outbox_for_after(
+        &self,
+        authorization: &AuthorizationContext,
+        aggregate_id: &str,
+        sequence: u64,
+    ) -> Result<Vec<OutboxEvent>, StoreError> {
+        let mut events = self
+            .outbox_for(authorization)?
+            .into_iter()
+            .filter(|event| event.aggregate_id == aggregate_id && event.sequence > sequence)
+            .collect::<Vec<_>>();
+        events.sort_by_key(|event| event.sequence);
+        Ok(events)
+    }
 }
 
 #[derive(Clone, Debug, Default)]
@@ -171,9 +189,107 @@ pub struct InMemoryControlPlane {
     idempotency: BTreeMap<(String, String, String), String>,
     outbox: Vec<OutboxEvent>,
     next_event_id: u64,
+    delivery_ledger: EventDeliveryLedger,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum DeliveryResult {
+    Applied,
+    Duplicate,
+}
+
+#[derive(Debug, Eq, PartialEq)]
+pub enum DeliveryError<E> {
+    InvalidArgument(&'static str),
+    Apply(E),
+}
+
+#[derive(Clone, Debug, Default, Eq, PartialEq)]
+pub struct EventDeliveryLedger {
+    delivered: BTreeSet<(String, String)>,
+}
+
+impl EventDeliveryLedger {
+    pub fn apply_once<F, E>(
+        &mut self,
+        consumer_id: &str,
+        event: &OutboxEvent,
+        apply: F,
+    ) -> Result<DeliveryResult, DeliveryError<E>>
+    where
+        F: FnOnce() -> Result<(), E>,
+    {
+        if consumer_id.trim().is_empty() {
+            return Err(DeliveryError::InvalidArgument("consumer_id"));
+        }
+        if event.event_id.trim().is_empty() {
+            return Err(DeliveryError::InvalidArgument("event_id"));
+        }
+        let key = (consumer_id.to_owned(), event.event_id.clone());
+        if self.delivered.contains(&key) {
+            return Ok(DeliveryResult::Duplicate);
+        }
+        apply().map_err(DeliveryError::Apply)?;
+        self.delivered.insert(key);
+        Ok(DeliveryResult::Applied)
+    }
+
+    pub fn contains(&self, consumer_id: &str, event_id: &str) -> bool {
+        self.delivered
+            .contains(&(consumer_id.to_owned(), event_id.to_owned()))
+    }
+
+    fn record(&mut self, consumer_id: &str, event_id: &str) {
+        self.delivered
+            .insert((consumer_id.to_owned(), event_id.to_owned()));
+    }
 }
 
 impl InMemoryControlPlane {
+    fn session_state_name(state: SessionState) -> &'static str {
+        match state {
+            SessionState::Requested => "requested",
+            SessionState::Queued => "queued",
+            SessionState::Starting => "starting",
+            SessionState::Ready => "ready",
+            SessionState::Closing => "closing",
+            SessionState::Closed => "closed",
+            SessionState::Failed => "failed",
+            SessionState::Expired => "expired",
+        }
+    }
+
+    /// Execute a projection and its delivery marker as one in-memory
+    /// transaction. The production PostgreSQL implementation must call
+    /// `machina_begin_event_delivery` and apply the projection on the same
+    /// database transaction before committing.
+    pub fn apply_event_once<F, E>(
+        &mut self,
+        consumer_id: &str,
+        event: &OutboxEvent,
+        apply: F,
+    ) -> Result<DeliveryResult, DeliveryError<E>>
+    where
+        F: FnOnce(&mut Self) -> Result<(), E>,
+    {
+        if consumer_id.trim().is_empty() {
+            return Err(DeliveryError::InvalidArgument("consumer_id"));
+        }
+        if event.event_id.trim().is_empty() {
+            return Err(DeliveryError::InvalidArgument("event_id"));
+        }
+        if self.delivery_ledger.contains(consumer_id, &event.event_id) {
+            return Ok(DeliveryResult::Duplicate);
+        }
+        let mut candidate = self.clone();
+        apply(&mut candidate).map_err(DeliveryError::Apply)?;
+        candidate
+            .delivery_ledger
+            .record(consumer_id, &event.event_id);
+        *self = candidate;
+        Ok(DeliveryResult::Applied)
+    }
+
     fn append_event(
         &mut self,
         session: &SessionRecord,
@@ -187,6 +303,7 @@ impl InMemoryControlPlane {
             aggregate_type: "session".to_owned(),
             aggregate_id: session.id.clone(),
             aggregate_version: session.version,
+            sequence: session.version,
             scope: session.scope.clone(),
             event_type: event_type.to_owned(),
             payload_json,
@@ -333,7 +450,7 @@ impl ControlPlaneRepository for InMemoryControlPlane {
         candidate.append_event(
             &next,
             "session.state_changed.v1",
-            format!("{{\"state\":\"{next_state:?}\"}}"),
+            format!("{{\"state\":\"{}\"}}", Self::session_state_name(next_state)),
             created_at,
         );
         *self = candidate;
@@ -356,8 +473,8 @@ impl ControlPlaneRepository for InMemoryControlPlane {
 #[cfg(test)]
 mod tests {
     use super::{
-        AuthorizationContext, ControlPlaneRepository, InMemoryControlPlane, SessionState,
-        StoreError, TenantScope,
+        AuthorizationContext, ControlPlaneRepository, DeliveryResult, EventDeliveryLedger,
+        InMemoryControlPlane, SessionState, StoreError, TenantScope,
     };
 
     fn scope(project: &str) -> TenantScope {
@@ -383,7 +500,9 @@ mod tests {
             )
             .expect("create");
         assert_eq!(session.version, 1);
-        assert_eq!(store.outbox_for(&authorization).expect("outbox").len(), 1);
+        let first_event = store.outbox_for(&authorization).expect("outbox");
+        assert_eq!(first_event.len(), 1);
+        assert_eq!(first_event[0].sequence, 1);
         let ready = store
             .transition_session(
                 &authorization,
@@ -394,7 +513,17 @@ mod tests {
             )
             .expect("transition");
         assert_eq!(ready.version, 2);
-        assert_eq!(store.outbox_for(&authorization).expect("outbox").len(), 2);
+        let events = store.outbox_for(&authorization).expect("outbox");
+        assert_eq!(events.len(), 2);
+        assert_eq!(
+            store
+                .outbox_for_after(&authorization, "session-1", 1)
+                .expect("resume")
+                .iter()
+                .map(|event| event.sequence)
+                .collect::<Vec<_>>(),
+            vec![2]
+        );
     }
 
     #[test]
@@ -480,5 +609,88 @@ mod tests {
                 .len(),
             1
         );
+    }
+
+    #[test]
+    fn outbox_replay_applies_each_event_once_per_consumer() {
+        let mut store = InMemoryControlPlane::default();
+        let owner = authorization("project-1");
+        store
+            .create_session(
+                owner.clone(),
+                "session-1".to_owned(),
+                "policy-v1".to_owned(),
+                "idem-1".to_owned(),
+                "now".to_owned(),
+            )
+            .expect("create");
+        let event = store.outbox_for(&owner).expect("outbox").remove(0);
+        let mut ledger = EventDeliveryLedger::default();
+        let mut effects = 0;
+        assert_eq!(
+            ledger
+                .apply_once("projection-1", &event, || {
+                    effects += 1;
+                    Ok::<(), ()>(())
+                })
+                .expect("apply"),
+            DeliveryResult::Applied
+        );
+        assert_eq!(
+            ledger
+                .apply_once("projection-1", &event, || {
+                    effects += 1;
+                    Ok::<(), ()>(())
+                })
+                .expect("replay"),
+            DeliveryResult::Duplicate
+        );
+        assert_eq!(effects, 1);
+        assert!(ledger.contains("projection-1", &event.event_id));
+    }
+
+    #[test]
+    fn transactional_projection_retries_after_failed_effect() {
+        let mut store = InMemoryControlPlane::default();
+        let owner = authorization("project-1");
+        store
+            .create_session(
+                owner.clone(),
+                "session-1".to_owned(),
+                "policy-v1".to_owned(),
+                "idem-1".to_owned(),
+                "now".to_owned(),
+            )
+            .expect("create");
+        let event = store.outbox_for(&owner).expect("outbox").remove(0);
+        let mut attempts = 0;
+        assert_eq!(
+            store
+                .apply_event_once("projection-1", &event, |_| {
+                    attempts += 1;
+                    Err::<(), _>("projection failed")
+                })
+                .expect_err("failed projection"),
+            super::DeliveryError::Apply("projection failed")
+        );
+        assert_eq!(
+            store
+                .apply_event_once("projection-1", &event, |_| {
+                    attempts += 1;
+                    Ok::<(), &str>(())
+                })
+                .expect("retry"),
+            DeliveryResult::Applied
+        );
+        assert_eq!(
+            store
+                .apply_event_once("projection-1", &event, |_| {
+                    attempts += 1;
+                    Ok::<(), &str>(())
+                })
+                .expect("duplicate"),
+            DeliveryResult::Duplicate
+        );
+        assert_eq!(attempts, 2);
     }
 }
