@@ -1,0 +1,9 @@
+[package]
+name = "machina-dom"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Arena-backed DOM node storage, generational handles, mutation invariants, and document lifecycle."
+
+[dependencies]
