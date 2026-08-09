@@ -18,9 +18,9 @@ purpose: "Track only proven blockers with evidence, impact, owner, and recommend
 - Owner: platform
 - Class: external
 - Severity: medium
-- Exact reproduction/evidence: `Get-Command docker` returns no executable in the current host.
-- Work attempted: Compose source and local-only lifecycle scripts were implemented; source checks and non-Docker tests pass.
-- Why autonomous repair is exhausted: Docker installation/runtime requires host provisioning outside the repository.
+- Exact reproduction/evidence: `Get-Command docker` returns no executable in the current host; `winget install Docker.DockerDesktop` downloaded and verified the installer but failed at the administrator/UAC install step.
+- Work attempted: Compose source and local-only lifecycle scripts were implemented; source checks and non-Docker tests pass; Docker Desktop provisioning was attempted twice.
+- Why autonomous repair is exhausted: Docker Desktop installation/runtime requires an interactive administrator approval outside the repository session.
 - Impacted descendants: M0-T11 exit and M0-T12 full local-stack rehearsal.
 - Unaffected work that may continue: M0-T01 through M0-T10 source review and all tasks not requiring container health.
 - Recommended resolution: Install Docker Desktop/Engine, run `just dev-up`, `just dev-health`, and `just dev-reset --confirm` against the local project only.

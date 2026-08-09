@@ -47,7 +47,7 @@ purpose: "Provide the durable, human-readable snapshot that each autonomous cycl
 
 ## Known blockers
 
-- M0 fast-gate source checks pass locally with Node 20.18.0, Rust 1.86.0, CMake 4.4.2, Ninja 1.13.2, Buf 1.47.2, and pnpm 9.15.0. Docker/Compose health remains unverified because Docker is unavailable.
+- M0 fast-gate source checks pass locally with Node 20.18.0, Rust 1.86.0, CMake 4.4.2, Ninja 1.13.2, Buf 1.47.2, and pnpm 9.15.0. Docker Desktop provisioning failed at the required administrator/UAC step.
 
 ## Reconciliation notes
 
