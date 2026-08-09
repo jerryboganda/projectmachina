@@ -37,14 +37,19 @@ scheduling policy above):
 | 10 | M2-T09 | 5 | M2 | native-engine | M2-T02 (merged), M2-T04 (merged), M2-T07, M2-T08 | A |
 | — | ~~M2-T10~~ | 5 | M2 | native-engine | merged (#42) | — |
 | 12 | M2-T12 | 5 | M2 | native-engine | M2-T05, M2-T08 | A |
-| 13 | M2-T13 | 6 | M2 | native-engine + agent-runtime | M2-T05, M2-T10 | A |
-| 14 | M2-T14 | 7 | M2 | orchestrator + quality | M2-T01 through M2-T13, M1-T09 | A (no parallel) |
+| — | ~~M2-T13~~ | 6 | M2 | native-engine + agent-runtime | merged (#46) | — |
+| 14 | M2-T14 | 7 | M2 | orchestrator + quality | M2-T01 through M2-T13 (12 of 13 merged; M2-T06/T07/T08/T09/T12 remain), M1-T09 | A (no parallel) |
 
 ## Active
 
 | Task | Owner | Branch/worktree | State | Heartbeat |
 | --- | --- | --- | --- | --- |
-| M2-T13 | wave4-builder-a | agent/M2-T13-semantic-extraction | claimed | — |
+None. Twelve of fourteen M2 tasks merged: T01/T02/T03/T04/T05/T10/T11/T13,
+plus the boundary-checker fix and the interaction.click.v1 wiring. Remaining:
+M2-T06 (V8 bridge — toolchain now ready, code not started), M2-T07 (needs
+M2-T06), M2-T08 (needs M2-T06/T07/T02), M2-T09 (needs T02/T04/T07/T08),
+M2-T12 (needs T05/T08), M2-T14 (final gate, needs everything). All remaining
+tasks are now blocked on M2-T06 landing.
 
 `interaction.click.v1` is now wired end-to-end through `native-core` (merged,
 not a numbered M2-Tnn task): selector resolution via `machina-selectors` →
