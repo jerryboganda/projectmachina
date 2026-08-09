@@ -32,7 +32,7 @@ scheduling policy above):
 | 5 | M2-T06 | 2 | M2 | native-engine + security | M2-T01 (merged) | B |
 | — | ~~M2-T04~~ | 3 | M2 | native-engine | merged (#38) | — |
 | 7 | M2-T07 | 3 | M2 | native-engine | M2-T06, M2-T05 | B |
-| 8 | M2-T11 | 3 | M2 | native-engine | M2-T05 (merged) | A |
+| — | ~~M2-T11~~ | 3 | M2 | native-engine | merged (#40) | — |
 | 9 | M2-T08 | 4 | M2 | native-engine | M2-T06, M2-T07, M2-T02 | A |
 | 10 | M2-T09 | 5 | M2 | native-engine | M2-T02 (merged), M2-T04 (merged), M2-T07, M2-T08 | A |
 | 11 | M2-T10 | 5 | M2 | native-engine | M2-T05 (merged) | B |
@@ -44,8 +44,16 @@ scheduling policy above):
 
 | Task | Owner | Branch/worktree | State | Heartbeat |
 | --- | --- | --- | --- | --- |
-| M2-T11 | wave3-builder-c | agent/M2-T11-event-dispatch | claimed | — |
 | M2-T10 | wave3-builder-d | agent/M2-T10-selectors | claimed | — |
+
+M2-T11 (#40) merged. Its builder independently caught the same M2-T05
+merge-status discrepancy noted above and correctly worked around it
+(branched from the PR tip instead of `main`); the orchestrator retargeted
+its PR to `main` and resolved the resulting Cargo.toml/Cargo.lock conflict
+after PR #31 landed, verified with a full `cargo test --workspace` pass.
+M2-T13 (needs M2-T05 + M2-T10) and native-core's `interaction.click.v1`
+wiring (needs M2-T11 + M2-T10) are both now one task away from ready once
+M2-T10 lands.
 
 **Process correction (2026-08-09):** the orchestrator briefly recorded
 M2-T05 as merged before it actually was (PR #31 was still open, only its CI
