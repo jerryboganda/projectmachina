@@ -1,0 +1,10 @@
+[package]
+name = "machina-policy"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Stable, hashable effective project policy primitives."
+
+[dependencies]
+sha2 = "0.10.8"
