@@ -2,7 +2,7 @@
   "schema_version": "0.1.0",
   "type": "task-evidence",
   "task_id": "M1-T04",
-  "status": "active",
+  "status": "released",
   "agent_id": "copilot-scheduler",
   "identity": {
     "task": "M1-T04",
@@ -12,7 +12,7 @@
     "base_commit": "unknown",
     "current_commit": "unknown"
   },
-  "generated_at": "2026-08-09T05:00:12.426Z",
+  "generated_at": "2026-08-09T05:08:38.425Z",
   "objective": "",
   "acceptance_criteria": [],
   "claim": {
@@ -40,14 +40,17 @@
     "heartbeat_at": "2026-08-09T05:00:12.426Z",
     "lease_expires_at": "2026-08-09T06:30:12.426Z",
     "grace_expires_at": "2026-08-09T06:50:12.426Z",
-    "status": "active",
-    "lock_fence": "a3242edc-6946-4ac9-b9d2-8ed0129e5454"
+    "status": "released",
+    "lock_fence": "a7dd50a0-dbc3-4c76-ad44-2e1d65914873",
+    "release_reason": "merged-to-main",
+    "released_at": "2026-08-09T05:08:38.425Z"
   },
   "commands": [
     {
-      "type": "claim",
-      "status": "active",
-      "at": "2026-08-09T05:00:12.426Z"
+      "type": "release",
+      "status": "released",
+      "at": "2026-08-09T05:08:38.425Z",
+      "reason": "merged-to-main"
     }
   ],
   "artifacts": [],
@@ -59,5 +62,5 @@
   "decisions": [],
   "failures": [],
   "risks": [],
-  "next_action": "Continue work and heartbeat before the lease expires."
+  "next_action": ""
 }
