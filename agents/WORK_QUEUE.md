@@ -15,9 +15,30 @@ Select critical-path and unblocking tasks first. Two tasks may be active only wh
 
 ## Ready
 
-| Rank | Task | Milestone | Role | Dependencies | Suggested lane |
-| ---: | --- | --- | --- | --- | --- |
-| 1 | None | — | — | — | — |
+M2 native-engine source track is unblocked early under
+`M2-ENTRY-WAIVER-M1-EXIT` (see `agents/WAIVERS.md`) while `BLK-003`
+(Chromium-track only) remains open separately.
+
+Real dependency graph (wave = earliest point a task can honestly start;
+concurrency capped at two active builder/implementation agents per the
+scheduling policy above):
+
+| Rank | Task | Wave | Milestone | Role | Dependencies | Suggested lane |
+| ---: | --- | ---: | --- | --- | --- | --- |
+| 1 | M2-T01 | 1 | M2 | native-engine | M1-T03, M1-T04, M0-T04 (all merged) | A |
+| 2 | M2-T02 | 2 | M2 | native-engine + security | M2-T01 | A |
+| 3 | M2-T03 | 2 | M2 | native-engine | M2-T01 | B |
+| 4 | M2-T05 | 2 | M2 | native-engine | M2-T01 | A |
+| 5 | M2-T06 | 2 | M2 | native-engine + security | M2-T01 | B |
+| 6 | M2-T04 | 3 | M2 | native-engine | M2-T03, M2-T05 | A |
+| 7 | M2-T07 | 3 | M2 | native-engine | M2-T06, M2-T05 | B |
+| 8 | M2-T11 | 3 | M2 | native-engine | M2-T05 | A |
+| 9 | M2-T08 | 4 | M2 | native-engine | M2-T06, M2-T07, M2-T02 | A |
+| 10 | M2-T09 | 5 | M2 | native-engine | M2-T02, M2-T04, M2-T07, M2-T08 | A |
+| 11 | M2-T10 | 5 | M2 | native-engine | M2-T05 | B |
+| 12 | M2-T12 | 5 | M2 | native-engine | M2-T05, M2-T08 | A |
+| 13 | M2-T13 | 6 | M2 | native-engine + agent-runtime | M2-T05, M2-T10 | A |
+| 14 | M2-T14 | 7 | M2 | orchestrator + quality | M2-T01 through M2-T13, M1-T09 | A (no parallel) |
 
 ## Active
 
@@ -29,12 +50,15 @@ None.
 
 M0-T01 through M0-T12 and M1-T01/M1-T12 have merged hosted-gate/source evidence.
 The injected M1 smoke passes; M1 exit remains blocked by BLK-003 pending real
-runtime/listener evidence.
+Chromium-track runtime/listener evidence. M2 source track proceeds separately
+under the recorded waiver.
 
 ## Blocked
 
-BLK-003 — real Chromium/process/listener compatibility runtime is unavailable;
-see `agents/BLOCKERS.md` and `agents/M1_EXIT_REPORT.md`.
+BLK-003 — real Chromium process launch/CDP code does not exist in
+`crates/chromium-adapter`; blocks M1 exit and any Chromium-track (non-native)
+production claim. Does not block M2 native-engine source work — see
+`agents/BLOCKERS.md` and `agents/M1_EXIT_REPORT.md`.
 
 ## Deferred until dependencies
 
