@@ -38,6 +38,36 @@
       "id": "network-policy",
       "method": "GET",
       "path": "/network-policy"
+    },
+    {
+      "id": "redirect-chain",
+      "method": "GET",
+      "path": "/redirect-chain",
+      "note": "?n=<count> decrements to a 200 landing response; ?to=<absolute origin> redirects cross-origin on the final hop. Added for M2-T02 (crates/network) redirect/credential-stripping fixtures."
+    },
+    {
+      "id": "redirect-loop",
+      "method": "GET",
+      "path": "/redirect-loop",
+      "note": "Always redirects to itself; added for M2-T02 redirect-loop-detection fixtures."
+    },
+    {
+      "id": "compressed",
+      "method": "GET",
+      "path": "/compressed/{gzip,deflate,br}",
+      "note": "Streaming-compression fixtures added for M2-T02; response carries x-machina-decompressed-length for assertion."
+    },
+    {
+      "id": "chunked",
+      "method": "GET",
+      "path": "/chunked",
+      "note": "Multi-write, no Content-Length response (Transfer-Encoding: chunked); added for M2-T02."
+    },
+    {
+      "id": "slow-trickle",
+      "method": "GET",
+      "path": "/slow-trickle",
+      "note": "?delay_ms=&chunks= paced response for cancellation/deadline fixtures; added for M2-T02."
     }
   ],
   "reproduction": "node --test scripts/test/fixture-server.test.mjs"

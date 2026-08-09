@@ -99,6 +99,62 @@ test("serves deterministic navigation, redirect, mutation, and form fixtures", a
   }
 });
 
+test("M2-T02: redirect-chain, redirect-loop, compressed, chunked, and slow-trickle fixtures", async () => {
+  const fixture = createFixtureServer();
+  const address = await fixture.start();
+  try {
+    const baseUrl = `${address.protocol}://${address.host}:${address.port}`;
+
+    const chainStart = await fetch(`${baseUrl}/redirect-chain?n=2`, { redirect: "manual" });
+    assert.equal(chainStart.status, 302);
+    assert.equal(chainStart.headers.get("location"), "/redirect-chain?n=1");
+    const chainLanding = await fetch(`${baseUrl}/redirect-chain?n=0`);
+    assert.deepEqual(await chainLanding.json(), {
+      done: true,
+      received_authorization: false,
+      received_cookie: false
+    });
+    const chainWithAuth = await fetch(`${baseUrl}/redirect-chain?n=0`, {
+      headers: { authorization: "Bearer fixture", cookie: "session=fixture" }
+    });
+    assert.deepEqual(await chainWithAuth.json(), {
+      done: true,
+      received_authorization: true,
+      received_cookie: true
+    });
+
+    const loop = await fetch(`${baseUrl}/redirect-loop`, { redirect: "manual" });
+    assert.equal(loop.status, 302);
+    assert.equal(loop.headers.get("location"), "/redirect-loop");
+
+    for (const encoding of ["gzip", "deflate", "br"]) {
+      const compressed = await fetch(`${baseUrl}/compressed/${encoding}`);
+      assert.equal(compressed.status, 200);
+      assert.equal(compressed.headers.get("content-encoding"), encoding);
+      const decompressedLength = Number.parseInt(
+        compressed.headers.get("x-machina-decompressed-length"),
+        10
+      );
+      const text = await compressed.text();
+      assert.equal(Buffer.byteLength(text, "utf8"), decompressedLength);
+      assert.match(text, /machina-fixture-compressible-payload/);
+    }
+
+    const chunked = await fetch(`${baseUrl}/chunked`);
+    assert.equal(chunked.status, 200);
+    assert.equal(await chunked.text(), "first-chunk;second-chunk;third-chunk;fourth-chunk");
+
+    const trickleStart = Date.now();
+    const trickle = await fetch(`${baseUrl}/slow-trickle?delay_ms=10&chunks=3`);
+    const trickleBody = await trickle.text();
+    assert.equal(trickle.status, 200);
+    assert.equal(trickleBody, "chunk-0;chunk-1;chunk-2;");
+    assert.ok(Date.now() - trickleStart >= 20, "slow-trickle should pace its chunks");
+  } finally {
+    await fixture.stop();
+  }
+});
+
 test("rejects non-loopback fixture binding", () => {
   assert.throws(
     () => createFixtureServer({ host: "0.0.0.0" }),
