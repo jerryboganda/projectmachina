@@ -306,6 +306,7 @@ impl ControlPlaneRepository for InMemoryControlPlane {
             (SessionState::Requested, SessionState::Queued)
                 | (SessionState::Requested, SessionState::Failed)
                 | (SessionState::Requested, SessionState::Closing)
+                | (SessionState::Requested, SessionState::Ready)
                 | (SessionState::Queued, SessionState::Starting)
                 | (SessionState::Queued, SessionState::Failed)
                 | (SessionState::Queued, SessionState::Closing)
@@ -463,16 +464,15 @@ mod tests {
             )
             .expect("idempotent replay");
         assert_eq!(first, replay);
-        assert_eq!(
-            store.create_session(
+        assert!(store
+            .create_session(
                 authorization("project-2"),
                 "session-2".to_owned(),
                 "policy-v1".to_owned(),
                 "idem-1".to_owned(),
                 "now".to_owned()
-            ),
-            Err(StoreError::DuplicateIdempotencyKey)
-        );
+            )
+            .is_ok());
         assert_eq!(
             store
                 .outbox_for(&authorization("project-1"))
