@@ -25,11 +25,11 @@ scheduling policy above):
 
 | Rank | Task | Wave | Milestone | Role | Dependencies | Suggested lane |
 | ---: | --- | ---: | --- | --- | --- | --- |
-| 1 | M2-T01 | 1 | M2 | native-engine | M1-T03, M1-T04, M0-T04 (all merged) | A |
-| 2 | M2-T02 | 2 | M2 | native-engine + security | M2-T01 | A |
-| 3 | M2-T03 | 2 | M2 | native-engine | M2-T01 | B |
-| 4 | M2-T05 | 2 | M2 | native-engine | M2-T01 | A |
-| 5 | M2-T06 | 2 | M2 | native-engine + security | M2-T01 | B |
+| — | ~~M2-T01~~ | 1 | M2 | native-engine | merged (#28) | — |
+| 2 | M2-T02 | 2 | M2 | native-engine + security | M2-T01 (merged) | A |
+| 3 | M2-T03 | 2 | M2 | native-engine | M2-T01 (merged) | B |
+| 4 | M2-T05 | 2 | M2 | native-engine | M2-T01 (merged) | A |
+| 5 | M2-T06 | 2 | M2 | native-engine + security | M2-T01 (merged) | B |
 | 6 | M2-T04 | 3 | M2 | native-engine | M2-T03, M2-T05 | A |
 | 7 | M2-T07 | 3 | M2 | native-engine | M2-T06, M2-T05 | B |
 | 8 | M2-T11 | 3 | M2 | native-engine | M2-T05 | A |
@@ -44,7 +44,15 @@ scheduling policy above):
 
 | Task | Owner | Branch/worktree | State | Heartbeat |
 | --- | --- | --- | --- | --- |
-None.
+| M2-T05 | wave2-builder-a | agent/M2-T05-* | claimed | — |
+| M2-T03 | wave2-builder-b | agent/M2-T03-* | claimed | — |
+
+M2-T06 held back: no V8 build toolchain (`gn`/`gclient`/depot_tools) is
+available in this environment; a from-source V8 build is a multi-GB,
+hours-long fetch this session cannot responsibly attempt unattended. A
+research pass is scoped to determine real provisioning requirements before
+any builder claims M2-T06. M2-T02 queues behind T05/T03 per the
+2-concurrent-implementer cap.
 
 ## In review
 
