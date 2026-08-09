@@ -21,6 +21,7 @@ members = [
     "crates/html",
     "crates/network",
     "crates/html-tree-builder",
+    "crates/selectors",
 ]
 resolver = "2"
 
