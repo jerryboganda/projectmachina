@@ -1,0 +1,75 @@
+{
+  "schema_version": "0.1.0",
+  "type": "task-evidence",
+  "task_id": "M1-T01",
+  "status": "released",
+  "agent_id": "copilot-control-plane",
+  "identity": {
+    "task": "M1-T01",
+    "agent": "copilot-control-plane",
+    "branch": "agent/M1-T01-control-plane",
+    "worktree": "D:\\Projects\\machina-worktrees\\M1-T01-control-plane",
+    "base_commit": "unknown",
+    "current_commit": "unknown"
+  },
+  "generated_at": "2026-08-09T04:36:11.496Z",
+  "objective": "",
+  "acceptance_criteria": [],
+  "claim": {
+    "schema_version": 1,
+    "claim_id": "19d67ce3-4b53-4ad7-bc2f-e9ff910d5905",
+    "task_id": "M1-T01",
+    "agent_id": "copilot-control-plane",
+    "branch": "agent/M1-T01-control-plane",
+    "worktree": "D:\\Projects\\machina-worktrees\\M1-T01-control-plane",
+    "write_scope": [
+      "crates/control-plane/**",
+      "migrations/**",
+      "services/api-gateway/**",
+      "services/session-control/**",
+      "services/worker-chromium/**",
+      "services/worker-native/**",
+      "tests/integration/**"
+    ],
+    "dependencies": [
+      "M0-T01",
+      "M0-T04",
+      "M0-T09"
+    ],
+    "contract_dependencies": [],
+    "base_commit": "unknown",
+    "current_commit": "unknown",
+    "lease_minutes": 90,
+    "grace_minutes": 20,
+    "claimed_at": "2026-08-09T04:25:34.790Z",
+    "heartbeat_at": "2026-08-09T04:25:34.790Z",
+    "lease_expires_at": "2026-08-09T05:55:34.790Z",
+    "grace_expires_at": "2026-08-09T06:15:34.790Z",
+    "status": "released",
+    "lock_fence": "469f2139-7998-4e0b-b5d5-5adff8873d15",
+    "release_reason": "merged-to-main",
+    "released_at": "2026-08-09T04:36:11.496Z"
+  },
+  "commands": [
+    {
+      "type": "release",
+      "status": "released",
+      "at": "2026-08-09T04:36:11.496Z",
+      "reason": "merged-to-main"
+    }
+  ],
+  "artifacts": [],
+  "changed_files": [
+    "crates/control-plane/**",
+    "migrations/**",
+    "services/api-gateway/**",
+    "services/session-control/**",
+    "services/worker-chromium/**",
+    "services/worker-native/**",
+    "tests/integration/**"
+  ],
+  "decisions": [],
+  "failures": [],
+  "risks": [],
+  "next_action": ""
+}
