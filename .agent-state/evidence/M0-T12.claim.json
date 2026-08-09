@@ -1,0 +1,72 @@
+{
+  "schema_version": "0.1.0",
+  "type": "task-evidence",
+  "task_id": "M0-T12",
+  "status": "released",
+  "agent_id": "copilot-orchestrator",
+  "identity": {
+    "task": "M0-T12",
+    "agent": "copilot-orchestrator",
+    "branch": "agent/M0-T12-rehearsal",
+    "worktree": "D:\\Projects\\machina-worktrees\\M0-T12-rehearsal",
+    "base_commit": "unknown",
+    "current_commit": "unknown"
+  },
+  "generated_at": "2026-08-09T00:05:27.267Z",
+  "objective": "",
+  "acceptance_criteria": [],
+  "claim": {
+    "schema_version": 1,
+    "claim_id": "7bd022a8-b7ac-4994-aa74-757c499979ad",
+    "task_id": "M0-T12",
+    "agent_id": "copilot-orchestrator",
+    "branch": "agent/M0-T12-rehearsal",
+    "worktree": "D:\\Projects\\machina-worktrees\\M0-T12-rehearsal",
+    "write_scope": [
+      ".agent-state/**",
+      "scripts/agent/**"
+    ],
+    "dependencies": [
+      "M0-T02",
+      "M0-T03",
+      "M0-T04",
+      "M0-T05",
+      "M0-T06",
+      "M0-T07",
+      "M0-T08",
+      "M0-T09",
+      "M0-T10",
+      "M0-T11"
+    ],
+    "contract_dependencies": [],
+    "base_commit": "unknown",
+    "current_commit": "unknown",
+    "lease_minutes": 90,
+    "grace_minutes": 20,
+    "claimed_at": "2026-08-09T00:00:11.011Z",
+    "heartbeat_at": "2026-08-09T00:00:11.011Z",
+    "lease_expires_at": "2026-08-09T01:30:11.011Z",
+    "grace_expires_at": "2026-08-09T01:50:11.011Z",
+    "status": "released",
+    "lock_fence": "54394c2c-4cab-4883-9641-248aa378c39b",
+    "release_reason": "merged-to-main",
+    "released_at": "2026-08-09T00:05:27.267Z"
+  },
+  "commands": [
+    {
+      "type": "release",
+      "status": "released",
+      "at": "2026-08-09T00:05:27.267Z",
+      "reason": "merged-to-main"
+    }
+  ],
+  "artifacts": [],
+  "changed_files": [
+    ".agent-state/**",
+    "scripts/agent/**"
+  ],
+  "decisions": [],
+  "failures": [],
+  "risks": [],
+  "next_action": ""
+}

@@ -13,11 +13,11 @@ purpose: "Provide the durable, human-readable snapshot that each autonomous cycl
 
 ## Project
 
-- Status: `M0_IMPLEMENTATION_IN_PROGRESS`
+- Status: `M0_EXIT_CANDIDATE_BLOCKED`
 - Active milestone: `M0 — Foundation and governance`
 - Current release target: `0.1.0-alpha`
 - Last reconciled: `2026-08-09`
-- Default branch: `main` (M0-T01 through M0-T11 dependency-ready work merged)
+- Default branch: `main` (M0-T01 through M0-T12 source work merged)
 
 ## Active tasks
 
@@ -33,13 +33,13 @@ purpose: "Provide the durable, human-readable snapshot that each autonomous cycl
   fast-gate policy, M0-T04 command contract validation, and M0-T05 architecture
   boundary fixtures/reporting, M0-T06 security baseline, M0-T07 supply-chain
   provenance controls, M0-T08 deterministic fixtures, M0-T09 telemetry/evidence
-  primitives, M0-T10 reproducible benchmark smoke, and M0-T11 local stack health
-  controls are merged.
+  primitives, M0-T10 reproducible benchmark smoke, M0-T11 local stack health
+  controls, and M0-T12 real two-worktree rehearsal are merged.
 - Runtime foundation continuation adds capability snapshots, the single command bus, explicit fallback metadata, and bounded session/page resource accounting.
 
 ## Next ready tasks
 
-1. `M0-T12` — Rehearse the two-agent autonomous loop and approve M0 exit.
+1. Install Docker/Compose and complete local-stack health/reset evidence for M0 exit.
 
 ## Human gates pending
 
@@ -51,6 +51,5 @@ purpose: "Provide the durable, human-readable snapshot that each autonomous cycl
 
 ## Reconciliation notes
 
-M0-T01 through M0-T11 have merged hosted-gate evidence. M0-T12 is the remaining
-M0 task. Docker health remains an external limitation for the full local-stack
-portion of M0-T12.
+M0-T01 through M0-T12 have merged hosted-gate evidence and source evidence. M0 exit
+remains blocked only by Docker/Compose health and reset rehearsal on this host.

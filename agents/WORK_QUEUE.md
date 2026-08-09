@@ -17,7 +17,7 @@ Select critical-path and unblocking tasks first. Two tasks may be active only wh
 
 | Rank | Task | Milestone | Role | Dependencies | Suggested lane |
 | ---: | --- | --- | --- | --- | --- |
-| 1 | M0-T12 | M0 | orchestrator/reviewer | M0-T02 through M0-T11 | A |
+| 1 | M0 exit | M0 | release/orchestrator | Docker health and reset evidence | A |
 
 ## Active
 
@@ -27,11 +27,11 @@ None.
 
 ## In review
 
-M0-T01 through M0-T11 have merged hosted-gate evidence.
+M0-T01 through M0-T12 have merged hosted-gate evidence; M0 exit awaits Docker evidence.
 
 ## Blocked
 
-Docker/Compose health is pending; all available source fast-gate checks have run.
+Docker/Compose health and reset rehearsal are pending; all available source fast-gate checks have run.
 
 ## Deferred until dependencies
 
