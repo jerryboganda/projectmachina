@@ -1,0 +1,68 @@
+{
+  "schema_version": "0.1.0",
+  "type": "task-evidence",
+  "task_id": "M1-T07",
+  "status": "released",
+  "agent_id": "copilot-protocols",
+  "identity": {
+    "task": "M1-T07",
+    "agent": "copilot-protocols",
+    "branch": "agent/M1-T07-protocols",
+    "worktree": "D:\\Projects\\machina-worktrees\\M1-T07-protocols",
+    "base_commit": "unknown",
+    "current_commit": "unknown"
+  },
+  "generated_at": "2026-08-09T05:34:05.180Z",
+  "objective": "",
+  "acceptance_criteria": [],
+  "claim": {
+    "schema_version": 1,
+    "claim_id": "165f8a42-44c9-4edd-a485-284635fb725c",
+    "task_id": "M1-T07",
+    "agent_id": "copilot-protocols",
+    "branch": "agent/M1-T07-protocols",
+    "worktree": "D:\\Projects\\machina-worktrees\\M1-T07-protocols",
+    "write_scope": [
+      "crates/protocol-events/**",
+      "crates/protocol-http/**",
+      "services/api-gateway/**",
+      "tests/contract/**"
+    ],
+    "dependencies": [
+      "M1-T03",
+      "M1-T06"
+    ],
+    "contract_dependencies": [],
+    "base_commit": "unknown",
+    "current_commit": "unknown",
+    "lease_minutes": 90,
+    "grace_minutes": 20,
+    "claimed_at": "2026-08-09T05:21:43.743Z",
+    "heartbeat_at": "2026-08-09T05:21:43.743Z",
+    "lease_expires_at": "2026-08-09T06:51:43.743Z",
+    "grace_expires_at": "2026-08-09T07:11:43.743Z",
+    "status": "released",
+    "lock_fence": "4d745e0a-a868-420a-85a0-fd1c6ccd707f",
+    "release_reason": "merged-to-main",
+    "released_at": "2026-08-09T05:34:05.180Z"
+  },
+  "commands": [
+    {
+      "type": "release",
+      "status": "released",
+      "at": "2026-08-09T05:34:05.180Z",
+      "reason": "merged-to-main"
+    }
+  ],
+  "artifacts": [],
+  "changed_files": [
+    "crates/protocol-events/**",
+    "crates/protocol-http/**",
+    "services/api-gateway/**",
+    "tests/contract/**"
+  ],
+  "decisions": [],
+  "failures": [],
+  "risks": [],
+  "next_action": ""
+}

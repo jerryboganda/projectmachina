@@ -17,13 +17,13 @@ purpose: "Provide the durable, human-readable snapshot that each autonomous cycl
 - Active milestone: `M1 — Compatibility-first platform`
 - Current release target: `0.1.0-alpha`
 - Last reconciled: `2026-08-09`
-- Default branch: `main` (M0 exit waiver recorded; M1-T01 through M1-T06 merged)
+- Default branch: `main` (M0 exit waiver recorded; M1-T01 through M1-T07 merged)
 
 ## Active tasks
 
 | Task | Owner | Branch/worktree | State | Heartbeat | Blocker |
 | --- | --- | --- | --- | --- | --- |
-| M1-T04 | copilot-scheduler | `D:\Projects\machina-worktrees\M1-T04-scheduler` | in-review | 2026-08-09T05:01+05:00 | hosted CI/review pending |
+None.
 
 ## Recently completed
 
@@ -38,14 +38,14 @@ purpose: "Provide the durable, human-readable snapshot that each autonomous cycl
 - M1-T01 control-plane schema/outbox, M1-T02 scoped auth/policy primitives,
   M1-T03 idempotent session lifecycle, and M1-T04 fair scheduler/worker leases
   plus M1-T05 explicit worker pool/isolation contracts and M1-T06 Chromium adapter
-  boundary are merged.
+  boundary, and M1-T07 initial HTTP/gRPC/event contracts are merged.
 - M0 Docker/Compose runtime evidence is explicitly waived by owner option B;
   limitation remains recorded in `agents/WAIVERS.md`.
 - Runtime foundation continuation adds capability snapshots, the single command bus, explicit fallback metadata, and bounded session/page resource accounting.
 
 ## Next ready tasks
 
-1. `M1-T07` — Expose initial HTTP, gRPC and event-stream adapters.
+1. `M1-T08` — Implement WebDriver BiDi network, storage and input modules.
 
 ## Human gates pending
 
@@ -58,6 +58,6 @@ purpose: "Provide the durable, human-readable snapshot that each autonomous cycl
 
 ## Reconciliation notes
 
-M0-T01 through M0-T12 and M1-T01/M1-T06 have merged hosted-gate/source evidence. Owner
+M0-T01 through M0-T12 and M1-T01/M1-T07 have merged hosted-gate/source evidence. Owner
 option B waives Docker runtime evidence for M1; no production/container readiness
 claim follows.

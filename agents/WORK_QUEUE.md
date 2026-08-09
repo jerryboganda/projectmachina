@@ -17,7 +17,7 @@ Select critical-path and unblocking tasks first. Two tasks may be active only wh
 
 | Rank | Task | Milestone | Role | Dependencies | Suggested lane |
 | ---: | --- | --- | --- | --- | --- |
-| 1 | M1-T07 | M1 | protocol | M1-T03, M1-T06 | A |
+| 1 | M1-T08 | M1 | protocol | M1-T07, M3-T02, M3-T10, M3-T12 | A |
 
 ## Active
 
@@ -27,7 +27,7 @@ None.
 
 ## In review
 
-M0-T01 through M0-T12 and M1-T01/M1-T06 have merged hosted-gate evidence; Docker limitation
+M0-T01 through M0-T12 and M1-T01/M1-T07 have merged hosted-gate evidence; Docker limitation
 is waived for M1 under owner option B.
 
 ## Blocked
