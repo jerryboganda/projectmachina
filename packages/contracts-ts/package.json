@@ -1,14 +1,29 @@
 {
   "name": "@machina/contracts-ts",
-  "private": true,
+  "private": false,
   "version": "0.1.0-alpha",
   "type": "module",
   "scripts": {
-    "typecheck": "node ../../scripts/contracts/typecheck.mjs"
+    "build": "tsc --project tsconfig.json",
+    "check": "tsc --project tsconfig.json --noEmit"
   },
-  "types": "src/index.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./command-model": "./src/command-model.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./command-model": {
+      "types": "./dist/command-model.d.ts",
+      "import": "./dist/command-model.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "devDependencies": {
+    "typescript": "5.7.3"
   }
 }
