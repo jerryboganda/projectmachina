@@ -20,6 +20,7 @@ pub enum WorkerState {
     Ready,
     Leased,
     Draining,
+    Offline,
     Failed,
 }
 
@@ -149,13 +150,17 @@ impl WorkerPool {
             .workers
             .get_mut(worker_id)
             .ok_or(WorkerError::WorkerNotFound)?;
-        if worker.state != WorkerState::Leased {
+        if !matches!(worker.state, WorkerState::Leased | WorkerState::Draining) {
             return Err(WorkerError::WorkerNotReady);
         }
         if worker.lease_id.as_deref() != Some(lease_id) {
             return Err(WorkerError::LeaseMismatch);
         }
-        worker.state = WorkerState::Ready;
+        worker.state = if worker.state == WorkerState::Draining {
+            WorkerState::Offline
+        } else {
+            WorkerState::Ready
+        };
         worker.lease_id = None;
         Ok(worker.clone())
     }
@@ -165,8 +170,12 @@ impl WorkerPool {
             .workers
             .get_mut(worker_id)
             .ok_or(WorkerError::WorkerNotFound)?;
-        if worker.state == WorkerState::Leased {
-            return Err(WorkerError::WorkerLeased);
+        if worker.state != WorkerState::Ready {
+            return Err(match worker.state {
+                WorkerState::Leased => WorkerError::WorkerLeased,
+                WorkerState::Draining => WorkerError::Draining,
+                _ => WorkerError::WorkerNotReady,
+            });
         }
         worker.generation += 1;
         worker.reset_count += 1;
@@ -180,6 +189,9 @@ impl WorkerPool {
             .workers
             .get_mut(worker_id)
             .ok_or(WorkerError::WorkerNotFound)?;
+        if !matches!(worker.state, WorkerState::Ready | WorkerState::Leased) {
+            return Err(WorkerError::WorkerNotReady);
+        }
         worker.state = WorkerState::Draining;
         Ok(worker.clone())
     }
@@ -228,5 +240,7 @@ mod tests {
         let reset = pool.reset("native-1").expect("reset");
         assert_eq!(reset.generation, 1);
         assert_eq!(reset.state, WorkerState::Ready);
+        pool.drain("native-1").expect("drain");
+        assert_eq!(pool.lease("native-1"), Err(WorkerError::Draining));
     }
 }
