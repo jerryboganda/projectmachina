@@ -13,7 +13,7 @@ test("runs the injected canonical command-core smoke matrix", async () => {
   assert.equal(report.fixture_form_sanity, "passed");
   assert.deepEqual(report.explicit_failures, [
     "COMMAND_CANCELLED",
-    "UNSUPPORTED_CAPABILITY",
+    "ELEMENT_NOT_FOUND",
     "WORKER_LOST"
   ]);
   assert.equal(report.restart_reconciliation, "passed");

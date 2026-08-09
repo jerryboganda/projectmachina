@@ -623,7 +623,11 @@ dependencies = [
  "machina-capability",
  "machina-command-bus",
  "machina-command-model",
+ "machina-dom",
+ "machina-events",
+ "machina-selectors",
  "machina-session",
+ "serde_json",
 ]
 
 [[package]]

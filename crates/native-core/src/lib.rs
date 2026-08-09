@@ -1,21 +1,42 @@
 //! Engine adapter foundation shared by native and Chromium worker paths.
 //!
-//! `session.create.v1` / `session.close.v1` are the only commands routed
-//! through the shared `CommandBus`/`EngineAdapter` boundary in this slice;
-//! every other command kind returns a typed unsupported-capability error, it
-//! is never treated as a successful no-op.
+//! `session.create.v1` / `session.close.v1` / `interaction.click.v1` are the
+//! commands routed through the shared `CommandBus`/`EngineAdapter` boundary
+//! in this slice; every other command kind returns a typed
+//! unsupported-capability error, it is never treated as a successful no-op.
+//!
+//! `interaction.click.v1` is Native-only: it resolves `ClickPayload.selector`
+//! against the session's live `machina_dom::Document` (via
+//! `machina_selectors::query_selector_all`) and performs a synthetic click
+//! (via `machina_events::perform_click`), mapping both crates' typed errors
+//! onto the existing `CanonicalErrorCode` variants the M1/M2 contract
+//! compatibility checklist identified for exactly this purpose — no new
+//! error codes. The Chromium path deliberately does **not** register this
+//! capability and explicitly rejects it if reached directly (bypassing the
+//! bus): this crate's `EngineSession` document/registry are native-engine
+//! bookkeeping, not a real Chromium render, so faking a Chromium click
+//! against them would silently misreport engine provenance. See
+//! `.agent-state/evidence/wire-interaction-click.md` for the full mapping
+//! table and design decisions (ambiguity detection, malformed-selector
+//! mapping, and the `interaction.click.result.v1` result envelope).
 //!
 //! In addition to the command-bus surface, this crate composes the
 //! `EngineSession` facade: the per-session object that owns browsing-context
 //! and page identities, their lifecycle/cancellation, and their bounded
-//! resource counters. `EngineSession` is a native engine composition type —
-//! it consumes only canonical `machina-session`/`machina-command-model`/
-//! `machina-capability` types and never a protocol- or control-plane-layer
-//! type. Context/page create/close/cancel and resource accounting are not
-//! yet reachable through a canonical `CommandKind` (the command schema does
-//! not define `context.create.v1`/`page.create.v1` etc. yet), so they are
-//! exposed as direct Rust APIs on the engines, ready to be wired to those
-//! commands once the schema defines them.
+//! resource counters, plus (new in this slice) the session's live
+//! `machina_dom::Document` and `machina_events::EventTargetRegistry`.
+//! `EngineSession` is a native engine composition type — it consumes only
+//! canonical `machina-session`/`machina-command-model`/`machina-capability`/
+//! `machina-dom`/`machina-selectors`/`machina-events` types and never a
+//! protocol- or control-plane-layer type. Context/page create/close/cancel
+//! and resource accounting are not yet reachable through a canonical
+//! `CommandKind` (the command schema does not define
+//! `context.create.v1`/`page.create.v1` etc. yet), so they are exposed as
+//! direct Rust APIs on the engines, ready to be wired to those commands once
+//! the schema defines them. `Document` population is similarly exposed as a
+//! direct Rust API (`with_document_mut`) today — this task does not wire
+//! `navigation.goto.v1` (M2-T09's job); it only makes sure the plumbing a
+//! future navigation command needs to populate the document already exists.
 
 use std::collections::BTreeMap;
 use std::sync::Mutex;
@@ -25,6 +46,9 @@ use machina_command_bus::{CancellationToken, CommandContext, DispatchError, Engi
 use machina_command_model::{
     CanonicalErrorCode, CapabilityStatus, CommandEnvelope, CommandKind, CommandPayload, EngineKind,
 };
+use machina_dom::Document;
+use machina_events::{EventError, EventTargetRegistry, PostconditionState};
+use machina_selectors::QueryError;
 use machina_session::{
     ContextId, LifecycleState, PageId, PageResourceBudget, PageResourceKind, ResourceBudget,
     ResourceUsage, Session, SessionError, SessionId,
@@ -64,13 +88,30 @@ pub struct EngineHealth {
 pub struct EngineSession {
     engine: EngineKind,
     session: Session,
+    /// This session's live native DOM document. Owned here (not in
+    /// `machina-session`, which documents itself as DOM-agnostic
+    /// foundation layer, and never in `machina-dom`/`machina-events`
+    /// themselves, which stay engine-agnostic leaf crates) because
+    /// `EngineSession` is exactly the native-engine composition point that
+    /// is supposed to own this kind of cross-crate wiring. Empty at
+    /// creation; populated by whichever command kind first mutates a
+    /// session's content (today: only this crate's own tests exercising
+    /// `interaction.click.v1`; eventually M2-T09's `navigation.goto.v1`).
+    document: Document,
+    /// Listener/focus state for [`EngineSession::document`]. One registry
+    /// per document, per `machina_events`'s documented contract.
+    registry: EventTargetRegistry,
 }
 
 impl EngineSession {
     fn new(engine: EngineKind, id: SessionId, budget: ResourceBudget) -> Self {
+        let document = Document::new();
+        let registry = EventTargetRegistry::for_document(&document);
         Self {
             engine,
             session: Session::new(id, budget),
+            document,
+            registry,
         }
     }
 
@@ -185,6 +226,160 @@ impl EngineSession {
             budget: self.budget(),
         }
     }
+
+    pub fn document(&self) -> &Document {
+        &self.document
+    }
+
+    pub fn document_mut(&mut self) -> &mut Document {
+        &mut self.document
+    }
+
+    /// `interaction.click.v1`'s implementation: resolve `selector` against
+    /// this session's live document, then perform a synthetic click on the
+    /// resolved element. See this crate's module docs and
+    /// `.agent-state/evidence/wire-interaction-click.md` for the exact
+    /// error-code mapping and the ambiguity/result-envelope decisions.
+    fn click(&mut self, selector: &str) -> Result<String, DispatchError> {
+        let matches = machina_selectors::query_selector_all(&self.document, selector)
+            .map_err(map_query_error)?;
+        let target = match matches.elements.as_slice() {
+            [] => {
+                return Err(DispatchError::failed(
+                    CanonicalErrorCode::ElementNotFound,
+                    format!("no element matched selector {selector:?}"),
+                    false,
+                ));
+            }
+            [only] => only.node_handle(),
+            multiple => {
+                return Err(DispatchError::failed(
+                    CanonicalErrorCode::ElementAmbiguous,
+                    format!(
+                        "selector {selector:?} matched {} elements; interaction.click.v1 requires exactly one match",
+                        multiple.len()
+                    ),
+                    false,
+                ));
+            }
+        };
+
+        let outcome = machina_events::perform_click(&mut self.document, &mut self.registry, target)
+            .map_err(map_event_error)?;
+
+        match &outcome.postcondition {
+            PostconditionState::Verified => Ok(click_result_envelope(&outcome)),
+            PostconditionState::Failed(reason) => Err(DispatchError::failed(
+                CanonicalErrorCode::ActionPostconditionFailed,
+                reason.clone(),
+                false,
+            )),
+        }
+    }
+}
+
+/// Maps `machina_selectors::QueryError` onto `CanonicalErrorCode`. Decision
+/// record (see `.agent-state/evidence/wire-interaction-click.md`):
+/// `InvalidSelector` (malformed syntax), `UnsupportedFeature` (valid syntax,
+/// out-of-scope construct), and `TooComplex`/`ContextNodeRequired` (bounded-
+/// walk guards / a CSS-only call path that cannot actually produce this
+/// variant) all map to `SELECTOR_INVALID`: from `interaction.click.v1`'s
+/// caller's point of view every one of these means "the selector you gave me
+/// cannot be used to resolve an element," which is exactly what
+/// `SELECTOR_INVALID` denotes, and no finer-grained code exists in the
+/// pinned `CanonicalErrorCode` enum. `DomError` (an internal invariant
+/// failure — this crate always calls the query against its own session's
+/// live document/handles, so this should be structurally unreachable) maps
+/// to `ACTION_POSTCONDITION_FAILED`, the closest "we could not complete this
+/// action" bucket, with the underlying detail preserved in the message.
+fn map_query_error(error: QueryError) -> DispatchError {
+    match error {
+        QueryError::InvalidSelector { message, position } => DispatchError::failed(
+            CanonicalErrorCode::SelectorInvalid,
+            format!("invalid selector syntax at byte {position}: {message}"),
+            false,
+        ),
+        QueryError::UnsupportedFeature { feature, position } => DispatchError::failed(
+            CanonicalErrorCode::SelectorInvalid,
+            format!(
+                "selector uses an unsupported (out-of-scope) feature at byte {position}: {feature}"
+            ),
+            false,
+        ),
+        QueryError::TooComplex { limit } => DispatchError::failed(
+            CanonicalErrorCode::SelectorInvalid,
+            format!("selector exceeded a bounded-walk guard ({limit}); treated as unusable, not silently truncated"),
+            false,
+        ),
+        QueryError::ContextNodeRequired => DispatchError::failed(
+            CanonicalErrorCode::SelectorInvalid,
+            "selector requires a context node, which interaction.click.v1 does not supply",
+            false,
+        ),
+        QueryError::DomError(inner) => DispatchError::failed(
+            CanonicalErrorCode::ActionPostconditionFailed,
+            format!("internal dom error while resolving selector: {inner}"),
+            false,
+        ),
+        other => DispatchError::failed(
+            CanonicalErrorCode::SelectorInvalid,
+            format!("selector could not be resolved: {other}"),
+            false,
+        ),
+    }
+}
+
+/// Maps `machina_events::EventError` onto `CanonicalErrorCode`.
+/// `NotInteractable` is the one case `interaction.click.v1` names explicitly
+/// (`ELEMENT_NOT_INTERACTABLE`). `TargetNotFound` maps to
+/// `ELEMENT_NOT_FOUND`: it can only happen if the element resolved by the
+/// selector query stopped resolving in the brief window before
+/// `perform_click` re-validated it, which is the same caller-facing meaning
+/// as "no element matched." `WrongDocument`/`Dom` are internal-invariant
+/// failures (this crate always passes its own session's document/registry
+/// and a handle just resolved from that same document) and map to
+/// `ACTION_POSTCONDITION_FAILED`, the closest "could not complete this
+/// action" bucket.
+fn map_event_error(error: EventError) -> DispatchError {
+    match error {
+        EventError::NotInteractable => DispatchError::failed(
+            CanonicalErrorCode::ElementNotInteractable,
+            error.to_string(),
+            false,
+        ),
+        EventError::TargetNotFound => DispatchError::failed(
+            CanonicalErrorCode::ElementNotFound,
+            error.to_string(),
+            false,
+        ),
+        EventError::WrongDocument | EventError::Dom(_) => DispatchError::failed(
+            CanonicalErrorCode::ActionPostconditionFailed,
+            error.to_string(),
+            false,
+        ),
+    }
+}
+
+/// The `interaction.click.v1` success result envelope: `{"schema":
+/// "interaction.click.result.v1", "data": {...}}`. This is this task's
+/// concrete instance of the minimal result-envelope convention the M1/M2
+/// contract compatibility checklist recommended (finding 6) — no such
+/// convention existed anywhere in the codebase before this change; this is
+/// the first `CommandOutcome.result` payload with any internal structure.
+/// Reports only caller-meaningful outcome facts (which default actions
+/// fired, whether focus moved) — never a raw `NodeHandle` or other
+/// internal-only representation.
+fn click_result_envelope(outcome: &machina_events::ClickOutcome) -> String {
+    serde_json::json!({
+        "schema": "interaction.click.result.v1",
+        "data": {
+            "mousedownDefaultPrevented": outcome.mousedown_default_prevented,
+            "mouseupDefaultPrevented": outcome.mouseup_default_prevented,
+            "clickDefaultPrevented": outcome.click_default_prevented,
+            "focusChanged": outcome.focused.is_some(),
+        }
+    })
+    .to_string()
 }
 
 fn map_session_error(error: SessionError) -> DispatchError {
@@ -242,6 +437,18 @@ impl LifecycleEngine {
         };
         snapshot.register("session.create.v1", status);
         snapshot.register("session.close.v1", status);
+        // `interaction.click.v1` is Native-only: this engine composes its
+        // own in-memory `machina_dom::Document`, not a real Chromium
+        // render, so advertising it as Chromium-supported here would let
+        // the bus route real click commands to a fabricated result. Not
+        // registering it for Chromium at all (rather than registering it
+        // as `Unsupported`) means `CommandBus::decide` correctly reports
+        // `no_compatible_engine`/`UNSUPPORTED_CAPABILITY` when no engine
+        // can serve it, matching every other not-yet-implemented
+        // capability's honest behavior. See this crate's module docs.
+        if kind == EngineKind::Native {
+            snapshot.register("interaction.click.v1", status);
+        }
         Self {
             kind,
             snapshot,
@@ -276,6 +483,55 @@ impl LifecycleEngine {
             )
         })?;
         operation(session).map_err(map_session_error)
+    }
+
+    /// Mutable access to a session's live document, for whichever layer
+    /// populates content into it. Today: only this crate's own tests,
+    /// exercising `interaction.click.v1` end to end against real elements.
+    /// Eventually: M2-T09's `navigation.goto.v1` wiring, once merged — this
+    /// method is the plumbing that task needs and does not yet have to add
+    /// itself.
+    fn with_document_mut<T>(
+        &self,
+        session_id: &str,
+        operation: impl FnOnce(&mut Document) -> T,
+    ) -> Result<T, DispatchError> {
+        let id = parse_session_id(session_id)?;
+        let mut sessions = self.lock_sessions()?;
+        let session = sessions.get_mut(&id).ok_or_else(|| {
+            DispatchError::failed(
+                CanonicalErrorCode::SessionClosed,
+                "session does not exist or is already closed",
+                false,
+            )
+        })?;
+        Ok(operation(session.document_mut()))
+    }
+
+    /// `interaction.click.v1`. Native-only (see `LifecycleEngine::new`'s
+    /// registration comment and this crate's module docs): rejected
+    /// explicitly, not silently faked, if reached on the Chromium engine.
+    fn click(&self, session_id: &str, selector: &str) -> Result<String, DispatchError> {
+        if self.kind != EngineKind::Native {
+            return Err(DispatchError::unsupported("interaction.click.v1"));
+        }
+        let id = parse_session_id(session_id)?;
+        let mut sessions = self.lock_sessions()?;
+        let session = sessions.get_mut(&id).ok_or_else(|| {
+            DispatchError::failed(
+                CanonicalErrorCode::SessionClosed,
+                "session does not exist or is already closed",
+                false,
+            )
+        })?;
+        if session.state() != LifecycleState::Ready {
+            return Err(DispatchError::failed(
+                CanonicalErrorCode::SessionNotReady,
+                "session is not ready to accept interaction commands",
+                false,
+            ));
+        }
+        session.click(selector)
     }
 
     /// Open a browsing context under an existing, ready session.
@@ -432,6 +688,19 @@ impl LifecycleEngine {
                     .map_err(map_session_error)?;
                 Ok("session closed".to_owned())
             }
+            CommandKind::InteractionClickV1 => {
+                let payload = match &command.payload {
+                    CommandPayload::Click(payload) => payload,
+                    _ => {
+                        return Err(DispatchError::failed(
+                            CanonicalErrorCode::InvalidArgument,
+                            "interaction.click.v1 requires a click payload",
+                            false,
+                        ));
+                    }
+                };
+                self.click(&command.session_id, &payload.selector)
+            }
             _ => Err(DispatchError::unsupported(format!("{:?}", command.kind))),
         }
     }
@@ -504,6 +773,17 @@ impl NativeEngine {
         self.inner.cancel_session(session_id)
     }
 
+    /// Mutable access to a session's live document, for populating content
+    /// before an `interaction.click.v1` (or, eventually, a
+    /// `navigation.goto.v1`) command is dispatched against it.
+    pub fn with_document_mut<T>(
+        &self,
+        session_id: &str,
+        operation: impl FnOnce(&mut Document) -> T,
+    ) -> Result<T, DispatchError> {
+        self.inner.with_document_mut(session_id, operation)
+    }
+
     pub fn health(&self) -> Result<EngineHealth, DispatchError> {
         self.inner.health()
     }
@@ -543,7 +823,13 @@ impl ChromiumEngine {
     // symmetric with `NativeEngine` here. Chromium's actual browser launch
     // remains an explicit unsupported/injected boundary (see the shared
     // `execute` unsupported-capability fallthrough); this crate never fakes
-    // that a page was actually rendered.
+    // that a page was actually rendered. `interaction.click.v1` follows the
+    // same rule: `with_document_mut` is exposed symmetrically below (so a
+    // future contributor is not tempted to special-case it), but a real
+    // click against it is explicitly rejected in `LifecycleEngine::click`
+    // (the capability is also never registered for this engine), not
+    // silently run against `machina-dom`/`machina-events` as if it were a
+    // real Chromium render.
 
     pub fn open_context(&self, session_id: &str, context_id: &str) -> Result<(), DispatchError> {
         self.inner.open_context(session_id, context_id)
@@ -601,6 +887,14 @@ impl ChromiumEngine {
         self.inner.cancel_session(session_id)
     }
 
+    pub fn with_document_mut<T>(
+        &self,
+        session_id: &str,
+        operation: impl FnOnce(&mut Document) -> T,
+    ) -> Result<T, DispatchError> {
+        self.inner.with_document_mut(session_id, operation)
+    }
+
     pub fn health(&self) -> Result<EngineHealth, DispatchError> {
         self.inner.health()
     }
@@ -629,8 +923,8 @@ mod tests {
     use super::{ChromiumEngine, NativeEngine};
     use machina_command_bus::{CommandBus, CommandContext, EngineAdapter, FallbackPolicy};
     use machina_command_model::{
-        CanonicalErrorCode, CommandEnvelope, CommandKind, CommandMetadata, CommandPayload,
-        SessionClosePayload, SessionCreatePayload,
+        CanonicalErrorCode, ClickPayload, CommandEnvelope, CommandKind, CommandMetadata,
+        CommandPayload, SessionClosePayload, SessionCreatePayload,
     };
     use machina_session::{LifecycleState, PageResourceBudget, PageResourceKind};
     use std::time::Duration;
@@ -662,6 +956,27 @@ mod tests {
             }],
             metadata: CommandMetadata {
                 correlation_id: format!("{session_id}-correlation"),
+                causation_id: None,
+                client: "native-core-test".to_owned(),
+            },
+        }
+    }
+
+    fn click_command(session_id: &str, selector: &str) -> CommandEnvelope {
+        CommandEnvelope {
+            command_id: format!("{session_id}-click-command"),
+            session_id: session_id.to_owned(),
+            context_id: None,
+            page_id: None,
+            kind: CommandKind::InteractionClickV1,
+            payload: CommandPayload::Click(ClickPayload {
+                selector: selector.to_owned(),
+            }),
+            idempotency_key: None,
+            deadline_ms: 5_000,
+            required_capabilities: vec!["interaction.click.v1".to_owned()],
+            metadata: CommandMetadata {
+                correlation_id: format!("{session_id}-click-correlation"),
                 causation_id: None,
                 client: "native-core-test".to_owned(),
             },
@@ -1027,5 +1342,177 @@ mod tests {
         chromium
             .close_context("session-1", "context-1")
             .expect("chromium context close succeeds");
+    }
+
+    /// Acceptance: `interaction.click.v1` routed through the shared
+    /// `CommandBus` resolves a real, attached element and returns the
+    /// `interaction.click.result.v1` envelope, not an unsupported-capability
+    /// error — the concrete behavior change this task implements.
+    #[test]
+    fn interaction_click_v1_routes_through_the_bus_and_resolves_a_real_element() {
+        let native = NativeEngine::new("native-test");
+        create_session_directly(&native, "session-1");
+        native
+            .with_document_mut("session-1", |document| {
+                let button = document.create_element("button").expect("create button");
+                document
+                    .set_attribute(button, "id", "submit")
+                    .expect("set id attribute");
+                let root = document.root();
+                document
+                    .append_child(root, button.node_handle())
+                    .expect("attach button to document");
+            })
+            .expect("document population succeeds");
+
+        let bus = CommandBus::new(
+            native,
+            ChromiumEngine::new("chromium-test"),
+            FallbackPolicy::PreferNative,
+        );
+        let context = CommandContext::with_timeout("session-1-correlation", Duration::from_secs(1));
+        let outcome = bus
+            .execute(&click_command("session-1", "#submit"), &context)
+            .expect("click on a real, attached element should succeed");
+        assert_eq!(
+            outcome.execution.engine,
+            machina_command_model::EngineKind::Native
+        );
+        let result = outcome
+            .result
+            .expect("a successful click reports a result envelope");
+        let parsed: serde_json::Value =
+            serde_json::from_str(&result).expect("result envelope is valid json");
+        assert_eq!(parsed["schema"], "interaction.click.result.v1");
+        assert_eq!(parsed["data"]["mousedownDefaultPrevented"], false);
+        assert_eq!(parsed["data"]["mouseupDefaultPrevented"], false);
+        assert_eq!(parsed["data"]["clickDefaultPrevented"], false);
+    }
+
+    /// Acceptance: a selector matching nothing is `ELEMENT_NOT_FOUND`, not
+    /// `UNSUPPORTED_CAPABILITY` — the deliberate, reviewed behavior change
+    /// from the M1 baseline (see `scripts/test/m1-compatibility-smoke.mjs`).
+    #[test]
+    fn interaction_click_v1_missing_selector_is_element_not_found() {
+        let engine = NativeEngine::new("native-test");
+        create_session_directly(&engine, "session-1");
+        let context = CommandContext::with_timeout("session-1-correlation", Duration::from_secs(1));
+        let error = engine
+            .execute(&click_command("session-1", "#missing"), &context)
+            .expect_err("a selector matching nothing must fail explicitly");
+        assert_eq!(error.code, CanonicalErrorCode::ElementNotFound);
+    }
+
+    /// Acceptance: a selector matching more than one element is
+    /// `ELEMENT_AMBIGUOUS`. Design decision: `interaction.click.v1` uses
+    /// `query_selector_all` (not `query_selector`'s silent first-match) and
+    /// checks the match count itself, because a click is a real,
+    /// side-effecting action — silently clicking whichever element happened
+    /// to come first in document order would be the wrong default for an
+    /// automation product (see this crate's module docs).
+    #[test]
+    fn interaction_click_v1_ambiguous_selector_is_element_ambiguous() {
+        let engine = NativeEngine::new("native-test");
+        create_session_directly(&engine, "session-1");
+        engine
+            .with_document_mut("session-1", |document| {
+                // A document node allows at most one `Element` child
+                // (matches real DOM's single `documentElement` rule), so the
+                // two ambiguous siblings are attached under one wrapping
+                // `ul` element rather than directly under the document root.
+                let root = document.root();
+                let list = document.create_element("ul").expect("create ul");
+                document
+                    .append_child(root, list.node_handle())
+                    .expect("attach ul to document");
+                for _ in 0..2 {
+                    let element = document.create_element("li").expect("create li");
+                    document
+                        .set_attribute(element, "class", "item")
+                        .expect("set class attribute");
+                    document
+                        .append_child(list.node_handle(), element.node_handle())
+                        .expect("attach li to list");
+                }
+            })
+            .expect("document population succeeds");
+
+        let context = CommandContext::with_timeout("session-1-correlation", Duration::from_secs(1));
+        let error = engine
+            .execute(&click_command("session-1", ".item"), &context)
+            .expect_err("a selector matching more than one element must fail explicitly");
+        assert_eq!(error.code, CanonicalErrorCode::ElementAmbiguous);
+    }
+
+    /// Acceptance: malformed selector syntax is `SELECTOR_INVALID` (the
+    /// pinned `CanonicalErrorCode` variant that exists for exactly this
+    /// case), never treated as "matched nothing."
+    #[test]
+    fn interaction_click_v1_malformed_selector_is_selector_invalid() {
+        let engine = NativeEngine::new("native-test");
+        create_session_directly(&engine, "session-1");
+        let context = CommandContext::with_timeout("session-1-correlation", Duration::from_secs(1));
+        let error = engine
+            .execute(&click_command("session-1", ""), &context)
+            .expect_err("an empty selector string is malformed, not a legitimate empty match");
+        assert_eq!(error.code, CanonicalErrorCode::SelectorInvalid);
+    }
+
+    /// Acceptance: an unready session rejects `interaction.click.v1`
+    /// explicitly (`SESSION_NOT_READY`), matching every other command kind's
+    /// session-state precondition rather than silently no-opting.
+    #[test]
+    fn interaction_click_v1_requires_a_ready_session() {
+        let engine = NativeEngine::new("native-test");
+        let context = CommandContext::with_timeout("session-1-correlation", Duration::from_secs(1));
+        let error = engine
+            .execute(&click_command("session-1", "#missing"), &context)
+            .expect_err("a session that was never created cannot accept a click");
+        assert_eq!(error.code, CanonicalErrorCode::SessionClosed);
+    }
+
+    /// Acceptance / documented design decision: `interaction.click.v1` is
+    /// Native-only. The Chromium engine never registers the capability (so
+    /// `CommandBus::decide` reports `UNSUPPORTED_CAPABILITY` rather than
+    /// routing to a fabricated result), and a direct call that bypasses the
+    /// bus is also rejected explicitly by `LifecycleEngine::click`'s own
+    /// engine-kind guard — this crate never fakes a Chromium click against
+    /// its native-only `machina-dom`/`machina-events` composition.
+    #[test]
+    fn interaction_click_v1_is_native_only_and_never_faked_on_chromium() {
+        let chromium = ChromiumEngine::new("chromium-test");
+        assert!(
+            !chromium.capabilities().supports("interaction.click.v1"),
+            "the chromium engine must not advertise interaction.click.v1 as supported"
+        );
+        create_session_directly(&chromium, "session-1");
+        let context = CommandContext::with_timeout("session-1-correlation", Duration::from_secs(1));
+        let error = chromium
+            .execute(&click_command("session-1", "#missing"), &context)
+            .expect_err("a direct call bypassing the bus must still be rejected explicitly");
+        assert_eq!(error.code, CanonicalErrorCode::UnsupportedCapability);
+
+        let bus = CommandBus::new(
+            NativeEngine::new("native-test"),
+            ChromiumEngine::new("chromium-test"),
+            FallbackPolicy::ChromiumOnly,
+        );
+        let routed = bus.execute(&click_command("session-1", "#missing"), &context);
+        let error = routed.expect_err("no engine can honestly serve this under chromium-only");
+        assert_eq!(error.code, CanonicalErrorCode::UnsupportedCapability);
+    }
+
+    /// Acceptance: `perform_click`'s `EventError` variants map onto
+    /// documented `CanonicalErrorCode`s. `NotInteractable` cannot actually be
+    /// reached end-to-end through `interaction.click.v1` today (selector
+    /// resolution only ever returns elements already reachable from the
+    /// document root, which is exactly `perform_click`'s own attachment
+    /// precondition — see `.agent-state/evidence/wire-interaction-click.md`),
+    /// so this unit-tests the mapping function directly rather than
+    /// asserting an unreachable end-to-end path.
+    #[test]
+    fn map_event_error_covers_not_interactable() {
+        let error = super::map_event_error(machina_events::EventError::NotInteractable);
+        assert_eq!(error.code, CanonicalErrorCode::ElementNotInteractable);
     }
 }
