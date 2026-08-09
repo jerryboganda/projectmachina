@@ -45,7 +45,16 @@ scheduling policy above):
 | Task | Owner | Branch/worktree | State | Heartbeat |
 | --- | --- | --- | --- | --- |
 | M2-T13 | wave4-builder-a | agent/M2-T13-semantic-extraction | claimed | — |
-| — (integration, not a numbered task) | wave4-builder-b | agent/wire-interaction-click | claimed | — |
+
+`interaction.click.v1` is now wired end-to-end through `native-core` (merged,
+not a numbered M2-Tnn task): selector resolution via `machina-selectors` →
+`machina-events::perform_click`, native-only by design (rejected on
+`ChromiumEngine`), `m1-compatibility-smoke.mjs` updated per the compatibility
+checklist's explicit instruction. Flagged and tracked as `BLK-005`:
+`EngineSession` is now `!Send`/`!Sync` (via `machina-events`'s `Rc`-based
+design) — no current caller needs `Send`/`Sync`, but a future async
+multi-worker path will need the lane-actor pattern M2-T08's design already
+specifies for `runtime-v8`.
 
 Ten of fourteen M2 tasks complete (T01/T02/T03/T04/T05/T10/T11 merged;
 boundary-checker tooling fix merged). `cargo test --workspace` and the

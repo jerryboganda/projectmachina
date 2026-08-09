@@ -11,6 +11,22 @@ purpose: "Track only proven blockers with evidence, impact, owner, and recommend
 
 ## Open blockers
 
+## BLK-005 — EngineSession is `!Send`/`!Sync` once it composes machina-events
+
+- Related task(s): interaction.click.v1 wiring (merged), any future async multi-worker protocol-http path
+- First observed: 2026-08-09
+- Owner: native-engine + protocol
+- Class: technical
+- Severity: low (no current caller requires `Send`/`Sync` on `EngineAdapter`)
+- Exact reproduction/evidence: `machina_events::EventTargetRegistry` is `Rc`-based by design (per `.agent-state/design/M2-T11-event-dispatch-design.md`); `NativeEngine`/`ChromiumEngine` now compose it via `EngineSession`, making both `!Send`/`!Sync`. Verified by the wiring task's builder before merge — no test failure, purely a forward-compatibility note.
+- Work attempted: none yet; explicitly deferred as out of scope for the click-wiring task.
+- Why autonomous repair is exhausted: not attempted — no current consumer needs this, premature to redesign now.
+- Impacted descendants: any future architecture putting `EngineAdapter` instances behind `Arc` for a multi-threaded/async worker pool (plausibly M2-T08's event loop or a later protocol-http concurrency change).
+- Unaffected work that may continue: everything else; the current single-threaded-per-session model this repo already uses elsewhere (`crates/dom`, `crates/events` are both deliberately single-thread-confined) is unaffected.
+- Recommended resolution: when a task actually needs `Send`/`Sync` `EngineAdapter` instances, either wrap the `Rc`-based state behind a lane-actor pattern (matching `.agent-state/design/M2-T08-event-loop-design.md`'s `V8LaneHandle`/`ExecutionLane` design, which already solves exactly this problem for `runtime-v8`) or reassess whether `machina-events` should offer a `Send`-friendly alternative storage mode.
+- Human decision required, if any: None yet.
+- Review date: Before any task puts `EngineAdapter` behind `Arc`.
+
 ## BLK-004 — M2-T02 network loader: security-review items deferred to M3-T06
 
 - Related task(s): M2-T02 (merged), M3-T06
