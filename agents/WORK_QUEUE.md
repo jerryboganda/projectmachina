@@ -45,10 +45,14 @@ scheduling policy above):
 | Task | Owner | Branch/worktree | State | Heartbeat |
 | --- | --- | --- | --- | --- |
 | M2-T05 | wave2-builder-a | agent/M2-T05-* | claimed | — |
-| M2-T06 | wave2-builder-b | agent/M2-T06-* | claimed | — |
+| M2-T03 | wave2-builder-b | agent/M2-T03-* | claimed | — |
 
-M2-T02/M2-T03 queue behind these two per the 2-concurrent-implementer cap;
-next to start the moment either T05 or T06 lands.
+M2-T06 held back: no V8 build toolchain (`gn`/`gclient`/depot_tools) is
+available in this environment; a from-source V8 build is a multi-GB,
+hours-long fetch this session cannot responsibly attempt unattended. A
+research pass is scoped to determine real provisioning requirements before
+any builder claims M2-T06. M2-T02 queues behind T05/T03 per the
+2-concurrent-implementer cap.
 
 ## In review
 
