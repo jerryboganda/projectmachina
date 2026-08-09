@@ -1,0 +1,73 @@
+{
+  "schema_version": "0.1.0",
+  "type": "task-evidence",
+  "task_id": "M1-T08",
+  "status": "released",
+  "agent_id": "copilot-m1-t08",
+  "identity": {
+    "task": "M1-T08",
+    "agent": "copilot-m1-t08",
+    "branch": "agent/M1-T08-events",
+    "worktree": "D:\\Projects\\machina-worktrees\\M1-T08-events",
+    "base_commit": "f39f5802f4913d207903686dca066eb9e539e1f4",
+    "current_commit": "f39f5802f4913d207903686dca066eb9e539e1f4"
+  },
+  "generated_at": "2026-08-09T05:47:28.351Z",
+  "objective": "",
+  "acceptance_criteria": [],
+  "claim": {
+    "schema_version": 1,
+    "claim_id": "afb5aaa7-0736-4e97-9b20-5d51f2433ab5",
+    "task_id": "M1-T08",
+    "agent_id": "copilot-m1-t08",
+    "branch": "agent/M1-T08-events",
+    "worktree": "D:\\Projects\\machina-worktrees\\M1-T08-events",
+    "write_scope": [
+      ".agent-state/evidence/M1-T08.md",
+      "crates/control-plane/**",
+      "crates/protocol-events/**",
+      "migrations/002_event_outbox.*",
+      "services/api-gateway/README.md"
+    ],
+    "dependencies": [
+      "M1-T01",
+      "M1-T07"
+    ],
+    "contract_dependencies": [
+      "event-outbox",
+      "ordered-event-stream"
+    ],
+    "base_commit": "f39f5802f4913d207903686dca066eb9e539e1f4",
+    "current_commit": "f39f5802f4913d207903686dca066eb9e539e1f4",
+    "lease_minutes": 90,
+    "grace_minutes": 20,
+    "claimed_at": "2026-08-09T05:35:31.465Z",
+    "heartbeat_at": "2026-08-09T05:35:31.465Z",
+    "lease_expires_at": "2026-08-09T07:05:31.465Z",
+    "grace_expires_at": "2026-08-09T07:25:31.465Z",
+    "status": "released",
+    "lock_fence": "23906c8a-6dc8-4fc3-af36-48a1a89b304f",
+    "release_reason": "merged-to-main",
+    "released_at": "2026-08-09T05:47:28.351Z"
+  },
+  "commands": [
+    {
+      "type": "release",
+      "status": "released",
+      "at": "2026-08-09T05:47:28.351Z",
+      "reason": "merged-to-main"
+    }
+  ],
+  "artifacts": [],
+  "changed_files": [
+    ".agent-state/evidence/M1-T08.md",
+    "crates/control-plane/**",
+    "crates/protocol-events/**",
+    "migrations/002_event_outbox.*",
+    "services/api-gateway/README.md"
+  ],
+  "decisions": [],
+  "failures": [],
+  "risks": [],
+  "next_action": ""
+}

@@ -17,7 +17,7 @@ purpose: "Provide the durable, human-readable snapshot that each autonomous cycl
 - Active milestone: `M1 — Compatibility-first platform`
 - Current release target: `0.1.0-alpha`
 - Last reconciled: `2026-08-09`
-- Default branch: `main` (M0 exit waiver recorded; M1-T01 through M1-T07 merged)
+- Default branch: `main` (M0 exit waiver recorded; M1-T01 through M1-T08 merged)
 
 ## Active tasks
 
@@ -39,13 +39,15 @@ None.
   M1-T03 idempotent session lifecycle, and M1-T04 fair scheduler/worker leases
   plus M1-T05 explicit worker pool/isolation contracts and M1-T06 Chromium adapter
   boundary, and M1-T07 initial HTTP/gRPC/event contracts are merged.
+  M1-T08 now adds durable per-session event sequencing, bounded subscriber
+  delivery, explicit resync recovery, and idempotent outbox projection.
 - M0 Docker/Compose runtime evidence is explicitly waived by owner option B;
   limitation remains recorded in `agents/WAIVERS.md`.
 - Runtime foundation continuation adds capability snapshots, the single command bus, explicit fallback metadata, and bounded session/page resource accounting.
 
 ## Next ready tasks
 
-1. `M1-T08` — Implement WebDriver BiDi network, storage and input modules.
+1. `M1-T09` — Implement capability registry and router version zero.
 
 ## Human gates pending
 
@@ -58,6 +60,6 @@ None.
 
 ## Reconciliation notes
 
-M0-T01 through M0-T12 and M1-T01/M1-T07 have merged hosted-gate/source evidence. Owner
+M0-T01 through M0-T12 and M1-T01/M1-T08 have merged hosted-gate/source evidence. Owner
 option B waives Docker runtime evidence for M1; no production/container readiness
 claim follows.
