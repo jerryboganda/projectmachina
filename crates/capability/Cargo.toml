@@ -8,3 +8,4 @@ description = "Versioned engine capability snapshots and eligibility checks."
 
 [dependencies]
 machina-command-model = { path = "../command-model" }
+serde = { version = "1.0.228", features = ["derive"] }
