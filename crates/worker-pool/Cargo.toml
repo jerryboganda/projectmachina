@@ -1,0 +1,7 @@
+[package]
+name = "machina-worker-pool"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Explicit Chromium/native worker pool lifecycle and isolation contracts."
