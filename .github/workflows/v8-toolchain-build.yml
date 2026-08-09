@@ -113,6 +113,7 @@ jobs:
           echo "os_desc=$($os.Caption) $($os.Version)" >> $env:GITHUB_OUTPUT
 
       - name: Verify MSVC Build Tools are present
+        id: msvc
         run: |
           $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
           if (-not (Test-Path $vswhere)) {
@@ -125,44 +126,104 @@ jobs:
             exit 1
           }
           Write-Host "Found Visual Studio / Build Tools at: $vsInfo"
+          echo "installation_path=$vsInfo" >> $env:GITHUB_OUTPUT
 
       - name: Check and reclaim disk space
         id: disk
         run: |
-          $thresholdGb = 50
-          $drive = Get-PSDrive -Name C
-          $freeGb = [math]::Round($drive.Free / 1GB, 1)
-          Write-Host "Free space on C: before cleanup: ${freeGb}GB (need >= ${thresholdGb}GB for a V8 checkout + release build)"
-          if ($freeGb -lt $thresholdGb) {
-            Write-Host "Reclaiming space by removing preinstalled toolchains not needed for a V8/GN/ninja build..."
+          # --- Which drive should host the checkout + build output? ---
+          # GitHub-hosted windows-latest runners ship a second data disk
+          # mounted as D: with substantially more free space than C: (C: is
+          # crowded with preinstalled SDKs/tools; RUNNER_TEMP already
+          # defaults to D:\a\_temp on these runners for the same reason).
+          # Round 1 of this workflow hardcoded D:\ for the actual checkout
+          # (D:\depot_tools, D:\v8-checkout) but this gate checked C:'s free
+          # space instead of D:'s — an inconsistency that failed a run on a
+          # runner that actually had enough room where it mattered. Detect
+          # D: at runtime instead of assuming either way, and use whichever
+          # drive is actually going to hold the checkout.
+          $buildDriveLetter = if (Test-Path "D:\") { "D" } else { "C" }
+          $buildRoot = "${buildDriveLetter}:\v8-build"
+          Write-Host "Build drive resolved to: ${buildDriveLetter}: (checkout + build output will live under $buildRoot)"
+
+          Write-Host "--- Drive inventory (diagnostic) ---"
+          Get-PSDrive -PSProvider FileSystem | ForEach-Object {
+            $usedGb = [math]::Round($_.Used / 1GB, 1)
+            $freeGbDiag = [math]::Round($_.Free / 1GB, 1)
+            Write-Host ("  {0}: {1}GB free, {2}GB used" -f $_.Name, $freeGbDiag, $usedGb)
+          }
+
+          # --- Threshold math (replaces the previous flat 50GB guess) ---
+          # Per the M2-T06 toolchain feasibility analysis: V8 source + DEPS
+          # is roughly a few GB up to ~6-8GB on disk; a release build's
+          # output directory is roughly several GB up to ~15GB. 8 + 15 =
+          # 23GB of real need; add ~30% margin (~7GB) for depot_tools' own
+          # CIPD-fetched packages, intermediate ninja state, and general
+          # slack => 30GB on the drive that hosts the checkout/build.
+          $buildThresholdGb = 30
+          # The OS drive (C:) needs its own, much smaller, headroom
+          # regardless of where the checkout lives: CIPD/vpython3 caches,
+          # pip, TEMP, and git's own state land there even when the heavy
+          # checkout is on D:.
+          $osThresholdGb = 10
+
+          function Get-FreeGb($letter) {
+            $d = Get-PSDrive -Name $letter -ErrorAction SilentlyContinue
+            if (-not $d) { return $null }
+            return [math]::Round($d.Free / 1GB, 1)
+          }
+
+          $buildFreeGb = Get-FreeGb $buildDriveLetter
+          $cFreeGb = Get-FreeGb "C"
+          Write-Host "Free space on build drive ${buildDriveLetter}: before cleanup: ${buildFreeGb}GB (need >= ${buildThresholdGb}GB; see threshold math above)"
+          Write-Host "Free space on OS drive C: before cleanup: ${cFreeGb}GB (need >= ${osThresholdGb}GB headroom for toolchain caches/TEMP, independent of the build drive)"
+
+          $needsCleanup = ($buildFreeGb -lt $buildThresholdGb) -or ($cFreeGb -lt $osThresholdGb)
+          if ($needsCleanup) {
+            Write-Host "Reclaiming space on C: by removing preinstalled toolchains not needed for a V8/GN/ninja build..."
+            Write-Host "(Not touching Visual Studio, the Windows SDK, or Git — this build needs those.)"
             $candidates = @(
+              # Whole hostedtoolcache — none of the cached Node/Python/Go/
+              # Ruby/PyPy versions are used by this build; depot_tools
+              # brings its own Python 3 via CIPD (see the "Bootstrap
+              # depot_tools" step below).
+              $env:AGENT_TOOLSDIRECTORY,
+              "C:\hostedtoolcache\windows",
               "C:\Program Files (x86)\Android",
               "C:\Android",
-              "C:\hostedtoolcache\windows\Android",
-              "C:\hostedtoolcache\windows\Ruby",
-              "C:\hostedtoolcache\windows\Go",
-              "C:\hostedtoolcache\windows\PyPy",
               "C:\Program Files\dotnet",
               "C:\Program Files\Microsoft SQL Server",
               "C:\Program Files\Java",
               "C:\Program Files\Unity",
-              "C:\Program Files (x86)\Microsoft SDKs\Azure"
+              "C:\Program Files (x86)\Microsoft SDKs\Azure",
+              "C:\Program Files\Google\Chrome",
+              "C:\Program Files\Mozilla Firefox",
+              "C:\Program Files\Amazon",
+              "C:\Program Files\Amazon\Corretto",
+              "C:\Program Files\MongoDB",
+              "C:\Program Files\Microsoft SDKs\Service Fabric",
+              "C:\Program Files\Microsoft Service Fabric",
+              "C:\Program Files\Azure Cosmos DB Emulator"
             )
             foreach ($path in $candidates) {
-              if (Test-Path $path) {
+              if ($path -and (Test-Path $path)) {
                 Write-Host "Removing $path"
                 Remove-Item -Path $path -Recurse -Force -ErrorAction SilentlyContinue
               }
             }
-            $drive = Get-PSDrive -Name C
-            $freeGb = [math]::Round($drive.Free / 1GB, 1)
-            Write-Host "Free space on C: after cleanup: ${freeGb}GB"
+            $buildFreeGb = Get-FreeGb $buildDriveLetter
+            $cFreeGb = Get-FreeGb "C"
+            Write-Host "Free space on build drive ${buildDriveLetter}: after cleanup: ${buildFreeGb}GB"
+            Write-Host "Free space on OS drive C: after cleanup: ${cFreeGb}GB"
           }
-          if ($freeGb -lt $thresholdGb) {
-            Write-Error "Still only ${freeGb}GB free after cleanup (need >= ${thresholdGb}GB). Failing fast rather than risking a partial multi-hour job that runs out of disk mid-build."
+          if (($buildFreeGb -lt $buildThresholdGb) -or ($cFreeGb -lt $osThresholdGb)) {
+            Write-Error "Still short on disk after cleanup: build drive ${buildDriveLetter}: has ${buildFreeGb}GB (need >= ${buildThresholdGb}GB), OS drive C: has ${cFreeGb}GB (need >= ${osThresholdGb}GB). Failing fast rather than risking a partial multi-hour job that runs out of disk mid-build."
             exit 1
           }
-          echo "free_gb_before_build=$freeGb" >> $env:GITHUB_OUTPUT
+          echo "free_gb_before_build=$buildFreeGb" >> $env:GITHUB_OUTPUT
+          echo "build_drive=${buildDriveLetter}:" >> $env:GITHUB_OUTPUT
+          echo "build_root=$buildRoot" >> $env:GITHUB_OUTPUT
+          echo "V8_BUILD_ROOT=$buildRoot" >> $env:GITHUB_ENV
         timeout-minutes: 15
 
       - name: Configure git for a Chromium/V8-scale checkout
@@ -180,8 +241,40 @@ jobs:
 
       - name: Bootstrap depot_tools
         run: |
-          git clone --depth 1 https://chromium.googlesource.com/chromium/tools/depot_tools.git D:\depot_tools
-          echo "D:\depot_tools" >> $env:GITHUB_PATH
+          $depotTools = "$env:V8_BUILD_ROOT\depot_tools"
+          git clone --depth 1 https://chromium.googlesource.com/chromium/tools/depot_tools.git $depotTools
+          echo "$depotTools" >> $env:GITHUB_PATH
+
+          # --- One-time Python bootstrap, done explicitly regardless of DEPOT_TOOLS_UPDATE=0 ---
+          # The job sets DEPOT_TOOLS_UPDATE=0 for every later depot_tools
+          # invocation, to pin this depot_tools checkout instead of letting
+          # each command silently self-update. `fetch`/`gclient` don't need
+          # this bootstrap (they run via `vpython3`, which is CIPD-based and
+          # self-contained). But `gn` is invoked via depot_tools'
+          # `python-bin\python3` wrapper (see gn.bat), which requires
+          # `python3_bin_reldir.txt` to exist — a file normally created as a
+          # side effect of depot_tools' own auto-update/bootstrap machinery,
+          # exactly what DEPOT_TOOLS_UPDATE=0 suppresses. Verified by reading
+          # depot_tools' own scripts (gn.bat -> bootstrap\python3.bat reads
+          # python3_bin_reldir.txt; update_depot_tools.bat only regenerates
+          # it when DEPOT_TOOLS_UPDATE != 0, via bootstrap\win_tools.bat).
+          # bootstrap\win_tools.bat is depot_tools' standalone "make the
+          # Python bootstrap files exist" entrypoint: it installs the CIPD
+          # Python package and runs bootstrap.py, but — unlike
+          # update_depot_tools.bat — never does `git fetch`/`checkout
+          # origin/main` on depot_tools itself, so calling it here does not
+          # violate the "pinned depot_tools checkout" intent of
+          # DEPOT_TOOLS_UPDATE=0. Run it once, up front, so later steps
+          # (which keep DEPOT_TOOLS_UPDATE=0) find python3_bin_reldir.txt
+          # already in place.
+          Write-Host "Running depot_tools' one-time Python bootstrap (bootstrap\win_tools.bat) so python3_bin_reldir.txt exists before gn is invoked..."
+          & "$depotTools\bootstrap\win_tools.bat"
+          if ($LASTEXITCODE -ne 0) { Write-Error "depot_tools Python bootstrap (win_tools.bat) failed with exit code $LASTEXITCODE"; exit 1 }
+          if (-not (Test-Path "$depotTools\python3_bin_reldir.txt")) {
+            Write-Error "win_tools.bat completed but python3_bin_reldir.txt still does not exist at $depotTools; gn would fail later with the same error this fix targets."
+            exit 1
+          }
+          Write-Host "Confirmed python3_bin_reldir.txt exists: $(Get-Content "$depotTools\python3_bin_reldir.txt")"
         timeout-minutes: 10
 
       - name: Fetch V8 and sync to the pinned revision
@@ -189,9 +282,11 @@ jobs:
         env:
           V8_VERSION: ${{ steps.version.outputs.v8_version }}
         run: |
-          $env:Path = "D:\depot_tools;" + $env:Path
-          New-Item -ItemType Directory -Path D:\v8-checkout | Out-Null
-          Set-Location D:\v8-checkout
+          $depotTools = "$env:V8_BUILD_ROOT\depot_tools"
+          $v8Checkout = "$env:V8_BUILD_ROOT\v8-checkout"
+          $env:Path = "$depotTools;" + $env:Path
+          New-Item -ItemType Directory -Path $v8Checkout | Out-Null
+          Set-Location $v8Checkout
 
           Write-Host "Resolving V8 tag $env:V8_VERSION to an immutable commit SHA..."
           $lsRemote = git ls-remote https://chromium.googlesource.com/v8/v8.git "refs/tags/$env:V8_VERSION" "refs/tags/$env:V8_VERSION^{}"
@@ -215,14 +310,14 @@ jobs:
           fetch v8
           if ($LASTEXITCODE -ne 0) { Write-Error "fetch v8 failed with exit code $LASTEXITCODE"; exit 1 }
 
-          Set-Location D:\v8-checkout\v8
+          Set-Location "$v8Checkout\v8"
           Write-Host "Checking out pinned commit $commit..."
           git fetch origin $commit
           git checkout $commit
           if ($LASTEXITCODE -ne 0) { Write-Error "git checkout of pinned commit failed"; exit 1 }
 
           Write-Host "Re-running gclient sync for the pinned revision's DEPS..."
-          Set-Location D:\v8-checkout
+          Set-Location $v8Checkout
           gclient sync -D
           if ($LASTEXITCODE -ne 0) { Write-Error "gclient sync failed with exit code $LASTEXITCODE"; exit 1 }
         timeout-minutes: 110
@@ -234,19 +329,127 @@ jobs:
             v8_monolithic=true v8_use_external_startup_data=false
             is_component_build=false v8_enable_i18n_support=false
             symbol_level=0
+          VS_INSTALLATION_PATH: ${{ steps.msvc.outputs.installation_path }}
         run: |
-          $env:Path = "D:\depot_tools;" + $env:Path
-          Set-Location D:\v8-checkout\v8
+          $env:Path = "$env:V8_BUILD_ROOT\depot_tools;" + $env:Path
+          Set-Location "$env:V8_BUILD_ROOT\v8-checkout\v8"
           Write-Host "GN args: $env:GN_ARGS"
-          gn gen out.gn/x64.release --args="$env:GN_ARGS"
+
+          # --- Point the vendored build/vs_toolchain.py at the real VS install ---
+          # gn gen failed here with:
+          #   Exception: No supported Visual Studio can be found. Supported
+          #   versions are: 17.0 (2022), 16.0 (2019), 15.0 (2017).
+          # from V8's *checked-out* (DEPS-pinned, era-of-13.1.201.12)
+          # build/vs_toolchain.py, whose GetVisualStudioVersion() only knows
+          # hardcoded install paths for VS 2022/2019/2017 -- it has no entry
+          # for whatever newer VS version this runner image now ships
+          # (confirmed via the "Verify MSVC Build Tools are present" step's
+          # vswhere output: the real install is not under any of the 2022/
+          # 2019/2017 paths that old script checks). This is a version-skew
+          # mismatch between the pinned V8 checkout's vendored build tooling
+          # and the current windows-latest runner image, not a bug in this
+          # workflow's own script. vs_toolchain.py documents exactly this
+          # escape hatch: `_GenerateCandidatePaths` checks a `vs<year>_install`
+          # environment variable before falling back to its hardcoded paths,
+          # explicitly "for external developers" whose install doesn't match
+          # the hardcoded expectation. Point every version key vs_toolchain.py
+          # might check at the real vswhere-detected install path so
+          # detection succeeds regardless of which vendored revision's exact
+          # version list applies.
+          $env:vs2022_install = $env:VS_INSTALLATION_PATH
+          $env:vs2019_install = $env:VS_INSTALLATION_PATH
+          $env:vs2017_install = $env:VS_INSTALLATION_PATH
+          $env:vs2026_install = $env:VS_INSTALLATION_PATH
+          Write-Host "Overriding vs<year>_install env vars to the real VS install path: $env:VS_INSTALLATION_PATH"
+          # Persist for the Ninja build step too -- the actual compile
+          # re-invokes this same toolchain-detection code path per target,
+          # not just once at gn gen time.
+          "vs2022_install=$env:VS_INSTALLATION_PATH" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "vs2019_install=$env:VS_INSTALLATION_PATH" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "vs2017_install=$env:VS_INSTALLATION_PATH" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "vs2026_install=$env:VS_INSTALLATION_PATH" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+          # --- Alias the pinned SDK_VERSION string to whatever Windows SDK is actually installed ---
+          # After the VS-version-skew fix above, gn gen progressed further and
+          # failed with a *second*, same-class version-skew issue:
+          #   FileNotFoundError: [Errno 2] No such file or directory:
+          #   'C:\Program Files (x86)\Windows Kits\10\Include\10.0.22621.0\um\dcomp.h'
+          # from vs_toolchain.py's SDKIncludesIDCompositionDevice4(), which
+          # looks for a header under a *hardcoded* SDK_VERSION constant
+          # ("10.0.22621.0" in this pinned V8 checkout's vendored copy) rather
+          # than whatever SDK version is actually installed. This runner's
+          # actual Windows SDK is evidently a different (newer) version, so
+          # that exact-named subfolder does not exist, and the unguarded
+          # open() call crashes instead of degrading gracefully. Same root
+          # cause as the VS-version issue -- the DEPS-pinned build tooling's
+          # hardcoded version string predates what this runner image now
+          # ships -- so apply the same style of fix: alias the expected
+          # version-named directories to whatever the newest actually
+          # installed SDK version's directories are, via NTFS junctions, so
+          # any hardcoded-version-string lookup elsewhere in the vendored
+          # build scripts resolves to real, present headers/libs instead of
+          # failing outright. This does not modify V8's checked-out source;
+          # it only adds sibling directories under the SDK install root.
+          $sdkRoot = "${env:ProgramFiles(x86)}\Windows Kits\10"
+          $pinnedSdkVersion = "10.0.22621.0"
+          Write-Host "--- Installed Windows SDK versions under $sdkRoot\Include (diagnostic) ---"
+          $installed = Get-ChildItem (Join-Path $sdkRoot "Include") -Directory -ErrorAction SilentlyContinue |
+            Where-Object { $_.Name -match '^\d+\.\d+\.\d+\.\d+$' }
+          $installed | ForEach-Object { Write-Host "  $($_.Name)" }
+          if (-not (Test-Path (Join-Path $sdkRoot "Include\$pinnedSdkVersion"))) {
+            $newest = $installed | Sort-Object { [version]$_.Name } -Descending | Select-Object -First 1
+            if ($newest) {
+              Write-Host "Pinned V8's vendored build tooling expects Windows SDK $pinnedSdkVersion; only $($newest.Name) is actually installed. Creating junctions so version-specific lookups resolve to it."
+              foreach ($sub in @('Include', 'Lib', 'bin')) {
+                $target = Join-Path $sdkRoot "$sub\$($newest.Name)"
+                $link = Join-Path $sdkRoot "$sub\$pinnedSdkVersion"
+                if ((Test-Path $target) -and -not (Test-Path $link)) {
+                  Write-Host "  Junction: $link -> $target"
+                  cmd /c mklink /J "$link" "$target" | Out-Null
+                }
+              }
+            } else {
+              Write-Warning "No installed Windows SDK version found under $sdkRoot\Include; cannot alias $pinnedSdkVersion. gn gen may fail again."
+            }
+          } else {
+            Write-Host "$pinnedSdkVersion is directly installed; no alias needed."
+          }
+
+          # --- Write args.gn directly instead of passing --args= on the command line ---
+          # PowerShell's native-command argument marshaling does not reliably
+          # preserve double quotes embedded inside an already-interpolated
+          # string when invoking an external executable: passing
+          # `--args="$env:GN_ARGS"` here previously arrived at gn as
+          # `target_cpu=x64` (the quotes around x64 silently stripped),
+          # which GN rejected with "ERROR ... :1:27: Undefined identifier"
+          # because an unquoted x64 is parsed as an identifier reference,
+          # not a string literal. This is specific to PowerShell's argv
+          # construction for external processes; the Linux leg's equivalent
+          # bash `--args="$GN_ARGS"` does not have this problem (confirmed:
+          # that leg's GN gen step succeeds), so only the Windows leg needs
+          # this workaround. Sidestep PowerShell's native-argument quoting
+          # entirely by writing args.gn -- GN's own documented mechanism for
+          # supplying build args, read automatically by `gn gen` when no
+          # --args is given -- one assignment per line, matching the
+          # canonical args.gn format.
+          New-Item -ItemType Directory -Path out.gn/x64.release -Force | Out-Null
+          $argLines = $env:GN_ARGS -split '\s+' | Where-Object { $_ }
+          # ASCII, not utf8: all args are plain ASCII and this avoids
+          # PowerShell's utf8 Out-File adding a BOM that could confuse GN's
+          # parser.
+          $argLines | Out-File -FilePath out.gn/x64.release/args.gn -Encoding ascii
+          Write-Host "--- out.gn/x64.release/args.gn ---"
+          Get-Content out.gn/x64.release/args.gn | ForEach-Object { Write-Host "  $_" }
+
+          gn gen out.gn/x64.release
           if ($LASTEXITCODE -ne 0) { Write-Error "gn gen failed"; exit 1 }
           echo "$env:GN_ARGS" | Out-File -FilePath gn_args_used.txt -Encoding utf8
         timeout-minutes: 15
 
       - name: Ninja build v8_monolith
         run: |
-          $env:Path = "D:\depot_tools;" + $env:Path
-          Set-Location D:\v8-checkout\v8
+          $env:Path = "$env:V8_BUILD_ROOT\depot_tools;" + $env:Path
+          Set-Location "$env:V8_BUILD_ROOT\v8-checkout\v8"
           ninja -C out.gn/x64.release v8_monolith
           if ($LASTEXITCODE -ne 0) { Write-Error "ninja build failed with exit code $LASTEXITCODE"; exit 1 }
         timeout-minutes: 180
@@ -261,7 +464,7 @@ jobs:
           MEM_GB: ${{ steps.runner_facts.outputs.mem_gb }}
           OS_DESC: ${{ steps.runner_facts.outputs.os_desc }}
         run: |
-          Set-Location D:\v8-checkout\v8
+          Set-Location "$env:V8_BUILD_ROOT\v8-checkout\v8"
           $lib = Get-ChildItem -Path out.gn\x64.release -Recurse -Filter "v8_monolith.lib" | Select-Object -First 1
           if (-not $lib) {
             Write-Error "v8_monolith.lib not found under out.gn/x64.release; build did not produce the expected artifact."
@@ -363,10 +566,25 @@ jobs:
         timeout-minutes: 15
         run: |
           set -euo pipefail
-          threshold_gb=50
+          # --- Threshold math (replaces the previous flat 50GB guess) ---
+          # Per the M2-T06 toolchain feasibility analysis: V8 source + DEPS
+          # is roughly a few GB up to ~6-8GB on disk; a release build's
+          # output directory is roughly several GB up to ~15GB for a
+          # non-sanitized build. ASan+UBSan instrumentation (is_asan=true
+          # is_ubsan=true, symbol_level=1 here) measurably inflates object
+          # file and binary sizes versus a plain release build, so this leg
+          # gets extra headroom on top of the non-sanitized 30GB figure:
+          # 8 (source) + ~25 (instrumented output, allowing ~1.5-2x the
+          # plain-release estimate) = ~33GB of real need; round up to 40GB
+          # for margin. This is still well under the 50GB this leg already
+          # cleared on ubuntu-latest, so it stays a real, verified-safe
+          # tightening rather than a blind guess.
+          threshold_gb=40
+          echo "--- Filesystem inventory (diagnostic) ---"
+          df -h / /mnt 2>/dev/null || df -h /
           avail_kb=$(df --output=avail / | tail -1)
           avail_gb=$((avail_kb / 1024 / 1024))
-          echo "Free space on / before cleanup: ${avail_gb}GB (need >= ${threshold_gb}GB for a V8 checkout + ASan/UBSan build)"
+          echo "Free space on / before cleanup: ${avail_gb}GB (need >= ${threshold_gb}GB for a V8 checkout + ASan/UBSan build; see threshold math above)"
           if [ "$avail_gb" -lt "$threshold_gb" ]; then
             echo "Reclaiming space by removing preinstalled toolchains not needed for a V8/GN/ninja build..."
             sudo rm -rf /usr/share/dotnet || true
@@ -376,6 +594,9 @@ jobs:
             sudo rm -rf /usr/local/share/boost || true
             sudo rm -rf /usr/local/.ghcup || true
             sudo rm -rf "$AGENT_TOOLSDIRECTORY" || true
+            sudo rm -rf /usr/local/lib/node_modules || true
+            sudo rm -rf /usr/share/swift || true
+            sudo rm -rf /usr/lib/google-cloud-sdk || true
             sudo docker image prune --all --force || true
             avail_kb=$(df --output=avail / | tail -1)
             avail_gb=$((avail_kb / 1024 / 1024))
@@ -393,6 +614,41 @@ jobs:
           set -euo pipefail
           git clone --depth 1 https://chromium.googlesource.com/chromium/tools/depot_tools.git "$HOME/depot_tools"
           echo "$HOME/depot_tools" >> "$GITHUB_PATH"
+
+          # --- One-time Python bootstrap, done explicitly regardless of DEPOT_TOOLS_UPDATE=0 ---
+          # The job sets DEPOT_TOOLS_UPDATE=0 for every later depot_tools
+          # invocation, to pin this depot_tools checkout instead of letting
+          # each command silently self-update. `fetch`/`gclient sync`
+          # succeed fine under that setting because they run via
+          # `vpython3`, which is CIPD-based and self-contained. `gn`,
+          # however, is invoked via depot_tools' `python-bin/python3`
+          # wrapper, which refuses to run unless `python3_bin_reldir.txt`
+          # exists — a file normally created as a side effect of
+          # depot_tools' own auto-update/bootstrap machinery, exactly what
+          # DEPOT_TOOLS_UPDATE=0 suppresses. Verified by reading
+          # depot_tools' own scripts: `python-bin/python3` errors with
+          # "need to initialize depot_tools by running gclient,
+          # update_depot_tools or ensure_bootstrap" when the file is
+          # missing; `update_depot_tools` only creates it (via
+          # `bootstrap_python3` -> `bootstrap/bootstrap.py`) when
+          # DEPOT_TOOLS_UPDATE != 0. `ensure_bootstrap` is depot_tools'
+          # documented standalone entrypoint for exactly this: per its own
+          # --help text, "[u]nlike update_depot_tools, this script works
+          # with the current checkout, and will not update/sync the
+          # depot_tools repository" — it runs the same
+          # bootstrap_python3/bootstrap.py step without ever doing `git
+          # fetch`/`checkout origin/main` on depot_tools itself, so it does
+          # not violate the "pinned depot_tools checkout" intent of
+          # DEPOT_TOOLS_UPDATE=0. Run it once, up front, so later steps
+          # (which keep DEPOT_TOOLS_UPDATE=0) find python3_bin_reldir.txt
+          # already in place.
+          echo "Running depot_tools' one-time Python bootstrap (./ensure_bootstrap) so python3_bin_reldir.txt exists before gn is invoked..."
+          "$HOME/depot_tools/ensure_bootstrap"
+          if [ ! -f "$HOME/depot_tools/python3_bin_reldir.txt" ]; then
+            echo "::error::ensure_bootstrap completed but python3_bin_reldir.txt still does not exist at $HOME/depot_tools; gn would fail later with the same error this fix targets."
+            exit 1
+          fi
+          echo "Confirmed python3_bin_reldir.txt exists: $(cat "$HOME/depot_tools/python3_bin_reldir.txt")"
 
       - name: Fetch V8 and sync to the pinned revision
         id: fetch
