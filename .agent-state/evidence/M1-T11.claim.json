@@ -1,0 +1,76 @@
+{
+  "schema_version": "0.1.0",
+  "type": "task-evidence",
+  "task_id": "M1-T11",
+  "status": "released",
+  "agent_id": "copilot-m1-t11",
+  "identity": {
+    "task": "M1-T11",
+    "agent": "copilot-m1-t11",
+    "branch": "agent/M1-T11-sdks",
+    "worktree": "D:\\Projects\\machina-worktrees\\M1-T11-sdks",
+    "base_commit": "edc20c54181dca85638bcff6bc781e59c8dd162e",
+    "current_commit": "edc20c54181dca85638bcff6bc781e59c8dd162e"
+  },
+  "generated_at": "2026-08-09T06:50:00.102Z",
+  "objective": "",
+  "acceptance_criteria": [],
+  "claim": {
+    "schema_version": 1,
+    "claim_id": "cd419e12-fec3-4ad3-ad0a-0c84aa745cb2",
+    "task_id": "M1-T11",
+    "agent_id": "copilot-m1-t11",
+    "branch": "agent/M1-T11-sdks",
+    "worktree": "D:\\Projects\\machina-worktrees\\M1-T11-sdks",
+    "write_scope": [
+      ".agent-state/evidence/M1-T11.md",
+      "packages/contracts-ts/**",
+      "packages/sdk-python/**",
+      "packages/sdk-typescript/**",
+      "pnpm-lock.yaml",
+      "tests/sdk/**"
+    ],
+    "dependencies": [
+      "M1-T07",
+      "M1-T08"
+    ],
+    "contract_dependencies": [
+      "command-model-v0.1",
+      "http-command-endpoint",
+      "event-resume"
+    ],
+    "base_commit": "edc20c54181dca85638bcff6bc781e59c8dd162e",
+    "current_commit": "edc20c54181dca85638bcff6bc781e59c8dd162e",
+    "lease_minutes": 90,
+    "grace_minutes": 20,
+    "claimed_at": "2026-08-09T06:45:03.456Z",
+    "heartbeat_at": "2026-08-09T06:45:03.456Z",
+    "lease_expires_at": "2026-08-09T08:15:03.456Z",
+    "grace_expires_at": "2026-08-09T08:35:03.456Z",
+    "status": "released",
+    "lock_fence": "bcf56362-0c6d-4939-b100-b41988866903",
+    "release_reason": "merged-to-main",
+    "released_at": "2026-08-09T06:50:00.102Z"
+  },
+  "commands": [
+    {
+      "type": "release",
+      "status": "released",
+      "at": "2026-08-09T06:50:00.102Z",
+      "reason": "merged-to-main"
+    }
+  ],
+  "artifacts": [],
+  "changed_files": [
+    ".agent-state/evidence/M1-T11.md",
+    "packages/contracts-ts/**",
+    "packages/sdk-python/**",
+    "packages/sdk-typescript/**",
+    "pnpm-lock.yaml",
+    "tests/sdk/**"
+  ],
+  "decisions": [],
+  "failures": [],
+  "risks": [],
+  "next_action": ""
+}
