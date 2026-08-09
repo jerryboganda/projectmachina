@@ -73,3 +73,12 @@ M0-T01 through M0-T12 and M1-T01/M1-T12 have merged hosted-gate/source evidence.
 The injected M1 compatibility smoke passes, but `BLK-003` blocks real
 Chromium/listener/SDK integration and therefore M1 exit. The owner Docker waiver
 does not authorize a production/container readiness claim.
+
+2026-08-09: real Docker infra (Postgres/Redis/MinIO/fixture/Prometheus) was
+verified on owner-controlled VPS `185.252.233.186` (`machina.polytronx.com`),
+isolated to loopback ports with no public exposure — see
+`.agent-state/evidence/M1-T12-vps-runtime.md`. This resolves the environment
+half of `BLK-003`; the remaining and now primary gap is that
+`crates/chromium-adapter` has no real Chromium process launch/CDP code, which
+is a normal implementation task, not an environment blocker. M1 exit still
+requires that implementation plus a rerun of the real listener/worker journey.
