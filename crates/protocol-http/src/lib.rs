@@ -55,14 +55,34 @@ where
                 let status = match error.code {
                     machina_command_model::CanonicalErrorCode::Unauthenticated => 401,
                     machina_command_model::CanonicalErrorCode::PermissionDenied
-                    | machina_command_model::CanonicalErrorCode::PolicyDenied => 403,
+                    | machina_command_model::CanonicalErrorCode::PolicyDenied
+                    | machina_command_model::CanonicalErrorCode::ApprovalRequired
+                    | machina_command_model::CanonicalErrorCode::SecretUnavailable => 403,
+                    machina_command_model::CanonicalErrorCode::InvalidArgument
+                    | machina_command_model::CanonicalErrorCode::InvalidUrl
+                    | machina_command_model::CanonicalErrorCode::SelectorInvalid
+                    | machina_command_model::CanonicalErrorCode::ElementNotFound
+                    | machina_command_model::CanonicalErrorCode::ElementAmbiguous
+                    | machina_command_model::CanonicalErrorCode::ElementNotInteractable
+                    | machina_command_model::CanonicalErrorCode::ActionPostconditionFailed
+                    | machina_command_model::CanonicalErrorCode::WorkflowInvalid => 422,
+                    machina_command_model::CanonicalErrorCode::SessionNotReady
+                    | machina_command_model::CanonicalErrorCode::SessionClosed
+                    | machina_command_model::CanonicalErrorCode::SessionExpired
+                    | machina_command_model::CanonicalErrorCode::FallbackProhibited => 409,
                     machina_command_model::CanonicalErrorCode::QuotaExceeded
                     | machina_command_model::CanonicalErrorCode::RateLimited => 429,
                     machina_command_model::CanonicalErrorCode::CapacityUnavailable
-                    | machina_command_model::CanonicalErrorCode::WorkerLost => 503,
+                    | machina_command_model::CanonicalErrorCode::WorkerLost
+                    | machina_command_model::CanonicalErrorCode::MigrationFailed
+                    | machina_command_model::CanonicalErrorCode::StateTransferPartial => 503,
                     machina_command_model::CanonicalErrorCode::UnsupportedCapability
+                    | machina_command_model::CanonicalErrorCode::CapabilityDisabled
                     | machina_command_model::CanonicalErrorCode::RendererRequired => 501,
-                    _ => 400,
+                    machina_command_model::CanonicalErrorCode::CommandCancelled => 499,
+                    machina_command_model::CanonicalErrorCode::DeadlineExceeded => 504,
+                    machina_command_model::CanonicalErrorCode::NetworkPolicyBlocked => 403,
+                    machina_command_model::CanonicalErrorCode::NavigationFailed => 502,
                 };
                 HttpResponse {
                     status,
