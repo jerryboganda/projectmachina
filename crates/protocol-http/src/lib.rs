@@ -53,8 +53,13 @@ where
             },
             Err(error) => {
                 let status = match error.code {
+                    machina_command_model::CanonicalErrorCode::Unauthenticated => 401,
                     machina_command_model::CanonicalErrorCode::PermissionDenied
                     | machina_command_model::CanonicalErrorCode::PolicyDenied => 403,
+                    machina_command_model::CanonicalErrorCode::QuotaExceeded
+                    | machina_command_model::CanonicalErrorCode::RateLimited => 429,
+                    machina_command_model::CanonicalErrorCode::CapacityUnavailable
+                    | machina_command_model::CanonicalErrorCode::WorkerLost => 503,
                     machina_command_model::CanonicalErrorCode::UnsupportedCapability
                     | machina_command_model::CanonicalErrorCode::RendererRequired => 501,
                     _ => 400,
