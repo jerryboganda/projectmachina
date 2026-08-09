@@ -1,0 +1,9 @@
+DROP TABLE IF EXISTS audit_records;
+DROP TABLE IF EXISTS usage_records;
+DROP TABLE IF EXISTS workflows;
+DROP TABLE IF EXISTS artifacts;
+DROP TABLE IF EXISTS workers;
+DROP TABLE IF EXISTS sessions;
+DROP TABLE IF EXISTS policies;
+DROP TABLE IF EXISTS projects;
+DROP TABLE IF EXISTS organizations;
