@@ -19,6 +19,7 @@ members = [
     "crates/dom",
     "crates/html",
     "crates/network",
+    "crates/html-tree-builder",
 ]
 resolver = "2"
 
