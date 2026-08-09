@@ -17,17 +17,17 @@ Select critical-path and unblocking tasks first. Two tasks may be active only wh
 
 | Rank | Task | Milestone | Role | Dependencies | Suggested lane |
 | ---: | --- | --- | --- | --- | --- |
-| 1 | M1-T06 | M1 | protocol/platform | M1-T05, M0-T04 | A |
+| 1 | M1-T07 | M1 | protocol | M1-T03, M1-T06 | A |
 
 ## Active
 
 | Task | Owner | Branch/worktree | State | Heartbeat |
 | --- | --- | --- | --- | --- |
-| M1-T04 | copilot-scheduler | `D:\Projects\machina-worktrees\M1-T04-scheduler` | in-review | 2026-08-09T05:01+05:00 |
+None.
 
 ## In review
 
-M0-T01 through M0-T12 and M1-T01/M1-T05 have merged hosted-gate evidence; Docker limitation
+M0-T01 through M0-T12 and M1-T01/M1-T06 have merged hosted-gate evidence; Docker limitation
 is waived for M1 under owner option B.
 
 ## Blocked

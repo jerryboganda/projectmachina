@@ -1,0 +1,68 @@
+{
+  "schema_version": "0.1.0",
+  "type": "task-evidence",
+  "task_id": "M1-T06",
+  "status": "released",
+  "agent_id": "copilot-chromium",
+  "identity": {
+    "task": "M1-T06",
+    "agent": "copilot-chromium",
+    "branch": "agent/M1-T06-chromium",
+    "worktree": "D:\\Projects\\machina-worktrees\\M1-T06-chromium",
+    "base_commit": "unknown",
+    "current_commit": "unknown"
+  },
+  "generated_at": "2026-08-09T05:20:44.333Z",
+  "objective": "",
+  "acceptance_criteria": [],
+  "claim": {
+    "schema_version": 1,
+    "claim_id": "6ca9b7e4-6f9d-4e18-bb0d-bb00cff98d15",
+    "task_id": "M1-T06",
+    "agent_id": "copilot-chromium",
+    "branch": "agent/M1-T06-chromium",
+    "worktree": "D:\\Projects\\machina-worktrees\\M1-T06-chromium",
+    "write_scope": [
+      "crates/capability/**",
+      "crates/chromium-adapter/**",
+      "services/worker-chromium/**",
+      "tests/contract/**"
+    ],
+    "dependencies": [
+      "M0-T04",
+      "M1-T05"
+    ],
+    "contract_dependencies": [],
+    "base_commit": "unknown",
+    "current_commit": "unknown",
+    "lease_minutes": 90,
+    "grace_minutes": 20,
+    "claimed_at": "2026-08-09T05:17:01.521Z",
+    "heartbeat_at": "2026-08-09T05:17:01.521Z",
+    "lease_expires_at": "2026-08-09T06:47:01.521Z",
+    "grace_expires_at": "2026-08-09T07:07:01.521Z",
+    "status": "released",
+    "lock_fence": "b8b0bbd3-f044-4b74-9ee5-a834045d3466",
+    "release_reason": "merged-to-main",
+    "released_at": "2026-08-09T05:20:44.333Z"
+  },
+  "commands": [
+    {
+      "type": "release",
+      "status": "released",
+      "at": "2026-08-09T05:20:44.333Z",
+      "reason": "merged-to-main"
+    }
+  ],
+  "artifacts": [],
+  "changed_files": [
+    "crates/capability/**",
+    "crates/chromium-adapter/**",
+    "services/worker-chromium/**",
+    "tests/contract/**"
+  ],
+  "decisions": [],
+  "failures": [],
+  "risks": [],
+  "next_action": ""
+}
