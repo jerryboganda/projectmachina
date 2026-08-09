@@ -1,0 +1,514 @@
+name: v8-toolchain-build
+
+# ---------------------------------------------------------------------------
+# THIS WORKFLOW IS "STEP A" ONLY: V8 TOOLCHAIN PROVISIONING.
+#
+# It builds and packages the pinned V8 static-library artifacts
+# (toolchains/versions.toml [v8].version) that a *future* task will link
+# into cpp/v8-bridge/ + crates/runtime-v8/ (M2-T06 proper, per
+# .agent-state/design/M2-T06-v8-bridge-design.md). This workflow does NOT
+# write, build, or test any C++ bridge or Rust facade code. It only
+# produces the two build artifact sets M2-T06's design calls for:
+#   1. a non-sanitized release v8_monolith (functional correctness build)
+#   2. an ASan+UBSan instrumented v8_monolith (Linux+Clang only — the
+#      sanitizer job cannot run on Windows at all, per design §4)
+# plus a provenance record for each (resolved commit SHA, GN args, SHA-256,
+# build timestamp, runner facts) satisfying toolchains/V8_PROVENANCE.md.
+#
+# See .agent-state/design/M2-T06-toolchain-feasibility.md for the cost/risk
+# analysis behind this being a separate, explicitly human-triggered task:
+# a full V8 checkout + build is multi-GB and can realistically run from
+# well under an hour to several hours depending on runner class, so this
+# is NOT wired to push/pull_request/schedule. The owner decides when to
+# spend the Actions minutes.
+# ---------------------------------------------------------------------------
+
+on:
+  workflow_dispatch:
+    inputs:
+      v8_version:
+        description: >-
+          V8 version tag to build. Defaults to toolchains/versions.toml's
+          pinned [v8].version. Only override for a deliberate one-off
+          validation build; the pinned value is the source of truth for
+          what M2-T06 proper is allowed to link against.
+        required: false
+        default: "13.1.201.12"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: v8-toolchain-build-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # ---------------------------------------------------------------------
+  # Leg A1 (design doc naming): non-sanitized release v8_monolith.
+  # Runs on windows-latest deliberately, not because the eventual bridge
+  # is Windows-only (it is not — it is cross-platform), but because the
+  # feasibility doc's binding finding was that GitHub-hosted Windows
+  # runners already ship Visual Studio Build Tools + Windows SDK, which
+  # was the exact missing piece on the local dev machine. Using that
+  # existing toolchain removes an entire class of first-attempt friction
+  # for this leg specifically.
+  # ---------------------------------------------------------------------
+  build-non-sanitized:
+    name: "Leg A1: non-sanitized v8_monolith (windows-latest)"
+    runs-on: windows-latest
+    timeout-minutes: 350
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      # Tells depot_tools' Windows toolchain hooks to detect a local
+      # Visual Studio install via vswhere instead of trying to download
+      # Google-internal toolchain packages (which non-Googlers cannot
+      # access). This is the documented workaround for external
+      # contributors building V8/Chromium on Windows.
+      DEPOT_TOOLS_WIN_TOOLCHAIN: "0"
+      DEPOT_TOOLS_UPDATE: "0"
+      GIT_TERMINAL_PROMPT: "0"
+    steps:
+      - name: Checkout Project Machina (for this workflow's own context only)
+        # v4.2.2 — same pin used by .github/workflows/fast-gate.yml
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+
+      - name: Resolve requested V8 version and pinned-version drift check
+        id: version
+        run: |
+          $requested = "${{ github.event.inputs.v8_version }}"
+          if ([string]::IsNullOrWhiteSpace($requested)) { $requested = "13.1.201.12" }
+
+          $lines = Get-Content toolchains/versions.toml
+          $inV8Section = $false
+          $pinnedVersion = $null
+          foreach ($line in $lines) {
+            if ($line -match '^\[v8\]') { $inV8Section = $true; continue }
+            if ($inV8Section -and $line -match '^\[') { break }
+            if ($inV8Section -and $line -match '^version\s*=\s*"(.+)"') { $pinnedVersion = $Matches[1]; break }
+          }
+
+          Write-Host "Requested V8 version: $requested"
+          Write-Host "toolchains/versions.toml pinned V8 version: $pinnedVersion"
+          if ($requested -ne $pinnedVersion) {
+            Write-Warning "Requested version ($requested) differs from the pinned version ($pinnedVersion). This run's artifact is NOT the artifact M2-T06 proper is authorized to consume until versions.toml is updated to match."
+          }
+          echo "v8_version=$requested" >> $env:GITHUB_OUTPUT
+
+      - name: Report runner facts (for provenance)
+        id: runner_facts
+        run: |
+          $cpu = Get-CimInstance Win32_Processor
+          $mem = Get-CimInstance Win32_ComputerSystem
+          $os = Get-CimInstance Win32_OperatingSystem
+          Write-Host "CPU: $($cpu.Name) ($($cpu.NumberOfLogicalProcessors) logical cores)"
+          Write-Host "RAM: $([math]::Round($mem.TotalPhysicalMemory / 1GB, 1)) GB"
+          Write-Host "OS: $($os.Caption) $($os.Version)"
+          echo "cpu_desc=$($cpu.Name)" >> $env:GITHUB_OUTPUT
+          echo "cpu_cores=$($cpu.NumberOfLogicalProcessors)" >> $env:GITHUB_OUTPUT
+          echo "mem_gb=$([math]::Round($mem.TotalPhysicalMemory / 1GB, 1))" >> $env:GITHUB_OUTPUT
+          echo "os_desc=$($os.Caption) $($os.Version)" >> $env:GITHUB_OUTPUT
+
+      - name: Verify MSVC Build Tools are present
+        run: |
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          if (-not (Test-Path $vswhere)) {
+            Write-Error "vswhere.exe not found; cannot detect a local Visual Studio install. This runner does not match the feasibility doc's expected baseline."
+            exit 1
+          }
+          $vsInfo = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          if ([string]::IsNullOrWhiteSpace($vsInfo)) {
+            Write-Error "No Visual Studio install with the VC++ x86/x64 build tools component was found."
+            exit 1
+          }
+          Write-Host "Found Visual Studio / Build Tools at: $vsInfo"
+
+      - name: Check and reclaim disk space
+        id: disk
+        run: |
+          $thresholdGb = 50
+          $drive = Get-PSDrive -Name C
+          $freeGb = [math]::Round($drive.Free / 1GB, 1)
+          Write-Host "Free space on C: before cleanup: ${freeGb}GB (need >= ${thresholdGb}GB for a V8 checkout + release build)"
+          if ($freeGb -lt $thresholdGb) {
+            Write-Host "Reclaiming space by removing preinstalled toolchains not needed for a V8/GN/ninja build..."
+            $candidates = @(
+              "C:\Program Files (x86)\Android",
+              "C:\Android",
+              "C:\hostedtoolcache\windows\Android",
+              "C:\hostedtoolcache\windows\Ruby",
+              "C:\hostedtoolcache\windows\Go",
+              "C:\hostedtoolcache\windows\PyPy",
+              "C:\Program Files\dotnet",
+              "C:\Program Files\Microsoft SQL Server",
+              "C:\Program Files\Java",
+              "C:\Program Files\Unity",
+              "C:\Program Files (x86)\Microsoft SDKs\Azure"
+            )
+            foreach ($path in $candidates) {
+              if (Test-Path $path) {
+                Write-Host "Removing $path"
+                Remove-Item -Path $path -Recurse -Force -ErrorAction SilentlyContinue
+              }
+            }
+            $drive = Get-PSDrive -Name C
+            $freeGb = [math]::Round($drive.Free / 1GB, 1)
+            Write-Host "Free space on C: after cleanup: ${freeGb}GB"
+          }
+          if ($freeGb -lt $thresholdGb) {
+            Write-Error "Still only ${freeGb}GB free after cleanup (need >= ${thresholdGb}GB). Failing fast rather than risking a partial multi-hour job that runs out of disk mid-build."
+            exit 1
+          }
+          echo "free_gb_before_build=$freeGb" >> $env:GITHUB_OUTPUT
+        timeout-minutes: 15
+
+      - name: Configure git for a Chromium/V8-scale checkout
+        run: |
+          git config --global core.autocrlf false
+          git config --global core.filemode false
+          git config --global core.longpaths true
+          git config --global http.postBuffer 524288000
+          try {
+            Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" -Name "LongPathsEnabled" -Value 1 -ErrorAction Stop
+            Write-Host "Enabled Win32 long path support."
+          } catch {
+            Write-Warning "Could not set LongPathsEnabled (non-fatal, git core.longpaths=true is the primary mitigation): $_"
+          }
+
+      - name: Bootstrap depot_tools
+        run: |
+          git clone --depth 1 https://chromium.googlesource.com/chromium/tools/depot_tools.git D:\depot_tools
+          echo "D:\depot_tools" >> $env:GITHUB_PATH
+        timeout-minutes: 10
+
+      - name: Fetch V8 and sync to the pinned revision
+        id: fetch
+        env:
+          V8_VERSION: ${{ steps.version.outputs.v8_version }}
+        run: |
+          $env:Path = "D:\depot_tools;" + $env:Path
+          New-Item -ItemType Directory -Path D:\v8-checkout | Out-Null
+          Set-Location D:\v8-checkout
+
+          Write-Host "Resolving V8 tag $env:V8_VERSION to an immutable commit SHA..."
+          $lsRemote = git ls-remote https://chromium.googlesource.com/v8/v8.git "refs/tags/$env:V8_VERSION" "refs/tags/$env:V8_VERSION^{}"
+          if ([string]::IsNullOrWhiteSpace($lsRemote)) {
+            Write-Error "Tag $env:V8_VERSION does not exist on chromium.googlesource.com/v8/v8.git"
+            exit 1
+          }
+          # Prefer the peeled (^{}) line if present — that is the commit an
+          # annotated tag points at; otherwise the tag itself is a
+          # lightweight tag pointing directly at the commit.
+          $peeled = $lsRemote | Where-Object { $_ -match '\^\{\}$' }
+          if ($peeled) {
+            $commit = ($peeled -split "`t")[0]
+          } else {
+            $commit = ($lsRemote -split "`n")[0].Split("`t")[0]
+          }
+          Write-Host "Resolved commit: $commit"
+          echo "commit=$commit" >> $env:GITHUB_OUTPUT
+
+          Write-Host "Running depot_tools 'fetch v8' (standard documented V8 checkout flow, full history)..."
+          fetch v8
+          if ($LASTEXITCODE -ne 0) { Write-Error "fetch v8 failed with exit code $LASTEXITCODE"; exit 1 }
+
+          Set-Location D:\v8-checkout\v8
+          Write-Host "Checking out pinned commit $commit..."
+          git fetch origin $commit
+          git checkout $commit
+          if ($LASTEXITCODE -ne 0) { Write-Error "git checkout of pinned commit failed"; exit 1 }
+
+          Write-Host "Re-running gclient sync for the pinned revision's DEPS..."
+          Set-Location D:\v8-checkout
+          gclient sync -D
+          if ($LASTEXITCODE -ne 0) { Write-Error "gclient sync failed with exit code $LASTEXITCODE"; exit 1 }
+        timeout-minutes: 110
+
+      - name: GN gen (release, non-sanitized)
+        env:
+          GN_ARGS: >-
+            is_debug=false target_cpu="x64" is_clang=true
+            v8_monolithic=true v8_use_external_startup_data=false
+            is_component_build=false v8_enable_i18n_support=false
+            symbol_level=0
+        run: |
+          $env:Path = "D:\depot_tools;" + $env:Path
+          Set-Location D:\v8-checkout\v8
+          Write-Host "GN args: $env:GN_ARGS"
+          gn gen out.gn/x64.release --args="$env:GN_ARGS"
+          if ($LASTEXITCODE -ne 0) { Write-Error "gn gen failed"; exit 1 }
+          echo "$env:GN_ARGS" | Out-File -FilePath gn_args_used.txt -Encoding utf8
+        timeout-minutes: 15
+
+      - name: Ninja build v8_monolith
+        run: |
+          $env:Path = "D:\depot_tools;" + $env:Path
+          Set-Location D:\v8-checkout\v8
+          ninja -C out.gn/x64.release v8_monolith
+          if ($LASTEXITCODE -ne 0) { Write-Error "ninja build failed with exit code $LASTEXITCODE"; exit 1 }
+        timeout-minutes: 180
+
+      - name: Package artifact and write provenance
+        id: package
+        env:
+          V8_VERSION: ${{ steps.version.outputs.v8_version }}
+          RESOLVED_COMMIT: ${{ steps.fetch.outputs.commit }}
+          CPU_DESC: ${{ steps.runner_facts.outputs.cpu_desc }}
+          CPU_CORES: ${{ steps.runner_facts.outputs.cpu_cores }}
+          MEM_GB: ${{ steps.runner_facts.outputs.mem_gb }}
+          OS_DESC: ${{ steps.runner_facts.outputs.os_desc }}
+        run: |
+          Set-Location D:\v8-checkout\v8
+          $lib = Get-ChildItem -Path out.gn\x64.release -Recurse -Filter "v8_monolith.lib" | Select-Object -First 1
+          if (-not $lib) {
+            Write-Error "v8_monolith.lib not found under out.gn/x64.release; build did not produce the expected artifact."
+            exit 1
+          }
+          $outDir = "$env:GITHUB_WORKSPACE\v8-artifacts\non-sanitized"
+          New-Item -ItemType Directory -Path $outDir -Force | Out-Null
+          Copy-Item $lib.FullName "$outDir\v8_monolith.lib"
+          $hash = (Get-FileHash "$outDir\v8_monolith.lib" -Algorithm SHA256).Hash.ToLower()
+          $ts = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+          $gnArgs = Get-Content gn_args_used.txt -Raw
+
+          $provenance = @{
+            artifact_set     = "non-sanitized"
+            v8_version_tag   = $env:V8_VERSION
+            resolved_commit  = $env:RESOLVED_COMMIT
+            source_repo      = "https://chromium.googlesource.com/v8/v8.git"
+            gn_args          = $gnArgs.Trim()
+            build_target     = "v8_monolith"
+            artifact_file    = "v8_monolith.lib"
+            artifact_sha256  = $hash
+            build_timestamp  = $ts
+            runner_os        = $env:OS_DESC
+            runner_cpu       = $CPU_DESC
+            runner_cpu_cores = $CPU_CORES
+            runner_mem_gb    = $MEM_GB
+            github_run_id    = "${{ github.run_id }}"
+            github_run_url   = "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            workflow_file    = ".github/workflows/v8-toolchain-build.yml"
+          }
+          $provenance | ConvertTo-Json | Out-File -FilePath "$outDir\provenance.json" -Encoding utf8
+          Write-Host "SHA-256: $hash"
+          Get-Content "$outDir\provenance.json"
+        timeout-minutes: 10
+
+      - name: Upload non-sanitized artifact
+        # v5.0.0
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: v8-monolith-non-sanitized-windows-x64
+          path: v8-artifacts/non-sanitized
+          retention-days: 14
+          if-no-files-found: error
+
+  # ---------------------------------------------------------------------
+  # Leg A2 (design doc naming): ASan+UBSan instrumented v8_monolith.
+  # MUST run on Linux+Clang — MSVC ASan is immature and explicitly
+  # excluded by .agent-state/design/M2-T06-v8-bridge-design.md §4. There
+  # is no Windows alternative for this leg; ubuntu-latest is mandatory,
+  # not a preference.
+  # ---------------------------------------------------------------------
+  build-sanitized:
+    name: "Leg A2: ASan/UBSan v8_monolith (ubuntu-latest, mandatory Linux leg)"
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    env:
+      DEPOT_TOOLS_UPDATE: "0"
+      GIT_TERMINAL_PROMPT: "0"
+    steps:
+      - name: Checkout Project Machina (for this workflow's own context only)
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+
+      - name: Resolve requested V8 version and pinned-version drift check
+        id: version
+        run: |
+          set -euo pipefail
+          requested="${{ github.event.inputs.v8_version }}"
+          requested="${requested:-13.1.201.12}"
+          pinned=$(awk '/^\[v8\]/{f=1;next} /^\[/{f=0} f && /^version *=/{gsub(/[" ]/,"",$3); print $3}' toolchains/versions.toml)
+          echo "Requested V8 version: $requested"
+          echo "toolchains/versions.toml pinned V8 version: $pinned"
+          if [ "$requested" != "$pinned" ]; then
+            echo "::warning::Requested version ($requested) differs from the pinned version ($pinned). This run's artifact is NOT the artifact M2-T06 proper is authorized to consume until versions.toml is updated to match."
+          fi
+          echo "v8_version=$requested" >> "$GITHUB_OUTPUT"
+
+      - name: Report runner facts (for provenance)
+        id: runner_facts
+        run: |
+          set -euo pipefail
+          cpu_desc=$(lscpu | awk -F: '/Model name/{gsub(/^ +/,"",$2); print $2}')
+          cpu_cores=$(nproc)
+          mem_gb=$(awk '/MemTotal/{printf "%.1f", $2/1024/1024}' /proc/meminfo)
+          os_desc=$(source /etc/os-release && echo "$PRETTY_NAME")
+          echo "CPU: $cpu_desc ($cpu_cores logical cores)"
+          echo "RAM: ${mem_gb}GB"
+          echo "OS: $os_desc"
+          {
+            echo "cpu_desc=$cpu_desc"
+            echo "cpu_cores=$cpu_cores"
+            echo "mem_gb=$mem_gb"
+            echo "os_desc=$os_desc"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Check and reclaim disk space
+        id: disk
+        timeout-minutes: 15
+        run: |
+          set -euo pipefail
+          threshold_gb=50
+          avail_kb=$(df --output=avail / | tail -1)
+          avail_gb=$((avail_kb / 1024 / 1024))
+          echo "Free space on / before cleanup: ${avail_gb}GB (need >= ${threshold_gb}GB for a V8 checkout + ASan/UBSan build)"
+          if [ "$avail_gb" -lt "$threshold_gb" ]; then
+            echo "Reclaiming space by removing preinstalled toolchains not needed for a V8/GN/ninja build..."
+            sudo rm -rf /usr/share/dotnet || true
+            sudo rm -rf /usr/local/lib/android || true
+            sudo rm -rf /opt/ghc || true
+            sudo rm -rf /opt/hostedtoolcache/CodeQL || true
+            sudo rm -rf /usr/local/share/boost || true
+            sudo rm -rf /usr/local/.ghcup || true
+            sudo rm -rf "$AGENT_TOOLSDIRECTORY" || true
+            sudo docker image prune --all --force || true
+            avail_kb=$(df --output=avail / | tail -1)
+            avail_gb=$((avail_kb / 1024 / 1024))
+            echo "Free space on / after cleanup: ${avail_gb}GB"
+          fi
+          if [ "$avail_gb" -lt "$threshold_gb" ]; then
+            echo "::error::Still only ${avail_gb}GB free after cleanup (need >= ${threshold_gb}GB). Failing fast rather than risking a partial multi-hour job that runs out of disk mid-build."
+            exit 1
+          fi
+          echo "free_gb_before_build=$avail_gb" >> "$GITHUB_OUTPUT"
+
+      - name: Bootstrap depot_tools
+        timeout-minutes: 10
+        run: |
+          set -euo pipefail
+          git clone --depth 1 https://chromium.googlesource.com/chromium/tools/depot_tools.git "$HOME/depot_tools"
+          echo "$HOME/depot_tools" >> "$GITHUB_PATH"
+
+      - name: Fetch V8 and sync to the pinned revision
+        id: fetch
+        timeout-minutes: 110
+        env:
+          V8_VERSION: ${{ steps.version.outputs.v8_version }}
+        run: |
+          set -euo pipefail
+          export PATH="$HOME/depot_tools:$PATH"
+          mkdir -p "$HOME/v8-checkout"
+          cd "$HOME/v8-checkout"
+
+          echo "Resolving V8 tag $V8_VERSION to an immutable commit SHA..."
+          ls_remote_out=$(git ls-remote https://chromium.googlesource.com/v8/v8.git "refs/tags/$V8_VERSION" "refs/tags/$V8_VERSION^{}")
+          if [ -z "$ls_remote_out" ]; then
+            echo "::error::Tag $V8_VERSION does not exist on chromium.googlesource.com/v8/v8.git"
+            exit 1
+          fi
+          peeled=$(echo "$ls_remote_out" | grep '\^{}$' || true)
+          if [ -n "$peeled" ]; then
+            commit=$(echo "$peeled" | cut -f1)
+          else
+            commit=$(echo "$ls_remote_out" | head -1 | cut -f1)
+          fi
+          echo "Resolved commit: $commit"
+          echo "commit=$commit" >> "$GITHUB_OUTPUT"
+
+          echo "Running depot_tools 'fetch v8' (standard documented V8 checkout flow, full history)..."
+          fetch v8
+
+          cd "$HOME/v8-checkout/v8"
+          echo "Checking out pinned commit $commit..."
+          git fetch origin "$commit"
+          git checkout "$commit"
+
+          echo "Re-running gclient sync for the pinned revision's DEPS..."
+          cd "$HOME/v8-checkout"
+          gclient sync -D
+
+      - name: GN gen (release, ASan+UBSan)
+        timeout-minutes: 15
+        env:
+          GN_ARGS: >-
+            is_debug=false target_cpu="x64" is_clang=true
+            v8_monolithic=true v8_use_external_startup_data=false
+            is_component_build=false v8_enable_i18n_support=false
+            is_asan=true is_ubsan=true symbol_level=1
+        run: |
+          set -euo pipefail
+          export PATH="$HOME/depot_tools:$PATH"
+          cd "$HOME/v8-checkout/v8"
+          echo "GN args: $GN_ARGS"
+          gn gen out.gn/x64.release.asan-ubsan --args="$GN_ARGS"
+          echo "$GN_ARGS" > gn_args_used.txt
+
+      - name: Ninja build v8_monolith (ASan+UBSan)
+        timeout-minutes: 180
+        run: |
+          set -euo pipefail
+          export PATH="$HOME/depot_tools:$PATH"
+          cd "$HOME/v8-checkout/v8"
+          ninja -C out.gn/x64.release.asan-ubsan v8_monolith
+
+      - name: Package artifact and write provenance
+        id: package
+        timeout-minutes: 10
+        env:
+          V8_VERSION: ${{ steps.version.outputs.v8_version }}
+          RESOLVED_COMMIT: ${{ steps.fetch.outputs.commit }}
+          CPU_DESC: ${{ steps.runner_facts.outputs.cpu_desc }}
+          CPU_CORES: ${{ steps.runner_facts.outputs.cpu_cores }}
+          MEM_GB: ${{ steps.runner_facts.outputs.mem_gb }}
+          OS_DESC: ${{ steps.runner_facts.outputs.os_desc }}
+        run: |
+          set -euo pipefail
+          cd "$HOME/v8-checkout/v8"
+          lib=$(find out.gn/x64.release.asan-ubsan -name "libv8_monolith.a" | head -1)
+          if [ -z "$lib" ]; then
+            echo "::error::libv8_monolith.a not found under out.gn/x64.release.asan-ubsan; build did not produce the expected artifact."
+            exit 1
+          fi
+          out_dir="$GITHUB_WORKSPACE/v8-artifacts/sanitized"
+          mkdir -p "$out_dir"
+          cp "$lib" "$out_dir/libv8_monolith.a"
+          hash=$(sha256sum "$out_dir/libv8_monolith.a" | cut -d ' ' -f1)
+          ts=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          gn_args=$(cat gn_args_used.txt)
+
+          run_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          cat > "$out_dir/provenance.json" <<JSON
+          {
+            "artifact_set": "sanitized-asan-ubsan",
+            "v8_version_tag": "$V8_VERSION",
+            "resolved_commit": "$RESOLVED_COMMIT",
+            "source_repo": "https://chromium.googlesource.com/v8/v8.git",
+            "gn_args": "$gn_args",
+            "build_target": "v8_monolith",
+            "artifact_file": "libv8_monolith.a",
+            "artifact_sha256": "$hash",
+            "build_timestamp": "$ts",
+            "runner_os": "$OS_DESC",
+            "runner_cpu": "$CPU_DESC",
+            "runner_cpu_cores": "$CPU_CORES",
+            "runner_mem_gb": "$MEM_GB",
+            "github_run_id": "${{ github.run_id }}",
+            "github_run_url": "$run_url",
+            "workflow_file": ".github/workflows/v8-toolchain-build.yml"
+          }
+          JSON
+          echo "SHA-256: $hash"
+          cat "$out_dir/provenance.json"
+
+      - name: Upload sanitized artifact
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+        with:
+          name: v8-monolith-asan-ubsan-linux-x64
+          path: v8-artifacts/sanitized
+          retention-days: 14
+          if-no-files-found: error

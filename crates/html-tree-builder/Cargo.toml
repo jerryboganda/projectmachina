@@ -1,0 +1,19 @@
+[package]
+name = "machina-html-tree-builder"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "HTML tree construction (WHATWG HTML §13.2.6): insertion modes, foster parenting, adoption agency, foreign content, and parser/document integration on top of machina-html + machina-dom."
+
+[lib]
+path = "src/lib.rs"
+
+# Sibling-crate dependency direction only: no protocol/command-model/
+# command-bus/capability crate is ever depended on here (see
+# .agent-state/design/M2-T04-tree-builder-design.md §0).
+[dependencies]
+machina-html = { path = "../html" }
+machina-dom = { path = "../dom" }
+
+[dev-dependencies]

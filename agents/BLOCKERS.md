@@ -11,6 +11,22 @@ purpose: "Track only proven blockers with evidence, impact, owner, and recommend
 
 ## Open blockers
 
+## BLK-004 — M2-T02 network loader: security-review items deferred to M3-T06
+
+- Related task(s): M2-T02 (merged), M3-T06
+- First observed: 2026-08-09
+- Owner: native-engine
+- Class: technical
+- Severity: low (explicitly scoped-deferred, not blocking anything today)
+- Exact reproduction/evidence: `.agent-state/design/M2-T02-security-review.md`'s pre-merge checklist marks several items `[DEFER→M3-T06]`; M2-T02's merged evidence (`.agent-state/evidence/M2-T02.md`) confirms every `[NOW]` item was implemented and tested, and lists the deferred set explicitly rather than silently dropping it: full cookie-jar/CORS-credential-aware redirect forwarding, referrer-policy computation across redirects, HTTP caching semantics, HTTP/2 server push and HTTP/3, proxy support (CONNECT/SOCKS), a DNS-rebinding-hardened resolver/cache with tenancy-aware variants, and certificate pinning/strict OCSP policy. Additionally: connection pooling/concurrency caps were not implemented in this pass (every request is a fresh connection through the full policy pipeline) — a real pre-production follow-up, not a security gap per se.
+- Work attempted: `crates/network`'s `[NOW]` scope (SSRF/DNS-rebinding defense, redirect re-validation, decompression-bomb/oversized-response/malformed-header defense, TLS hard-enforcement, per-phase timeouts/budgets, streaming backpressure) is implemented and covered by 52 passing tests including dedicated SSRF/malformed-response fixtures.
+- Why autonomous repair is exhausted: not applicable — this is intentionally out of M2-T02's scope per the milestone doc's own task boundary (M3-T06 owns CORS/referrer/cache/redirect-credential hardening).
+- Impacted descendants: M3-T06 inherits this list as its starting scope; M2-T09 (navigation, wires `machina-network` into `native-core`) should not assume cookie/CORS/cache semantics exist yet.
+- Unaffected work that may continue: everything else in M2 — this does not block M2-T08/T09/T12/T14.
+- Recommended resolution: M3-T06 implements the deferred items against this list; add connection pooling as a separate, tracked pre-production task once real traffic patterns are known.
+- Human decision required, if any: None.
+- Review date: Before M3-T06 is claimed; before any production traffic claim.
+
 ## BLK-003 — M1 real Chromium/process compatibility runtime unavailable
 
 - Related task(s): M1-T12, M1 exit, M2 native corpus entry

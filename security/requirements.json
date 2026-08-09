@@ -16,13 +16,13 @@
     {
       "id": "TM-03",
       "owner": "security",
-      "tasks": ["M3-T06", "M7-T04"],
+      "tasks": ["M2-T02", "M3-T06", "M7-T04"],
       "test_tags": ["ssrf", "metadata", "redirect"]
     },
     {
       "id": "TM-04",
       "owner": "security",
-      "tasks": ["M3-T06", "M7-T04"],
+      "tasks": ["M2-T02", "M3-T06", "M7-T04"],
       "test_tags": ["dns-rebinding", "resolution", "redirect"]
     },
     {
