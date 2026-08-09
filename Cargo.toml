@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "crates/command-model",
+    "crates/control-plane",
     "crates/capability",
     "crates/command-bus",
     "crates/session",
