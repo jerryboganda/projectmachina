@@ -142,6 +142,18 @@ mod tests {
             .expect("close");
         assert_eq!(closed.state, SessionState::Closed);
         assert_eq!(closed.version, 3);
+        assert_eq!(
+            service
+                .close(&auth(), "session-1", closed.version, "retry".to_owned())
+                .expect("idempotent close"),
+            closed
+        );
+        assert_eq!(
+            service
+                .cancel(&auth(), "session-1", closed.version, "retry".to_owned())
+                .expect("terminal cancel replay"),
+            closed
+        );
     }
 
     #[test]
