@@ -26,11 +26,11 @@ scheduling policy above):
 | Rank | Task | Wave | Milestone | Role | Dependencies | Suggested lane |
 | ---: | --- | ---: | --- | --- | --- | --- |
 | — | ~~M2-T01~~ | 1 | M2 | native-engine | merged (#28) | — |
-| 2 | M2-T02 | 2 | M2 | native-engine + security | M2-T01 (merged) | A |
-| 3 | M2-T03 | 2 | M2 | native-engine | M2-T01 (merged) | B |
-| — | ~~M2-T05~~ | 2 | M2 | native-engine | merged (#31) | — |
+| — | ~~M2-T02~~ | 2 | M2 | native-engine + security | merged (#36) | — |
+| — | ~~M2-T03~~ | 2 | M2 | native-engine | merged (#34) | — |
+| — | ~~M2-T05~~ | 2 | M2 | native-engine | merged (#31, independently re-verified — see note below) | — |
 | 5 | M2-T06 | 2 | M2 | native-engine + security | M2-T01 (merged) | B |
-| 6 | M2-T04 | 3 | M2 | native-engine | M2-T03, M2-T05 | A |
+| 6 | M2-T04 | 3 | M2 | native-engine | M2-T03 (merged), M2-T05 (merged) | A |
 | 7 | M2-T07 | 3 | M2 | native-engine | M2-T06, M2-T05 | B |
 | 8 | M2-T11 | 3 | M2 | native-engine | M2-T05 | A |
 | 9 | M2-T08 | 4 | M2 | native-engine | M2-T06, M2-T07, M2-T02 | A |
@@ -44,17 +44,30 @@ scheduling policy above):
 
 | Task | Owner | Branch/worktree | State | Heartbeat |
 | --- | --- | --- | --- | --- |
-| M2-T03 | wave2-builder-b | agent/M2-T03-* | claimed | — |
-| M2-T02 | wave3-builder-a | agent/M2-T02-* | claimed | — |
+| M2-T04 | wave3-builder-b | agent/M2-T04-tree-builder | claimed | — |
+| M2-T11 | wave3-builder-c | agent/M2-T11-event-dispatch | claimed | — |
 
-M2-T05 merged (#31), unlocking M2-T10 and M2-T11 (both depend only on T05) —
-next pair to start the moment a slot frees, per the 2-concurrent cap.
+**Process correction (2026-08-09):** the orchestrator briefly recorded
+M2-T05 as merged before it actually was (PR #31 was still open, only its CI
+had passed). This was caught before real damage: `crates/dom` was verified
+missing from `main` via independent `git ls-tree`/`find` checks, PR #31 was
+then genuinely merged (with a real Cargo.toml/Cargo.lock conflict resolved
+against the now-parallel M2-T02/T03 merges, verified with a full
+`cargo test --workspace` pass before pushing), and the M2-T04 builder
+(which had been working against a stale `.gitkeep`-only `crates/dom`) was
+notified directly to re-sync. M2-T05 is now independently re-verified
+present and passing on `main`. Recorded here rather than silently corrected,
+per this repo's evidence-over-narration culture.
+
+M2-T10 still queued — next to start the moment a slot frees.
 
 M2-T06 held back: no V8 build toolchain (`gn`/`gclient`/depot_tools) is
 available locally; owner directed GitHub Actions ONLY for the V8 build
-(`.github/workflows/v8-toolchain-build.yml`, workflow_dispatch, run in
-progress) rather than local/VPS. M2-T06 proper (the C++ bridge/Rust facade
-code) is blocked on that workflow producing real artifacts.
+(`.github/workflows/v8-toolchain-build.yml`, workflow_dispatch). First real
+run hit two fixable CI-environment bugs (depot_tools bootstrap ordering,
+Windows runner disk headroom); a fix is in progress/validating. M2-T06
+proper (the C++ bridge/Rust facade code) remains blocked on that workflow
+producing real, checksummed artifacts.
 
 ## In review
 
